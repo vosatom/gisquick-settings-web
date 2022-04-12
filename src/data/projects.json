@@ -1,0 +1,39 @@
+[{
+  "name": "marcel/prague",
+  "title": "Prague",
+  "qgis_file": "prague.qgz",
+  "created": "2021-12-08T18:22:51.064677298Z",
+  "updated": "2021-12-08T18:22:51.064677429Z",
+  "projection": "EPSG:3857",
+  "mapcache": false,
+  "authentication": "all",
+  "state": "published",
+  "size": 23453132,
+  "thumbnail": "/prague.jpeg"
+},
+{
+  "name": "marcel/test",
+  "title": "Test",
+  "qgis_file": "test.qgz",
+  "created": "2021-12-08T18:22:51.064677298Z",
+  "updated": "2021-12-08T18:22:51.064677429Z",
+  "projection": "EPSG:3857",
+  "mapcache": false,
+  "authentication": "owner",
+  "state": "published",
+  "size": 10345332,
+  "thumbnail": "/prague2.jpeg"
+},
+{
+  "name": "marcel/map",
+  "title": "Map",
+  "qgis_file": "map.qgz",
+  "created": "2021-11-07T12:22:51.064677298Z",
+  "updated": "2021-12-08T18:22:51.064677429Z",
+  "projection": "EPSG:3857",
+  "mapcache": false,
+  "authentication": "all",
+  "state": "published",
+  "size": 75454432,
+  "thumbnail": "/map1.jpeg"
+}]
