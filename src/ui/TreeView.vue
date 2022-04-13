@@ -14,6 +14,7 @@ export default {
   components: { VCollapsible },
   props: {
     expanded: Object,
+    expandedKey: String,
     items: Array,
     itemKey: String,
     itemChildren: {
@@ -35,6 +36,11 @@ export default {
     isGroup (item) {
       return item[this.itemChildren]?.length > 0
     },
+    isExpanded (group) {
+      return this.expandedKey
+        ? group[this.expandedKey]
+        : Boolean(this.expanded?.[group[this.itemKey]])
+    },
     indendStyle (depth) {
       const baseIndent = 6
       return this.indent ? { paddingLeft: `${baseIndent + this.numIndent * depth}px` } : null
@@ -43,7 +49,7 @@ export default {
       const style = this.indendStyle(depth)
       let groupContent = null
       const groupKey = item[this.itemKey]
-      const expanded = Boolean(this.expanded?.[groupKey])
+      const expanded = this.isExpanded(item)
       if (expanded) {
         const contentData = this.groupContentAttrs?.(item)
         const children = item[this.itemChildren].map(item => this.isGroup(item) ? this.renderGroup(h, item, depth + 1) : this.renderLeaf(h, item, depth + 1))

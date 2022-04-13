@@ -88,9 +88,9 @@
 
             <template v-slot:thumbnail>
               <div class="f-row-ac f-justify-end">
-                <v-btn v-if="project.thumbnail" class="icon" @click="">
+                <!-- <v-btn v-if="project.thumbnail" class="icon" @click="deleteThumbnail">
                   <v-icon name="delete_forever"/>
-                </v-btn>
+                </v-btn> -->
                 <div class="v-separator"/>
                 <v-btn class="icon" @click="$refs.input.click()">
                   <v-icon name="folder-open"/>
@@ -169,6 +169,7 @@
         :project="project.name"
         :layers="visibleLayers"
         :config="project.meta"
+        :settings="settings"
       >
         <template v-slot:toolbar>
           <v-btn class="layers-toggle icon flat" :color="showLayers ? 'primary' : ''" @click="showLayers = !showLayers">
@@ -203,10 +204,7 @@
 
         <!-- <div class="layers-control">
           <v-scroll-area>
-            <layers-tree
-              :layers="layers"
-              :expanded.sync="expanded"
-            >
+            <layers-tree :layers="layers">
               <template v-slot:leaf-append="{ layer }">
                 <div class="symbol f-row-ac">
                   <img
@@ -233,11 +231,7 @@
           <div class="toolbar f-row-ac">
           </div>
           <v-scroll-area>
-
-            <layers-tree
-              :layers="layers"
-              :expanded.sync="expanded"
-            >
+            <layers-tree :layers="layers">
               <template v-slot:leaf-append="{ layer }">
                 <div class="symbol f-row-ac">
                   <img
@@ -247,7 +241,6 @@
                 </div>
               </template>
             </layers-tree>
-
           </v-scroll-area>
         </div>
       </transition>
@@ -287,7 +280,6 @@ export default {
       tab: 'scales',
       legends: {},
       layers: [],
-      expanded: {},
       activeExtentEdit: null,
       showLayers: false,
       thumbnailSrc: null
@@ -343,24 +335,22 @@ export default {
     }
   },
   watch: {
-    qgisMeta: {
-      immediate: true,
-      handler: 'initLayersModel'
-    },
     flatLayers: {
       immediate: true,
       handler: 'fetchLegend'
     }
+  },
+  created () {
+    this.initLayersModel(this.qgisMeta)
   },
   methods: {
     initLayersModel (meta) {
       const layers = transformLayersTree(
         meta.layers_tree,
         l => ({ ...meta.layers[l.id] }),
-        (g, layers) => ({ name: g.name, visible: true, layers })
+        (g, layers) => ({ name: g.name, visible: true, expanded: true, layers })
       )
       this.layers = filterLayers(layers, l => l.type !== 'VectorLayer' || l.options.wkb_type !== 'NoGeometry')
-      this.expanded = this.groups.reduce((obj, g) => (obj[g.name] = true, obj), {})
     },
     updateExtent(key, extent) {
       this.settings[key] = extent?.map(v => round(v, this.extentPrecision))

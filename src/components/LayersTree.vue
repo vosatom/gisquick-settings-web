@@ -4,7 +4,7 @@
     item-key="name"
     item-children="layers"
     :items="layers"
-    :expanded="expanded"
+    expanded-key="expanded"
     :group-content-attrs="groupContentAttributes"
   >
     <template v-slot:group="{ item, depth, style }">
@@ -14,11 +14,11 @@
           viewBox="0 0 16 16"
           role="button"
           class="toggle icon"
-          :class="{expanded: expanded[item.name]}"
+          :class="{expanded: item.expanded}"
           @click="toggleGroup(item)"
         >
           <path d="M 8,1 L 8,15"/>
-          <path class="tr" :d="expanded[item.name] ? 'M 8,8 L 8,8' : 'M 1,8 L 15,8'"/>
+          <path class="tr" :d="item.expanded ? 'M 8,8 L 8,8' : 'M 1,8 L 15,8'"/>
         </svg>
         <span class="label f-grow" v-text="item.name"/>
         <v-switch
@@ -38,7 +38,7 @@
           <slot name="leaf-append" :layer="item"/>
           <v-checkbox
             class="f-grow"
-            :label="item.title || item.name"
+            :label="item.title"
             :value="item.visible"
             @input="setLayerVisibility(item, $event)"
           />
@@ -77,7 +77,6 @@ export default {
   },
   data () {
     return {
-      expandedGroups: {},
       expandedLayer: null
     }
   },
@@ -85,9 +84,7 @@ export default {
   },
   methods: {
     toggleGroup (group) {
-      // this.$set(this.expandedGroups, group.name, !this.expandedGroups[group.name])
-      // this.$emit('expanded', group.name)
-      this.$emit('update:expanded', { ...this.expanded, [group.name]: !this.expanded[group.name] })
+      group.expanded = !group.expanded
     },
     toggleLayerInfo (layer) {
       this.expandedLayer = this.expandedLayer !== layer ? layer : null
@@ -97,8 +94,6 @@ export default {
     },
     groupContentAttributes (item) {
       return { class: { disabled: !item.visible } }
-    },
-    showAttributesTable (layer) {
     }
   }
 }
