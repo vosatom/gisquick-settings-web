@@ -22,18 +22,42 @@
         <div class="header f-row-ac dark px-4">
           <span class="title">Layers</span>
         </div>
-        <div v-if="wfsNotEnabled">
-          <v-btn color="orange" @click="enableWFS">Enable WFS</v-btn>
-        </div>
         <qgis-layers-info :meta="projectInfo"/>
+        <div v-if="wfsNotEnabled" class="note">
+          <v-icon name="unknown"/>
+          <span class="m-2">Vector layers without WFS service enabled cannot be queryable.</span>
+          <v-btn class="small" color="orange" @click="enableWFS">Enable WFS</v-btn>
+        </div>
       </div>
-      <div v-if="errors" class="card">
+      <div v-if="errors" class="card errors f-col">
         <div class="header errors f-row-ac dark px-4">
+          <v-icon name="warning" class="mr-2"/>
           <span class="title">Errors</span>
         </div>
-        <div class="p-2">
-          {{ errors }}
-        </div>
+
+        <template v-if="errors.duplicateLayersNames">
+          <span class="p-2"><strong>Layers does not have unique names.</strong> Layers with duplicit names (or short names):</span>
+          <ul>
+            <li v-for="n in errors.duplicateLayersNames" :key="n" v-text="n"/>
+          </ul>
+        </template>
+
+        <template v-if="errors.invalidLayersNames">
+          <strong class="p-2">Invalid Layers Names:</strong>
+          <ul>
+            <li v-for="n in errors.invalidLayersNames" :key="n" v-text="n"/>
+          </ul>
+          <p class="hint p-2">
+            <span>It is recommended set a <strong>Short name</strong> property without spaces and special characters in</span>
+            <span class="breadcrumb mx-1">
+              <strong>Layer Properties</strong>
+              <v-icon name="arrow-right" size="12"/>
+              <strong>QGIS Server</strong>
+              <!-- <v-icon name="arrow-right" size="12"/>
+              <strong>Short name</strong> -->
+            </span>
+          </p>
+        </template>
       </div>
 
       <div v-else class="card files f-col">
@@ -73,7 +97,7 @@
         </template>
       </div>
 
-      <div v-if="tasks.clientFiles.success" class="f-row-ac f-justify-center">
+      <div v-if="tasks.clientFiles.success" class="f-row-ac f-justify-center my-2">
         <!-- <span>{{ user.username }} /</span> -->
         <!-- <v-text-field class="filled" readonly disabled :value="user.username + '/'"/>
         <v-text-field class="filled" placeholder="name" v-model="name"/> -->
@@ -101,12 +125,12 @@
               :value="uploadProgress.totalProgress"
             />
           </template>
-          <span v-else>Upload</span>
+          <span v-else>Create</span>
         </v-btn>
       </div>
     </template>
     <div v-else-if="error" class="error f-row-ac">
-      <v-icon name="circle-error" color="red"/>
+      <v-icon name="warning" color="red"/>
       <span class="title mx-2">Error:</span>
       {{ error.msg }}
       <div v-if="error.details" v-text="error.details" class="traceback"/>
@@ -115,6 +139,9 @@
 </template>
 
 <script>
+import path from 'path'
+import isEmpty from 'lodash/isEmpty'
+
 import QgisInfo from '@/components/QgisInfo.vue'
 import FilesTree from '@/components/FilesTree.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
@@ -200,7 +227,21 @@ export default {
       }
       return []
     },
+    filesOutsideDirectory () {
+      const layers = Object.values(this.projectInfo.layers)
+      const dataFiles = layers.reduce((files, l) => {
+        if (l.source_params.file) {
+          files.add(l.source_params.file)
+        }
+        return files
+      }, new Set())
+      const pDir = this.projectInfo.client_info.directory
+      return Array.from(dataFiles).map(f => path.relative(pDir, f)).filter(f => f.startsWith('..'))
+      // const projectDir = this.projectInfo.client_info.directory + path.sep
+      // return Array.from(dataFiles).filter(f => !f.startsWith(projectDir))
+    },
     errors () {
+      const errors = {}
       const layers = Object.values(this.projectInfo.layers)
       const names = layers.map(l => l.name)
       const nSet = new Set(names)
@@ -212,21 +253,17 @@ export default {
         //     return true
         //   }
         // })
-        // return 'Layers names are not unique. Duplicates: ' + Array.from(new Set(duplicates)).join(', ')
         const duplicates = layers.filter((l, i) => i !== names.indexOf(l.name))
-        return 'Layers names are not unique. Duplicates: ' + duplicates.map(l => l.title)
+        errors.duplicateLayersNames = duplicates.map(l => l.name)
       }
       const invalidNames = names.filter(n => !LayerNameRegex.test(n))
       if (invalidNames.length) {
-        const helpText = 'It is recommended assign short names without special characters in Layer Properties -> QGIS Server -> Short name'
-        return `Invalid layer names: ${invalidNames.join(', ')}. ${helpText}`
+        errors.invalidLayersNames = invalidNames
       }
-      // return {
-      //   unique: new Set(names).size === names.length,
-      //   characters: invalidNames.length > 0,
-      //   length: names.every(n => n.length > 0 && n.length < 30),
-      //   names
-      // }
+      if (this.filesOutsideDirectory?.length) {
+        errors.filesOutsideDirectory = this.filesOutsideDirectory
+      }
+      return isEmpty(errors) ? null : errors
     },
     sourceIcons () {
       return SourceIcons
@@ -381,19 +418,34 @@ export default {
     font-size: 13px;
   }
 }
-.header.errors {
-  background-color: var(--color-red);
+.errors {
+  .header {
+    background-color: var(--color-red);
+  }
+  .hint {
+    font-size: 13px;
+    color: #707070;
+  }
 }
 .note {
   display: flex;
   font-size: 13px;
-  opacity: 0.75;
+  // opacity: 0.75;
   padding: 3px 8px;
   // align-self: center;
   align-items: center;
   justify-content: center;
   border-top: 1px solid var(--border-color);
   background-color: #f4f4f4;
+  color: #777;
+  --icon-color: #777;
+}
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  > * {
+    margin: 0 3px;
+  }
 }
 .vjs-tree, .json-viewer, .json-diff-viewer {
   width: clamp(50vw, 960px, 80vw);

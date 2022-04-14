@@ -30,27 +30,21 @@
     <template v-slot:leaf.projection="{ item, value }">
       <span v-if="item.projection" v-text="item.projection"/>
       <v-icon v-else name="warning" color="orange"/>
-      <!-- <div v-else class="f-row-ac">
-        <v-icon name="warning" color="orange"/>
-      </div> -->
     </template>
 
     <!-- eslint-disable-next-line -->
     <template v-slot:leaf.source="{ item }">
-      <div
-        v-if="sourceInfo[item.id]"
-        class="f-row-ac xsource"
-      >
+      <template v-if="sourceInfo[item.id]">
         <v-icon size="24" :name="sourceIcons[sourceInfo[item.id].type]"/>
         <span class="single-line">{{ sourceInfo[item.id].text }}</span>
 
         <div v-if="sourceInfo[item.id].error" class="f-row-ac mx-2">
-          <v-icon name="circle-error" color="red"/>
+          <v-icon name="warning" color="red"/>
           <v-tooltip align="c;bb">
             <span v-text="sourceInfo[item.id].error"/>
           </v-tooltip>
         </div>
-      </div>
+      </template>
     </template>
   </layers-table>
 </template>
@@ -103,8 +97,7 @@ export default {
         {
           text: 'Source',
           value: 'source',
-          align: 'left',
-          tdClass: 'src'
+          align: 'left'
         }
       ]
     },
@@ -121,7 +114,7 @@ export default {
     },
     sourceInfo () {
       const pDir = this.meta.client_info.directory
-      const projectDir = this.meta.client_info.directory + path.sep// + 'x'
+      const projectDir = this.meta.client_info.directory + path.sep
       return mapValues(this.meta.layers, l => {
         let info
         const { provider_type: provider, source_params: source } = l
@@ -167,19 +160,5 @@ export default {
 <style lang="scss" scoped>
 td .icon {
   margin: 0 2px;
-}
-.source {
-  span {
-    min-width: 0;
-    // max-width: 420px;
-
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: pre-wrap;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    word-break: break-word;
-  }
 }
 </style>

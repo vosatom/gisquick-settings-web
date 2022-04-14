@@ -210,10 +210,12 @@
   </div>
   <div v-else class="m-4 f-col-ac">
     <div class="error f-row-ac my-4">
-      <v-icon name="circle-error" class="mr-2"/>
+      <v-icon name="warning" class="mr-2"/>
       <span>Invalid Authentication Settings</span>
     </div>
-    <v-btn color="primary" @click="initAuthSettings">New Authentication Settings</v-btn>
+    <v-btn color="primary" @click="initAuthSettings">
+      New Authentication Settings
+    </v-btn>
   </div>
 </template>
 

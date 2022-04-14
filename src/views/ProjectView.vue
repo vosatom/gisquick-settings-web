@@ -55,7 +55,7 @@
           <span v-if="project.settings">Save</span>
           <span v-else>Publish</span>
         </v-btn>
-        <v-icon v-if="projectErrors.length" name="circle-error" color="red"/>
+        <v-icon v-if="projectErrors.length" name="warning" color="red"/>
         <v-menu
           aria-label="Project actions"
           transition="slide-y"
@@ -120,40 +120,6 @@
           </div>
         </div>
 
-        <div v-if="false" class="card f-row f-space-between">
-          <qgis-info v-if="project" class="xcard" :meta="project.meta"/>
-          <div class="xcard f-col f-align-end xf-grow p-2">
-            <!-- <div><strong>Created:</strong> {{ createdAt.datetime }}</div>
-            <div><strong>Updated:</strong> {{ updatedAt.datetime }}</div> -->
-            <div class="date m-2">
-              <strong>Created:</strong>
-              <v-icon name="calendar"/>
-              <span v-text="createdAt.date"/>
-              <v-icon name="clock"/>
-              <span v-text="createdAt.time"/>
-            </div>
-            <div class="date m-2">
-              <strong>Udated:</strong>
-              <v-icon name="calendar"/>
-              <span v-text="updatedAt.date"/>
-              <v-icon name="clock"/>
-              <span v-text="updatedAt.time"/>
-            </div>
-            <div class="f-row-ac">
-              <strong>Status:</strong>
-              <v-badge
-                :color="statusColorMap[project.state]"
-                class="uppercase">{{ project.state }}
-              </v-badge>
-            </div>
-          </div>
-        </div>
-
-        <!-- <json-viewer :data="json"/> -->
-        <!-- <json-viewer2 :data="json"/> -->
-
-        <!-- <json-viewer :data="project.meta"/> -->
-        <!-- <json-viewer2 :data="project.meta"/> -->
         <qgis-layers-info :meta="project.meta"/>
       </div>
 
@@ -187,7 +153,6 @@ import mapValues from 'lodash/mapValues'
 import cloneDeep from 'lodash/cloneDeep'
 import isEqual from 'lodash/isEqual'
 
-import QgisInfo from '@/components/QgisInfo.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import JsonViewer from '@/components/JsonViewer.vue'
 // import JsonViewer2 from '@/components/JsonViewer2.vue'
@@ -196,32 +161,11 @@ import { scalesToResolutions, ProjectionsScales } from '@/utils/scales'
 import { TaskState, watchTask } from '@/tasks'
 import MapImg from '@/assets/map.svg?inline'
 
-const TestJson = {
-  text: 'string value',
-  bool: true,
-  bool_false: false,
-  null: null,
-  inline: [1, 2, "3", false],
-  nested_array: [
-    [1, 2],
-    [2, 3],
-    {},
-    {a: 0},
-    "text"
-  ],
-  nested_object: {
-    empty: {},
-    full: {
-      name: 'qwerty'
-    }
-  },
-  empty_array: []
-}
 
 export default {
   name: 'ProjectView',
-  components: { QgisInfo, QgisLayersInfo, MapImg, JsonViewer, JsonViewer2 },
-  // components: { QgisInfo, QgisLayersInfo, MapImg, JsonPretty, JsonViewer, JsonViewer2 },
+  components: { QgisLayersInfo, MapImg, JsonViewer, JsonViewer2 },
+  // components: { QgisLayersInfo, MapImg, JsonPretty, JsonViewer, JsonViewer2 },
   props: {
     user: String,
     name: String,
@@ -238,9 +182,6 @@ export default {
     }
   },
   computed: {
-    json () {
-      return TestJson
-    },
     createdAt () {
       return this.formatDate(this.project?.created)
     },

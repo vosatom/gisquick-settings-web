@@ -9,10 +9,13 @@ const VectorIcons = {
   NoGeometry: 'attribute-table2',
   Point: 'point',
   MultiPoint: 'point',
+  MultiPointZ: 'point',
   LineString: 'line',
   MultiLineString: 'line',
+  MultiLineStringZ: 'line',
   Polygon: 'polygon',
-  MultiPolygon: 'polygon'
+  MultiPolygon: 'polygon',
+  MultiPolygonZ: 'polygon'
 }
 function layerIcon2 (layer) {
   if (layer.type === 'VectorLayer') {

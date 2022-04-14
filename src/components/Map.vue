@@ -88,12 +88,10 @@ export default {
       if (this.map) {
         this.map.dispose()
       }
-    },
-    config () {
-      if (this.map) {
-        this.map.dispose()
-      }
       this.createMap()
+      if (this.$refs.map) {
+        this.map.setTarget(this.$refs.map)
+      }
     },
     layersParam (value) {
       this.wmsSource.updateParams({ LAYERS: value })
@@ -103,10 +101,6 @@ export default {
     createMap () {
       const { config, settings } = this
 
-      // const timestamp = config.publish_date_unix
-      // const project = timestamp ? `${this.project}_${timestamp}` : this.project
-
-      // const layers = layersList(config.layers).filter(l => l.visible)
       const layers = Object.values(config.layers).filter(l => l.visible)
       layers.sort((a, b) => (b.drawing_order || 0) - (a.drawing_order || 0))
 
@@ -158,7 +152,9 @@ export default {
         })
         // interactions: defaultInteractions({mouseWheelZoom: false}).extend([zoomInteraction])
       })
-      // this.map.getView().fit(this.extent, { padding: [50, 50, 50, 50] })
+      // if (process.env.NODE_ENV === 'development') {
+      //   window.olmap = this.map
+      // }
     },
     getImage () {
       return this.wmsSource.image_.getImage()
@@ -196,9 +192,6 @@ export default {
     inset: 0;
     z-index: 1;
     display: grid;
-    ::v-deep > * {
-      
-    }
   }
   .map-controls {
     margin: 3px;

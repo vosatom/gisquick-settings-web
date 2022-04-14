@@ -23,6 +23,28 @@
 import { objectDiff } from '@/utils/diff'
 import JsonViewer from '@/components/JsonDiffViewer.vue'
 
+const TestJson = {
+  text: 'string value',
+  bool: true,
+  bool_false: false,
+  null: null,
+  inline: [1, 2, "3", false],
+  nested_array: [
+    [1, 2],
+    [2, 3],
+    {},
+    {a: 0},
+    "text"
+  ],
+  nested_object: {
+    empty: {},
+    full: {
+      name: 'qwerty'
+    }
+  },
+  empty_array: []
+}
+
 const v1 = {
   layer: {
     name: 'Layer',

@@ -2,22 +2,26 @@
   <div class="qgis-info p-2">
     <div class="item">
       <span class="label">Projection:</span>
-      {{ meta.projection.code }}
+      <span v-text="meta.projection.code"/>
     </div>
     <!-- <hr/> -->
     <div class="item">
       <span class="label">Map Units:</span>
-      {{ meta.units.map }}
+      <span v-text="meta.units.map"/>
     </div>
     <!-- <hr/> -->
     <div class="item">
       <span class="label">Print Templates:</span>
-      {{ printTemplatesInfo }}
+      <span v-text="printTemplatesInfo"/>
     </div>
     <!-- <hr/> -->
     <div class="item">
       <span class="label">Client Info:</span>
-      QGIS Version: {{ meta.client_info.qgis_version }}, Plugin Version: {{ meta.client_info.plugin_version }}
+      <span>QGIS Version: {{ meta.client_info.qgis_version }}, Plugin Version: {{ meta.client_info.plugin_version }}</span>
+    </div>
+    <div class="item">
+      <span class="label">Project Directory:</span>
+      <span v-text="meta.client_info.directory"/>
     </div>
   </div>
 </template>
@@ -41,5 +45,6 @@ export default {
 }
 .label {
   font-weight: 500;
+  margin-right: 6px;
 }
 </style>

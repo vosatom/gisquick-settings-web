@@ -42,11 +42,19 @@ export function mapLayers (items, fn) {
   return items.map(i => i.layers ? { ...i, layers: mapLayers(i.layers, fn) } : fn(i))
 }
 
+function sortLayers (layers) {
+  return [
+    ...layers.filter(i => !i.layers),
+    ...layers.filter(i => i.layers)
+  ]
+}
+
 export function transformLayersTree (layers, transformLayer, transformGroup) {
   return layers.map(i => {
     if (i.layers) {
       const children = transformLayersTree(i.layers, transformLayer, transformGroup)
-      return transformGroup(i, children)
+      // return transformGroup(i, children)
+      return transformGroup(i, sortLayers(children))
     } else {
       return transformLayer(i)
     }

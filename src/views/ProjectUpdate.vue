@@ -3,7 +3,7 @@
     <plugin-disconnected v-if="!connected"/>
     <template v-else-if="projectInfo">
       <div v-if="projectInfo.file !== project.meta.file" class="f-row-ac warning p-2">
-        <v-icon name="circle-error"/>
+        <v-icon name="warning"/>
         <span class="ml-2">Project filename doesn't match!</span>
       </div>
       <!-- <json-viewer v-if="diffs.raw" :data="diffs.raw"/> -->
