@@ -104,7 +104,7 @@
             <span v-text="project.name" class="name"/>
           </div>
           <div class="details f-row f-align-end">
-            <v-badge color="dark" glow>{{ project.meta.projection.code }}</v-badge>
+            <v-badge color="dark" glow>{{ project.meta.projection }}</v-badge>
             <div class="f-row-ac m-2">
               <v-icon name="storage" size="16" class="m-1"/>
               <span v-text="$format.filesize(project.size)"/>
@@ -326,7 +326,7 @@ export default {
           tile_resolutions: scalesToResolutions(meta.scales, meta.units)
         })
       } else {
-        const projInfo = ProjectionsScales[meta.projection.code]
+        const projInfo = ProjectionsScales[meta.projection]
         if (projInfo) {
           Object.assign(settings, projInfo)
         }

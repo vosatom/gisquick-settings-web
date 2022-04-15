@@ -276,12 +276,11 @@ export default {
       return vectorLayers.length && vectorLayers.every(l => !l.options.wfs.length)
     },
     projectionValid () {
-      const { projection } = this.projectInfo
-      return !!(projection.code && projection.proj4) // or alow emty proj4 def for well known projections (EPSG:4326, ...)?
+      const projCode = this.projectInfo.projection
+      // or allow emty proj4 def for well known projections (EPSG:4326, ...)?
+      return Boolean(projCode && this.projectInfo.projections[projCode]?.proj4)
     },
     layersValid () {
-      // TODO: check source.file is relative to project dir
-      // return Object.values(this.sourceInfo).every(l => !l.error)
       return true
     },
     projectValid () {

@@ -104,12 +104,13 @@ export default {
       const layers = Object.values(config.layers).filter(l => l.visible)
       layers.sort((a, b) => (b.drawing_order || 0) - (a.drawing_order || 0))
 
-      let projection = getProj(config.projection.code)
-      if (!projection) {
-        proj4.defs(config.projection.code, config.projection.proj4)
-        register(proj4)
-        projection = getProj(config.projection.code)
-      }
+      Object.entries(config.projections).forEach(([code, def]) => {
+        if (code && !getProj(code)) {
+          proj4.defs(code, def.proj4)
+        }
+      })
+      register(proj4)
+
       const source = new ImageWMS({
         // url: '/api/project/map',
         url: `/api/project/map/${this.project}`,
@@ -141,7 +142,7 @@ export default {
       this.map = new Map({
         layers: [mapLayer],
         view: new View({
-          projection: projection,
+          projection: getProj(config.projection),
           center: getCenter(this.extent),
           zoom: 0,
           // resolutions: config.tile_resolutions,
