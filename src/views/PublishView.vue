@@ -43,7 +43,7 @@
         </template>
 
         <template v-if="errors.invalidLayersNames">
-          <strong class="p-2">Invalid Layers Names:</strong>
+          <strong class="p-2">Invalid layers names:</strong>
           <ul>
             <li v-for="n in errors.invalidLayersNames" :key="n" v-text="n"/>
           </ul>
@@ -57,6 +57,13 @@
               <strong>Short name</strong> -->
             </span>
           </p>
+        </template>
+
+        <template v-if="errors.filesOutsideDirectory">
+          <strong class="p-2">Data files outside of project's directory:</strong>
+          <ul>
+            <li v-for="n in errors.filesOutsideDirectory" :key="n" v-text="n"/>
+          </ul>
         </template>
       </div>
 
@@ -230,15 +237,13 @@ export default {
     filesOutsideDirectory () {
       const layers = Object.values(this.projectInfo.layers)
       const dataFiles = layers.reduce((files, l) => {
-        if (l.source_params.file) {
-          files.add(l.source_params.file)
+        const { file } = l.source_params
+        if (file && file.startsWith('..')) {
+          files.add(file)
         }
         return files
       }, new Set())
-      const pDir = this.projectInfo.client_info.directory
-      return Array.from(dataFiles).map(f => path.relative(pDir, f)).filter(f => f.startsWith('..'))
-      // const projectDir = this.projectInfo.client_info.directory + path.sep
-      // return Array.from(dataFiles).filter(f => !f.startsWith(projectDir))
+      return Array.from(dataFiles)
     },
     errors () {
       const errors = {}
@@ -341,12 +346,7 @@ export default {
       console.log('TODO: check availability', this.name)
     },
     async createProject () {
-      console.log(this.files)
-      // const data = {
-      //   // name: 
-      //   qgis: this.projectInfo,
-      // }
-      // await this.$http.post('/api/project/create', project)
+      // console.log(this.files)
       const projectName = `${this.user.username}/${this.name}`
       await this.$http.post(`/api/project/${projectName}`, this.projectInfo)
       // TODO: or create global upload manager, page independent?

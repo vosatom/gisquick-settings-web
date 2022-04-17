@@ -113,8 +113,6 @@ export default {
       return SourceIcons
     },
     sourceInfo () {
-      const pDir = this.meta.client_info.directory
-      const projectDir = this.meta.client_info.directory + path.sep
       return mapValues(this.meta.layers, l => {
         let info
         const { provider_type: provider, source_params: source } = l
@@ -133,9 +131,9 @@ export default {
         } else if (source.file) {
           info = {
             type: 'file',
-            text: path.relative(pDir, source.file)
+            text: source.file
           }
-          if (!source.file.startsWith(projectDir)) {
+          if (source.file.startsWith('..')) {
             info.error = "Data file is located outside of project's directory"
           }
         } else {
