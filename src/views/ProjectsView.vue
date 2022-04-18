@@ -38,9 +38,11 @@
         :key="p.name"
         class="card"
       >
-        <img v-if="p.thumbnail" :src="`/api/project/thumbnail/${p.name}`"/>
-        <map-img v-else/>
-        <router-link :to="{ path: '/' + p.name }" class="f-col px-2">
+        <a class="map-link" :href="`/?PROJECT=${p.name}`">
+          <img v-if="p.thumbnail" :src="`/api/project/thumbnail/${p.name}`"/>
+          <map-img v-else/>
+        </a>
+        <router-link :to="{ path: '/' + p.name }" class="project-link f-col px-2">
           <span v-text="p.title" class="title"/>
           <span v-text="p.name" class="name"/>
         </router-link>
@@ -174,16 +176,22 @@ export default {
   grid-template-columns: 150px 1fr auto;
   gap: 8px;
   padding: 4px 8px;
-  img, svg {
-    max-height: 120px;
-    max-width: 100%;
-    width: auto;
-    height: auto;
+  .map-link {
     grid-row: 1 / 3;
-    justify-self: center;
-    align-self: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    img {
+      max-height: 120px;
+      max-width: 100%;
+      width: auto;
+      height: auto;
+    }
+    svg {
+      height: 120px;
+    }
   }
-  a {
+  .project-link {
     justify-self: start;
     text-decoration: none;
     color: var(--color-primary);

@@ -39,11 +39,19 @@
         <router-link class="m-2" :to="{name: 'layers'}">Layers</router-link>
         <router-link class="m-2" :to="{name: 'topics'}">Topics</router-link>
         <router-link class="m-2" :to="{name: 'access'}">Permissions</router-link>
-        <!-- <div class="v-separator"/> -->
-        <div class="f-grow"/>
+        <div class="v-separator"/>
         <v-btn class="small" :to="{name: 'update'}">
           <v-icon name="qgis" class="mr-2"/>
           <span>Update</span>
+        </v-btn>
+        <div class="f-grow"/>
+        <v-btn
+          v-if="project.state === 'published'"
+          :href="`/?PROJECT=${project.name}`"
+          class="small"
+        >
+          <v-icon name="map" class="mr-2"/>
+          <span>Map</span>
         </v-btn>
         <v-btn
           class="small"
@@ -215,17 +223,6 @@ export default {
         users: 'users'
       }
     },
-    // project () {
-    //   if (this.qgisMeta) {
-    //     return {
-    //       // user: this.user,
-    //       name: this.projectName,
-    //       qgisMeta: this.qgisMeta,
-    //       settings: this.settings
-    //     }
-    //   }
-    //   return null
-    // },
     settingsChanged () {
       return this.project && !isEqual(this.project.settings, this.settings)
     },
@@ -236,11 +233,7 @@ export default {
         { text: 'Delete Project', action: this.deleteProject },
         { text: 'Debug', separator: true },
         { text: 'QGIS Meta', action: () => this.jsonDialog = 'meta' },
-        { text: 'Show settings', action: () => this.jsonDialog = 'settings' },
-        // { text: 'QGIS Meta', action: () => this.$refs.metaDialog.show(this.project.meta) },
-        // { text: 'Show settings', action: () => this.$refs.metaDialog.show(this.settings) },
-        // { text: 'QGIS Meta', action: () => this.jsonDialog = { title: 'QGIS meta', json: this.project.meta } },
-        // { text: 'Show settings', action: () => this.jsonDialog = { title: 'QGIS meta', json: this.settings } } },
+        { text: 'Show settings', action: () => this.jsonDialog = 'settings' }
       ]
     },
     projectErrors () {
@@ -300,8 +293,6 @@ export default {
     },
     newSettings (meta) {
       const layers = mapValues(meta.layers, (l) => ({
-        // publish: true,
-        // hidden: false,
         // flags: [l.queryable ? 'query' : null].filter(f => !!f),
         flags: [...l.flags],
         // how about attr_table_fields/info_panel_fields?
@@ -345,6 +336,7 @@ export default {
       if (this.fetchTask.success) {
         const { meta, settings } = data
         this.settings = settings ? cloneDeep(settings) : this.newSettings(meta)
+        this.refSettings = cloneDeep(this.settings)
       }
     },
     async saveSettings () {
@@ -357,7 +349,6 @@ export default {
       }
       this.$notify.success('Project settings was updated')
       this.fetchProjectInfo()
-      this.refSettings = cloneDeep(this.settings) // or use fetched project's settings ?
     },
     resetSettings () {
       // this.settings = this.newSettings(this.qgisMeta)
