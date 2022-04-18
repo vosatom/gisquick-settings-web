@@ -3,7 +3,7 @@
     <!-- <div class="expander" v-text="Array(120).fill('_').join(' ')"/> -->
     <div class="toolbar f-row-ac">
       <span class="title m-2">Projects</span>
-      <v-text-field class="filled" placeholder="Search">
+      <v-text-field class="filled" placeholder="Search" v-model="filter">
         <template v-slot:append>
           <v-icon name="search" class="mx-2"/>
         </template>
@@ -68,6 +68,7 @@
 import orderBy from 'lodash/orderBy'
 import MapImg from '@/assets/map.svg?inline'
 import { TaskState, watchTask } from '@/tasks'
+import { sanitize, escapeRegExp, removeDiacritics } from '@/ui/utils/text'
 
 export default {
   name: 'ProjectsPage',
@@ -79,7 +80,8 @@ export default {
     return {
       sortBy: '',
       sortDir: 'asc',
-      fetchTask: TaskState()
+      fetchTask: TaskState(),
+      filter: ''
     }
   },
   computed: {
@@ -121,10 +123,15 @@ export default {
       }))
     },
     sortedProjects () {
-      if (this.sortBy) {
-        return orderBy(this.formattedProjects, this.sortBy, this.sortDir)
+      let projects = this.formattedProjects
+      if (this.filter) {
+        const regex = new RegExp(escapeRegExp(sanitize(removeDiacritics(this.filter))), 'i')
+        projects = projects.filter(p => regex.test(removeDiacritics(p.title)) || regex.test(removeDiacritics(p.name)))
       }
-      return this.formattedProjects
+      if (this.sortBy) {
+        return orderBy(projects, this.sortBy, this.sortDir)
+      }
+      return projects
     }
   },
   watch: {
