@@ -235,11 +235,25 @@ import LayerPermissionsFlags from '@/components/LayerPermissionsFlags.vue'
 import { transformLayersTree } from '@/utils/layers'
 import { layerCapabilities, layerPermissionsCapabilities } from '@/flags'
 import { TaskState, watchTask } from '@/tasks'
-import usersData from '@/data/users.json'
 
 function fullName (user) {
   const parts = [ user.first_name, user.last_name ]
   return parts.filter(p => p).join(' ')
+}
+
+export function initLayersPermissions (layers) {
+  return {
+    layers: mapValues(layers, () => ['view']),
+    attributes: mapValues(
+      pickBy(layers, l => l.attributes),
+      l => Object.fromEntries(l.attributes.map(a => [a.name, ['view']]))
+    ),
+    // attributes: mapValues(this.project.meta.layers, l => l.attributes && Object.fromEntries(l.attributes.map(a => [a.name, ['view']]))),
+    // layers: mapValues(this.project.meta.layers, l => ({
+    //   flags: ['view'],
+    //   attributes: l.attributes && Object.fromEntries(l.attributes.map(a => [a.name, ['view']]))
+    // }))
+  }
 }
 
 export default {
@@ -367,7 +381,6 @@ export default {
       return mapValues(this.project.meta.layers, l => layerCapabilities(l, this.settings.layers[l.id]))
     },
     layersPermissionsCapabilities () {
-      console.log('layersPermissionsCapabilities')
       return mapValues(this.project.meta.layers, l => layerPermissionsCapabilities(
         this.layersProjectCapabilities[l.id], this.settings.layers[l.id]?.flags, this.layersPerms[l.id])
       )
@@ -381,31 +394,12 @@ export default {
       this.$set(this.settings, 'auth', { type: 'private', users: null, roles: null })
     },
     createRole (params) {
-      const layersPerms = mapValues(this.settings.layers, () => ({
-        view: true,
-        insert: false,
-        update: false,
-        delete: false
-      }))
-
       return {
         name: 'New',
         auth: 'public',
         ...params,
         users: [],
-        permissions: {
-          // layers: layersPerms
-          layers: mapValues(this.settings.layers, () => ['view']),
-          attributes: mapValues(
-            pickBy(this.project.meta.layers, l => l.attributes),
-            l => Object.fromEntries(l.attributes.map(a => [a.name, ['view']]))
-          ),
-          // attributes: mapValues(this.project.meta.layers, l => l.attributes && Object.fromEntries(l.attributes.map(a => [a.name, ['view']]))),
-          // layers: mapValues(this.project.meta.layers, l => ({
-          //   flags: ['view'],
-          //   attributes: l.attributes && Object.fromEntries(l.attributes.map(a => [a.name, ['view']]))
-          // }))
-        }
+        permissions: initLayersPermissions(this.project.meta.layers)
       }
     },
     setAuthType (type) {
@@ -421,12 +415,10 @@ export default {
       const setFullName = u => {
         u.full_name = fullName(u)
       }
-      usersData.forEach(setFullName)
-      const task = Promise.resolve({ data: usersData })
-      // const task = this.$http.get('/api/users').then(resp => {
-      //   resp.data.forEach(setFullName)
-      //   return resp
-      // })
+      const task = this.$http.get('/api/users').then(resp => {
+        resp.data.forEach(setFullName)
+        return resp
+      })
       watchTask(task, this.tasks.users)
     },
     addRole () {
