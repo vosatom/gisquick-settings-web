@@ -4,6 +4,7 @@
     color="primary"
     class="users-list"
     :class="{focused}"
+    :error="hasDeletedUsers ? 'Contains inactive or deleted users' : null"
   >
     <div class="input">
       <v-autocomplete2
@@ -83,6 +84,7 @@
           <div class="empty p-2">No users specified</div>
         </template>
         <template v-slot:item="{ item }">
+          <v-icon v-if="item.invalid" name="warning" color="orange" class="mr-2"/>
           <span class="f-grow">
             {{ item.username }} <span v-if="item.full_name"> ({{ item.full_name }})</span>
           </span>
@@ -133,7 +135,7 @@ export default {
       return keyBy(this.usersList, 'username')
     },
     users () {
-      return this.task.success && this.value ? this.value.map(k => this.usersMap[k]) : []
+      return this.task.success && this.value ? this.value.map(k => this.usersMap[k] ?? { username: k, invalid: true }) : []
     },
     filteredUsers () {
       if (this.usersList.length && this.text?.length > 1) {
@@ -143,6 +145,9 @@ export default {
           .filter(u => regex.test(removeDiacritics(u.username)))
       }
       return []
+    },
+    hasDeletedUsers () {
+      return this.task.success && this.value.some(username => !this.usersMap[username])
     }
   },
   methods: {
