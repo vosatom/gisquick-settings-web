@@ -9,6 +9,7 @@
     <template v-slot:group="{ item, expanded, style }">
       <div
         class="item folder f-row-ac"
+        :class="item.info.flag"
         :style="style"
         @contextmenu="$emit('contextmenu', { evt: $event, item })"
       >
@@ -47,6 +48,7 @@
 </template>
 
 <script>
+import findKey from 'lodash/findKey'
 import Path from 'path'
 // import { win32 as dirname } from 'path-dirname'
 
@@ -89,22 +91,43 @@ export function filesTree (files) {
   return root.children
 }
 
-export function collectFoldersInfo (tree) {
+export function collectFoldersInfo (tree, flags) {
   const info = {
     size: 0,
-    filesCount: 0
+    filesCount: 0,
+    flag: null
+  }
+  const state = {
+    new: true, // will be updated
+    deleted: true,
+    changed: false
   }
   tree.forEach(n => {
+    let flag
     if (n.children) {
-      const nInfo = collectFoldersInfo(n.children)
+      const nInfo = collectFoldersInfo(n.children, flags)
       info.size += nInfo.size
       info.filesCount += nInfo.filesCount
       n.info = nInfo
+      flag = nInfo.flag
     } else {
       info.size += n.size
       info.filesCount += 1
+      flag = flags?.[n.path]
+    }
+    if (flags) {
+      if (flag !== 'new') {
+        state.new = false
+      }
+      if (flag !== 'deleted') {
+        state.deleted = false
+      }
+      if (flag) {
+        state.changed = true
+      }
     }
   })
+  info.flag = flags && findKey(state, s => s)
   return info
 }
 
@@ -152,7 +175,7 @@ export default {
     tree () {
       if (this.files) {
         const tree = sortTree(filesTree(this.files))
-        collectFoldersInfo(tree)
+        collectFoldersInfo(tree, this.flags)
         return tree
       }
       return []
@@ -196,6 +219,10 @@ export default {
   }
   &.new {
     color: var(--color-green);
+    --icon-color: currentColor;
+  }
+  &.deleted {
+    color: var(--color-red);
     --icon-color: currentColor;
   }
 }
