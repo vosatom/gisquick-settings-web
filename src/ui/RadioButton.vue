@@ -1,6 +1,6 @@
 <template>
   <div
-    class="radio-button"
+    class="radio-btn"
     :class="{focused, selected}"
     :disabled="disabled"
     :aria-disabled="disabled"
@@ -77,7 +77,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.radio-button {
+.radio-btn {
   display: flex;
   align-items: center;
   margin: 6px;

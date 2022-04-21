@@ -102,7 +102,8 @@ export default {
       const { config, settings } = this
 
       const layers = Object.values(config.layers).filter(l => l.visible)
-      layers.sort((a, b) => (b.drawing_order || 0) - (a.drawing_order || 0))
+      const layersOrder = config.layers_order.reduce((res, id, i) => (res[id] = i, res), {})
+      layers.sort((a, b) => (layersOrder[a.id] ?? 0) - (layersOrder[b.id] ?? 0))
 
       Object.entries(config.projections).forEach(([code, def]) => {
         if (code && !getProj(code)) {

@@ -175,7 +175,9 @@
                 <div>Components: {{ item.components.join(', ') }}</div>
                 <small>File: <a target="_blank" :href="`/api/project/file/${project.name}/web/${item.path}`" v-text="item.path"/></small>
               </div>
-              <v-icon name="delete_forever" @click="deleteScript(item)"/>
+              <v-btn class="icon" @click="deleteScript(item)">
+                <v-icon name="delete_forever"/>
+              </v-btn>
             </template>
           </v-list>
           <div class="new-script f-row">

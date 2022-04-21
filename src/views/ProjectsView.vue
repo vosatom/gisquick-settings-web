@@ -1,5 +1,5 @@
 <template>
-  <div class="projects light">
+  <div v-if="sortedProjects.length" class="projects light">
     <!-- <div class="expander" v-text="Array(120).fill('_').join(' ')"/> -->
     <div class="toolbar f-row-ac">
       <span class="title m-2">Projects</span>
@@ -63,6 +63,15 @@
         </v-badge>
       </div>
     </div>
+  </div>
+  <div v-else-if="!fetchTask.pending" class="projects empty light f-col-ac">
+    <h1 class="my-4">Welcome to the</h1>
+    <img class="logo mb-4" src="@/assets/text_logo.svg"/>
+    <div class="spacer f-grow"/>
+    <h2 class="my-4">You do not have any published projects yet.</h2>
+    <v-btn color="primary" to="/publish">
+      New Project
+    </v-btn>
   </div>
 </template>
 
@@ -166,10 +175,25 @@ export default {
   width: clamp(600px, 100%, 1200px);
   // align-self: center;
   grid-column: 2 / 3;
-  // width: 1200px;
-  // width: clamp(600px, 100%, 100vw);
-
-  max-width: 1200px;
+  &.empty {
+    padding: 24px 12px;
+    text-align: center;
+    .logo {
+      max-width: 320px;
+      height: auto;
+    }
+    .spacer {
+      max-height: 160px;
+    }
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 500;
+  }
+  h2 {
+    font-size: 28px;
+    font-weight: 500;
+  }
 }
 .card {
   display: grid;
@@ -229,11 +253,11 @@ export default {
     min-width: 130px;
   }
 }
-.expander {
-  line-height: 0;
-  height: 0;
-  max-height: 0;
-  visibility: hidden;
-  overflow: hidden;
-}
+// .expander {
+//   line-height: 0;
+//   height: 0;
+//   max-height: 0;
+//   visibility: hidden;
+//   overflow: hidden;
+// }
 </style>

@@ -15,7 +15,9 @@
       @mouseenter="onTooltipEnter"
       @mouseleave="onTooltipLeave"
     >
-      <slot v-if="open"/>
+      <slot v-if="open">
+        <span v-text="text"/>
+      </slot>
     </div>
   </popup-content>
 </template>
@@ -48,6 +50,7 @@ export default {
       default: true
     },
     manualMode: Boolean,
+    text: String,
     transition: {
       type: [String, Object],
       default: 'slide-y'

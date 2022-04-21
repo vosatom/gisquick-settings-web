@@ -27,7 +27,6 @@
       </template>
     </v-dialog> -->
     <div class="panel dark p-2">
-      Panel
     </div>
     <div v-if="project && settings" class="project-page f-col light">
       <portal to="menu">
@@ -40,7 +39,7 @@
         <router-link class="m-2" :to="{name: 'topics'}">Topics</router-link>
         <router-link class="m-2" :to="{name: 'access'}">Permissions</router-link>
         <div class="v-separator"/>
-        <v-btn class="small" :to="{name: 'update'}">
+        <v-btn v-if="project.settings" class="small" :to="{name: 'update'}">
           <v-icon name="qgis" class="mr-2"/>
           <span>Update</span>
         </v-btn>
@@ -182,11 +181,11 @@ export default {
   data () {
     return {
       fetchTask: TaskState(),
-      filesTask: this.createFilesTask(),
       settings: null,
       jsonRouteFilter: false,
       jsonDialog: null,
-      editTitle: false
+      editTitle: false,
+      project: null
     }
   },
   computed: {
@@ -199,15 +198,8 @@ export default {
     projectName () {
       return `${this.user}/${this.name}`
     },
-    project () {
-      // return this.publishedProject || this.fetchTask.data
-      const data = this.publishedProject || this.fetchTask.data
-
-      return {
-        ...data,
-        files: this.filesTask,
-        fetch: this.fetchProjectInfo
-      }
+    projectData () {
+      return this.publishedProject || this.fetchTask.data
     },
     statusColorMap () {
       return {
@@ -271,11 +263,27 @@ export default {
   //     handler: 'fetchProjectInfo'
   //   }
   // },
+  watch: {
+    projectData: {
+      immediate: true,
+      handler (data) {
+        this.project = {
+          ...data,
+          files: this.createFilesTask()
+        }
+      }
+    }
+  },
   created () {
     if (this.publishedProject) {
       this.settings = this.newSettings(this.publishedProject.meta)
     } else {
       this.fetchProjectInfo()
+    }
+  },
+  provide () {
+    return {
+      reloadProject: this.fetchProjectInfo
     }
   },
   methods: {

@@ -73,7 +73,7 @@
         </div>
 
         <v-btn
-          v-if="!tasks.clientFiles.data"
+          v-if="!clientFiles || !serverFiles"
           class="load"
           color="primary"
           @click="fetchFiles"
@@ -81,8 +81,8 @@
           Load Files
         </v-btn>
         <files-tree
-          v-if="clientFiles && filesDiff"
-          :files="clientFiles"
+          v-if="filesDiff"
+          :files="filesDiff.files"
           :flags="filesDiff.flags"
           :progress="uploadProgress && uploadProgress.files"
         />
@@ -90,7 +90,8 @@
           <hr/>
           <div class="p-2">
             <small>New Files: {{ filesDiff.new.length }}, </small>
-            <small>Modified Files: {{ filesDiff.updated.length }}</small>
+            <small>Modified Files: {{ filesDiff.updated.length }}, </small>
+            <small>Files to remove: {{ filesDiff.removed.length }}</small>
           </div>
         </template>
       </div>
@@ -150,6 +151,7 @@ export default {
     project: Object,
     settings: Object
   },
+  inject: ['reloadProject'],
   data () {
     return {
       error: null,
@@ -177,28 +179,56 @@ export default {
     filesDiff () {
       if (this.clientFiles && this.serverFiles) {
         const sfMap = keyBy(this.serverFiles, 'path')
+        const cfMap = keyBy(this.clientFiles, 'path')
+        // const clientFilesPaths = new Set(this.clientFiles.map(f => f.path))
+
         const newFiles = this.clientFiles.filter(f => !sfMap[f.path])
         const updatedFiles = this.clientFiles.filter(f => sfMap[f.path] && sfMap[f.path].hash !== f.hash)
+        const removedFiles = this.serverFiles.filter(f => !cfMap[f.path])
+        console.log('removedFiles', removedFiles.map(f => f.path))
 
         const newPaths = new Set(newFiles.map(f => f.path))
         const updatedPaths = new Set(updatedFiles.map(f => f.path))
-        const flags = this.clientFiles.reduce((flags, f) => {
+        const removedPaths = new Set(removedFiles.map(f => f.path))
+
+        const files = [...this.serverFiles, ...newFiles]
+
+        const flags = files.reduce((flags, f) => {
           if (newPaths.has(f.path)) {
             flags[f.path] = 'new'
           }
           if (updatedPaths.has(f.path)) {
             flags[f.path] = 'changed'
           }
+          if (removedPaths.has(f.path)) {
+            flags[f.path] = 'deleted'
+          }
           return flags
         }, {})
         return {
+          files,
           new: newFiles,
           updated: updatedFiles,
+          removed: Array.from(removedPaths),
           flags
         }
       }
       return null
     },
+    // files () {
+    //   if (this.clientFiles && this.serverFiles) {
+    //     const clientFilesPaths = new Set(this.clientFiles.map(f => f.path))
+    //     const serverFilesPaths = new Set(this.serverFiles.map(f => f.path))
+    //     const files = [...this.serverFiles]
+    //     this.clientFiles.forEach(f => {
+    //       if (!serverFilesPaths.has(f.path)) {
+    //         files.push(f)
+    //       }
+    //     })
+    //     return files
+    //   }
+    //   return null
+    // },
     diffs () {
       if (this.projectInfo) {
         const ignoredFields = ['client_info', 'project_hash']
@@ -260,7 +290,7 @@ export default {
   methods: {
     async onProjectChange () {
       await this.fetchProjectInfo()
-      if (!!this.files) {
+      if (this.tasks.clientFiles.success) {
         this.tasks.clientFiles = TaskState()
         this.fetchLocalFiles()
       }
@@ -293,37 +323,51 @@ export default {
       this.project.files.fetch()
     },
     fetchFiles () {
-      this.fetchLocalFiles()
+      if (!this.tasks.clientFiles.data) {
+        this.fetchLocalFiles()
+      }
       if (!this.project.files.data) {
         this.fetchServerFiles()
       }
     },
-    async updateFiles (files) {
-      // console.log(files)
+    async updateFiles (files, removedFiles) {
+      if (removedFiles?.length) {
+        const data = {
+          files: removedFiles
+        }
+        try {
+          await this.$http.delete(`/api/project/files/${this.project.name}`, { data })
+        } catch (err) {
+          // this.$notify.error('Failed to remove files')
+          throw new Error('Failed to remove files')
+        }
+      }
       this.upload = createUpload(this.$ws, files, this.project.name)
       this.uploadProgress = this.upload.info
       try {
         await this.upload.start()
       } catch (e) {
         if (e !== 'aborted') {
-          console.error(e)
+          throw new Error('Failed to upload files')
           // this.$notification.error(e)
         }
       } finally {
         // this.fetchServerFiles()
         this.uploadProgress = null
-        this.$notify.success('Files was uploaded')
+        // this.$notify.success('Files was uploaded')
       }
     },
     async updateAllFiles () {
       const files = [...this.filesDiff.new, ...this.filesDiff.updated]
-      this.updateFiles(files)
+      await this.updateFiles(files, this.filesDiff.removed)
       this.fetchServerFiles()
     },
     async updateProject () {
-      const files = this.shouldUpdateAllFiles
+      const filesToUpload = this.shouldUpdateAllFiles
         ? [...this.filesDiff.new, ...this.filesDiff.updated]
-        : this.clientFiles.filter(f => f.path === this.projectInfo.file)
+        // : this.clientFiles.filter(f => f.path === this.projectInfo.file)
+        : this.filesDiff.updated.filter(f => f.path === this.projectInfo.file)
+      const filesToRemove = this.shouldUpdateAllFiles ? this.filesDiff.removed : []
 
       const settings = cloneDeep(this.settings)
       this.diffs.newLayers.forEach(id => {
@@ -368,14 +412,22 @@ export default {
         })
       }
 
-      // console.log('upload files', files)
+      // console.log('upload files', filesToUpload)
       // console.log('update settings', settings)
 
-      await this.updateFiles(files)
+      if (filesToUpload.length || filesToRemove.length) {
+        try {
+          await this.updateFiles(filesToUpload, filesToRemove)
+        } catch (err) {
+          console.error(err)
+          this.$notify.error(err.mesage || 'Failed to update files')
+          return
+        }
+      }
       await this.$http.post(`/api/project/meta/${this.project.name}`, this.projectInfo)
       await this.$http.post(`/api/project/settings/${this.project.name}`, settings)
       this.$notify.success('Project was updated')
-      this.project.fetch()
+      this.reloadProject()
       const [ user, name ] = this.project.name.split('/')
       this.$router.push({ name: 'project', params: { user, name: name } })
     }

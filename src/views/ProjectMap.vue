@@ -181,6 +181,7 @@
         </template>
         <template v-slot:toolbar-end>
           <v-btn class="icon" @click="reloadProject">
+            <v-tooltip slot="tooltip" text="Reload project on QGIS server"/>
             <!-- <v-icon name="server_reload" size="24"/> -->
             <!-- <v-icon name="server_reload2" size="24"/> -->
             <v-icon name="server_reload" size="24"/>
@@ -295,7 +296,9 @@ export default {
     },
     flatLayers () {
       // return Object.values(this.qgisMeta.layers)
-      return layersList(this.layers).sort((a, b) => (b.drawing_order || 0) - (a.drawing_order || 0))
+      const layersOrder = this.qgisMeta.layers_order.reduce((res, id, i) => (res[id] = i, res), {})
+      return layersList(this.layers).sort((a, b) => (layersOrder[b.id] ?? 0) - (layersOrder[a.id] ?? 0))
+      // return layersList(this.layers).sort((a, b) => (b.drawing_order || 0) - (a.drawing_order || 0))
     },
     hiddenLayers () {
       const hiddenGroups = layersGroups(this.layers).filter(g => !g.visible)

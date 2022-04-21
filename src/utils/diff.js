@@ -68,8 +68,10 @@ function arrayDiff1 (target, base, key) {
 function arrayDiff (target, base, key) {
   const t = keyBy(target, key)
   const b = keyBy(base, key)
-  const { $diff, ...items } = objectDiff(t, b)
+  const { $diff, ...items } = objectDiff(t, b, [], true)
+  // console.log('objectDiff', objectDiff(t, b))
   const keyToIndex = Object.keys(items).reduce((map, k, i) => (map[k] = i, map), {})
+  // console.log('keyToIndex', keyToIndex, items)
 
   $diff.changed.forEach(k => {
     // all fields in changed object item
@@ -83,39 +85,49 @@ function arrayDiff (target, base, key) {
 
     // key field + changes
     items[k] = {
-      [key]: target[keyToIndex[k]][key],
+      // [key]: target[keyToIndex[k]][key],
+      [key]: k,
       ...items[k]
     }
   })
   const res = Object.values(items)
-  res.$diff = mapValues($diff, keys => keys.map(k => keyToIndex[k]))
+  // res.$diff = mapValues($diff, keys => keys.map(k => keyToIndex[k]))
+  res.$diff = mapValues($diff, keys => Array.isArray(keys) ? keys.map(k => keyToIndex[k]) : keys)
+  // console.log('result', res)
   return res
 }
 
-export function objectDiff (object, base, path = []) {
+export function objectDiff (object, base, path = [], debug = false) {
   const oKeys = Object.keys(object)
   const bKeys = Object.keys(base)
   const added = difference(oKeys, bKeys)
   const removed = difference(bKeys, oKeys)
   const common = intersection(oKeys, bKeys)
-  const $diff = { added, removed, changed: [] }
+  const $diff = { added, removed, changed: [], orig: {} }
   const diffObj = {}
   common.forEach(k => {
     const v1 = object[k]
     const v2 = base[k]
     if (!isEqual(v1, v2)) {
+      if (debug) {
+        console.log('diff', v1, v2)
+      }
       path = [...path, k]
       $diff.changed.push(k)
       if (Array.isArray(v1) && Array.isArray(v2)) {
-        console.log('compare arrays', path, k)
+        // console.log('compare arrays', path, k)
         if (k === 'attributes') {
           diffObj[k] = arrayDiff(v1, v2, 'name')
+          console.log(k, diffObj[k])
+          console.log(v1[0], v2[0])
         } else {
           diffObj[k] = simpleArrayDiff(v1, v2)
+          $diff.orig[k] = `[ ${v2.join(', ')} ]`
         }
       } else if (isObject(v1) && isObject(v2)) {
         diffObj[k] = objectDiff(v1, v2, path)
       } else {
+        $diff.orig[k] = v2
         diffObj[k] = object[k]
       }
     }

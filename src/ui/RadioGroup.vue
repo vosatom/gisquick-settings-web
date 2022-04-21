@@ -14,7 +14,11 @@
       :val="item[itemValue]"
       :value="value"
       @input="$emit('input', $event)"
-    />
+    >
+      <template v-slot:append>
+        <slot name="item-append" :item="item"/>
+      </template>
+    </v-radio-btn>
   </input-field>
 </template>
 
@@ -48,5 +52,17 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  &.two-line {
+    .radio-btn {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      ::v-deep {
+        .radio {
+          grid-row: 1 / 3;
+          align-self: start;
+        }
+      }
+    }
+  }
 }
 </style>

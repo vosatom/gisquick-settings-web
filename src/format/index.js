@@ -29,7 +29,7 @@ export default Vue.observable({
   filesize: v => {
     if (Number.isFinite(v)) {
       const { value, unit } = preformatFilesize(v)
-      return `${numeric.shortNum(value)} ${unit}`
+      return `${numeric.num(value)} ${unit}`
     }
     return v
   }

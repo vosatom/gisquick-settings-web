@@ -127,10 +127,12 @@ a {
     // max-height: 100%;
     // font-size: 14px;
     font-weight: 500;
-    text-transform: uppercase;
     text-decoration: none;
     padding: 0 12px;
     white-space: nowrap;
+    &:not(.n-case) {
+      text-transform: uppercase;
+    }
     &.round {
       border-radius: 18px;
       padding: 0 16px;

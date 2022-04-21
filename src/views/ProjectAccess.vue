@@ -106,12 +106,22 @@
             lazy
             v-model="selectedRole.name"
           />
-          <v-select
+          <!-- <v-select
             class="filled"
             label="Access"
             :items="rolesTypes"
             v-model="selectedRole.type"
-          />
+          /> -->
+          <radio-group
+            label="Access"
+            color="primary"
+            :items="rolesTypes"
+            v-model="selectedRole.type"
+          >
+            <template v-slot:item-append="{ item }">
+              <span v-if="item.desc" class="desc-text ml-2">({{ item.desc }})</span>
+            </template>
+          </radio-group>
           <template v-if="selectedRole.type === 'users'">
             <v-select
               v-if="settings.auth.type === 'users'"
@@ -299,10 +309,22 @@ export default {
     rolesTypes () {
       return [
         // { text: 'Project Access', value: 'all' },
-        { text: 'Authenticated', value: 'authenticated' }, // if if settings.auth === 'public'
+        {
+          text: 'Selected Users',
+          value: 'users',
+          // desc: 'Group of listed users'
+        },
+        {
+          text: 'All authenticated users',
+          value: 'authenticated',
+          // desc: 'All authenticated users'
+        }, // if settings.auth === 'public'
         // { text: 'Anonymous', value: 'anonymous' }, // if settings.auth === 'public' // maybe not needed
-        { text: 'Selected Users', value: 'users' },
-        { text: 'Other', value: 'other' }
+        {
+          text: 'Other',
+          value: 'other',
+          desc: 'Special group of users not matched by any other role/group'
+        }
       ]
     },
     roleTabs () {
@@ -396,7 +418,7 @@ export default {
     createRole (params) {
       return {
         name: 'New',
-        auth: 'public',
+        type: 'users',
         ...params,
         users: [],
         permissions: initLayersPermissions(this.project.meta.layers)
@@ -566,5 +588,9 @@ export default {
       background-color: var(--color-primary);
     }
   }
+}
+.desc-text {
+  opacity: 0.6;
+  font-size: 13.5px;
 }
 </style>
