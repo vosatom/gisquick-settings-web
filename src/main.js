@@ -19,6 +19,7 @@ Vue.use(UI)
 Vue.use(PortalVue)
 Vue.prototype.$http = http
 Vue.prototype.$format = format
+Vue.prototype.$gettext = v => v
 
 // new Vue({
 //   router,
@@ -38,7 +39,7 @@ function createApp (data) {
       http.interceptors.response.use(
         resp => resp,
         error => {
-          if (error?.response.status === 401) {
+          if (error?.response?.status === 401) {
             this.user = null
           }
           return Promise.reject(error)

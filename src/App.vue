@@ -56,6 +56,7 @@
       password-reset-url=""
       @login="onLogin"
     />
+    <change-password-dialog ref="changePasswordDialog"/>
     <!-- <portal-target name="dialogs"/> -->
     <popup-layer class="light"/>
     <!-- <v-btn @click="$refs.notification.showError('test')">Show notification</v-btn> -->
@@ -76,6 +77,7 @@ import PopupLayer from '@/ui/PopupLayer.vue'
 // import Settings from '@/Settings.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import VNotification from '@/components/Notification.vue'
+import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
 
 export default {
   name: 'app',
@@ -83,7 +85,8 @@ export default {
     PopupLayer,
     LoginDialog,
     // Settings,
-    VNotification
+    VNotification,
+    ChangePasswordDialog
   },
   data () {
     return {
@@ -98,10 +101,16 @@ export default {
       return this.$ws?.pluginConnected ? require('./assets/qgis-icon32.svg') : require('./assets/qgis-icon-black32.svg')
     },
     menuItems () {
-      return [{
-        text: 'Logout',
-        action: this.logout
-      }]
+      return [
+        {
+          key: 'change_password',
+          text: 'Change password',
+          action: () => this.$refs.changePasswordDialog.show()
+        }, {
+          text: 'Logout',
+          action: this.logout
+        }
+      ]
     }
   },
   watch: {
