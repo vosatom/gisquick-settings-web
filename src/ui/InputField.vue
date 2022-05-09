@@ -63,6 +63,7 @@ export default {
 <style lang="scss" scoped>
 .i-field {
   display: grid;
+  grid-template-rows: auto 1fr auto;
   margin: var(--gutter);
   position: relative;
   // transition: all .4s cubic-bezier(.25,.8,.25,1);
@@ -135,6 +136,7 @@ export default {
   &.inline {
     align-items: center;
     grid-auto-flow: column;
+    grid-template-rows: unset;
     grid-template-columns: auto 1fr;
     gap: 6px;
 

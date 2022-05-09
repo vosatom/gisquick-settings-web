@@ -28,6 +28,7 @@
         :autocomplete="autocomplete"
         :disabled="disabled"
         :readonly="readonly === undefined ? !focused : readonly"
+        :style="style"
         @pointerup="updateCaretPosition"
         @input="onInput"
         @change="onChange"
@@ -132,7 +133,8 @@ export default {
     trim: Boolean,
     multiline: Boolean,
     displayFormat: String,
-    validChars: String
+    validChars: String,
+    height: [String, Number]
     // valueFormat: String
   },
   data () {
@@ -146,6 +148,14 @@ export default {
     },
     colorVars () {
       return this.color && colorVars(this.color)
+    },
+    style () {
+      if (this.height) {
+        return {
+          height: isNaN(this.height) ? this.height : this.height + 'px'
+        }
+      }
+      return null
     },
     inputValue () {
       const value = this.value ?? ''
@@ -283,7 +293,7 @@ export default {
   //     -webkit-appearance: none;
   //   }
   // }
-  textarea {
+  textarea[noresize] {
     resize: none;
     min-height: 100%;
   }

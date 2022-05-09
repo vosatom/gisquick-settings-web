@@ -12,20 +12,16 @@
     @closed="$emit('closed')"
     @opened="$emit('opened')"
   >
-    <!-- <slot name="header">
-      <div class="header">
+    <slot name="header">
+      <div v-if="title" class="header dark">
         <slot name="title">
-          <span class="title">{{ title }}</span>
+          <span class="title" v-text="title"/>
         </slot>
-        <v-btn
-          color="primary"
-          class="icon"
-          @click="close"
-        >
-          <v-icon size="16" name="close"/>
+        <v-btn class="icon" @click="close">
+          <v-icon name="x"/>
         </v-btn>
       </div>
-    </slot> -->
+    </slot>
     <slot
       v-if="open"
       :close="close"
@@ -98,14 +94,13 @@ export default {
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
-    padding: 12px;
+    // padding: 12px;
     text-align: center;
+    background-color: var(--color-dark);
     .title {
       grid-area: 1 / 1 / 2 / 3;
-      margin: 24px 6px 6px 6px;
-      font-size: 34px;
-      font-weight: bold;
-      color: var(--color-primary);
+      margin: 0 6px;
+      font-size: 22px;
       justify-self: center;
       max-width: calc(100% - 100px);
     }
@@ -115,12 +110,6 @@ export default {
       width: 26px;
       height: 26px;
       align-self: start;
-    }
-    @media (max-width: 600px) {
-      padding: 6px;
-      .title {
-        font-size: 24px;
-      }
     }
   }
 }

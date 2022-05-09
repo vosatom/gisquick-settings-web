@@ -195,8 +195,10 @@ export default {
       border-top-color: rgba(#D3D3D3, 0.25);
     }
   }
-  .test {
-    background-color: green;
-  } 
+  .empty {
+    flex-grow: 1;
+    padding-block: 6px;
+    opacity: 0.6;
+  }
 }
 </style>
