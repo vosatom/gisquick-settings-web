@@ -103,8 +103,11 @@
           </div>
         </template>
       </div>
-
-      <div v-if="tasks.clientFiles.success" class="f-row-ac f-justify-center my-2">
+      <!-- <div v-if="error" class="error f-row-ac f-justify-center m-2">
+        <v-icon name="warning" size="19" class="mr-2"/>
+        <span v-text="error"/>
+      </div> -->
+      <div v-if="tasks.clientFiles.success" class="submit-form f-row-ac f-justify-center py-2">
         <!-- <span>{{ user.username }} /</span> -->
         <!-- <v-text-field class="filled" readonly disabled :value="user.username + '/'"/>
         <v-text-field class="filled" placeholder="name" v-model="name"/> -->
@@ -123,6 +126,7 @@
           class="upload"
           color="primary"
           :disabled="!name || !projectValid"
+          :loading="tasks.createProject.pending"
           @click="uploadProgress ? upload.abort() : createProject()"
         >
           <template v-if="uploadProgress">
@@ -131,22 +135,25 @@
               color="orange"
               :value="uploadProgress.totalProgress"
             />
+            <span>Uploading</span>
           </template>
+          <span v-else-if="tasks.createProject.success">Upload</span>
           <span v-else>Create</span>
         </v-btn>
       </div>
     </template>
-    <div v-else-if="error" class="error f-row-ac">
-      <v-icon name="warning" color="red"/>
-      <span class="title mx-2">Error:</span>
-      {{ error.msg }}
-      <div v-if="error.details" v-text="error.details" class="traceback"/>
+    <div v-else-if="pluginError" class="plugin-error f-col">
+      <div class="title f-row-ac my-2">
+        <v-icon name="warning" color="red"/>
+        <span class="mx-2">Error:</span>
+        <span v-text="pluginError.msg"/>
+      </div>
+      <div v-if="pluginError.details" v-text="pluginError.details" class="traceback"/>
     </div>
   </div>
 </template>
 
 <script>
-import path from 'path'
 import isEmpty from 'lodash/isEmpty'
 
 import QgisInfo from '@/components/QgisInfo.vue'
@@ -185,11 +192,12 @@ export default {
   data () {
     return {
       name: '',
-      error: null,
+      pluginError: null,
       projectInfo: null,
       opened: [],
       tasks: {
-        clientFiles: TaskState()
+        clientFiles: TaskState(),
+        createProject: TaskState()
       },
       uploadProgress: null
       // test data for styling
@@ -319,7 +327,7 @@ export default {
       if (!this.connected) {
         return
       }
-      this.error = null
+      this.pluginError = null
       const params = {
         skip_layers_with_error: skipLayersWithError
       }
@@ -328,7 +336,7 @@ export default {
         this.projectInfo = data
       } catch (err) {
         this.projectInfo = null
-        this.error = {
+        this.pluginError = {
           code: err.status,
           msg: err.data || 'Error',
           details: err.traceback
@@ -338,17 +346,26 @@ export default {
     enableWFS () {
       this.$ws.request('EnableLayersWFS')
     },
-    fetchLocalFiles () {
+    async fetchLocalFiles () {
       const task = this.$ws.request('ProjectFiles')
-      watchTask(task, this.tasks.clientFiles)
+      await watchTask(task, this.tasks.clientFiles)
+      this.$nextTick(() => {
+        this.$el.querySelector('.submit-form')?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      })
     },
     checkAvailability () {
       console.log('TODO: check availability', this.name)
     },
     async createProject () {
-      // console.log(this.files)
       const projectName = `${this.user.username}/${this.name}`
-      await this.$http.post(`/api/project/${projectName}`, this.projectInfo)
+      if (!this.tasks.createProject.success) {
+        const create = this.$http.post(`/api/project/${projectName}`, this.projectInfo)
+        await watchTask(create, this.tasks.createProject)
+        if (!this.tasks.createProject.success) {
+          this.$notify.error(this.tasks.createProject.error)
+          return
+        }
+      }
       // TODO: or create global upload manager, page independent?
       this.upload = createUpload(this.$ws, this.files, projectName)
       this.uploadProgress = this.upload.info
@@ -366,8 +383,7 @@ export default {
         this.$router.push({ name: 'project', params: { user: this.user.username, name: this.name, project } })
       } catch (e) {
         if (e !== 'aborted') {
-          console.error(e)
-          // this.$notification.error(e)
+          this.$notify.error(e.message ?? 'Error')
         }
       } finally {
         // this.fetchServerFiles()
@@ -406,7 +422,7 @@ export default {
 .linear-progress {
   min-width: 80px;
 }
-.error {
+.plugin-error {
   .title {
     color: var(--color-red);
     font-size: 18px;
@@ -426,6 +442,10 @@ export default {
     color: #707070;
   }
 }
+// .error {
+//   color: var(--color-red);
+//   --icon-color: currentColor;
+// }
 .note {
   display: flex;
   font-size: 13px;

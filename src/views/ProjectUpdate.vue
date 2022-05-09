@@ -122,6 +122,14 @@
         <p v-else class="p-2">No changes detected</p>
       </div>
     </template>
+    <div v-else-if="pluginError" class="plugin-error f-col">
+      <div class="title f-row-ac my-2">
+        <v-icon name="warning" color="red"/>
+        <span class="mx-2">Error:</span>
+        <span v-text="pluginError.msg"/>
+      </div>
+      <div v-if="pluginError.details" v-text="pluginError.details" class="traceback"/>
+    </div>
   </div>
 </template>
 
@@ -154,7 +162,7 @@ export default {
   inject: ['reloadProject'],
   data () {
     return {
-      error: null,
+      pluginError: null,
       projectInfo: null,
       opened: [],
       tasks: {
@@ -299,7 +307,7 @@ export default {
       if (!this.connected) {
         return
       }
-      this.error = null
+      this.pluginError = null
       const params = {
         skip_layers_with_error: skipLayersWithError
       }
@@ -308,7 +316,7 @@ export default {
         this.projectInfo = data
       } catch (err) {
         this.projectInfo = null
-        this.error = {
+        this.pluginError = {
           code: err.status,
           msg: err.data || 'Error',
           details: err.traceback
@@ -419,7 +427,6 @@ export default {
         try {
           await this.updateFiles(filesToUpload, filesToRemove)
         } catch (err) {
-          console.error(err)
           this.$notify.error(err.mesage || 'Failed to update files')
           return
         }
@@ -458,5 +465,16 @@ export default {
 }
 ul {
   padding-left: 18px;
+}
+.plugin-error {
+  .title {
+    color: var(--color-red);
+    font-size: 18px;
+  }
+  .traceback {
+    white-space: pre-line;
+    font-family: monospace;
+    font-size: 13px;
+  }
 }
 </style>

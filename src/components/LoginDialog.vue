@@ -161,9 +161,6 @@ export default {
     }
   },
   methods: {
-    $gettext (text) {
-      return text
-    },
     async login () {
       const task = this.$http.login(this.username, this.password)
       const resp = await watchTask(task, this.tasks.login)

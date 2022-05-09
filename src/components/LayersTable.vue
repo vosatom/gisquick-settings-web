@@ -8,12 +8,15 @@ import { sanitize, escapeRegExp, removeDiacritics } from '@/ui/utils/text'
 const VectorIcons = {
   NoGeometry: 'attribute-table2',
   Point: 'point',
+  PointZ: 'point',
   MultiPoint: 'point',
   MultiPointZ: 'point',
   LineString: 'line',
+  LineStringZ: 'line',
   MultiLineString: 'line',
   MultiLineStringZ: 'line',
   Polygon: 'polygon',
+  PolygonZ: 'polygon',
   MultiPolygon: 'polygon',
   MultiPolygonZ: 'polygon'
 }

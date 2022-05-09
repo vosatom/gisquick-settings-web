@@ -13,10 +13,12 @@ function axiosErrorHandler (err, state) {
   // if (response.hasOwnProperty('data')) {
   //   state.data = response.data
   // }
+  const message = response.data?.message || err.message
   return {
-    message: response.data?.message || err.message,
-    status: response.status,
-    response
+    message,
+    response,
+    status: response?.status,
+    toString: () => message
   }
 }
 

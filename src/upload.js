@@ -40,7 +40,7 @@ export function createUpload (ws, files, project) {
   }
 
   function onErrorMessage (msg) {
-    task.reject(msg.data.trim())
+    task.reject(new Error(JSON.parse(msg.data)?.message))
   }
 
   return {
