@@ -23,7 +23,7 @@ export default {
       return transformLayersTree(
         tree,
         l => ({ ...meta.layers[l.id] }),
-        (g, layers) => ({ name: g.name, layers })
+        (g, layers) => ({ ...g, layers })
       )
     }
   }

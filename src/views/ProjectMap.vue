@@ -351,7 +351,7 @@ export default {
       const layers = transformLayersTree(
         meta.layers_tree,
         l => ({ ...meta.layers[l.id] }),
-        (g, layers) => ({ name: g.name, visible: true, expanded: true, layers })
+        (g, layers) => ({ ...g, layers, visible: true, expanded: true })
       )
       this.layers = filterLayers(layers, l => l.type !== 'VectorLayer' || l.options.wkb_type !== 'NoGeometry')
     },
@@ -561,7 +561,7 @@ export default {
   overflow: auto;
   .symbol {
     width: 20px;
-    margin-left: 4px;
+    margin-left: 6px;
     img {
       max-width: 20px;
       max-height: 20px;

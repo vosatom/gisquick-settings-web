@@ -126,11 +126,11 @@ export default {
     groupKey (item) {
       return item.name
     },
-    toggleGroup (item) {
+    toggleGroup (group) {
       if (this.collapsed) {
-        this.$emit('update:collapsed', _xor(this.collapsed, [item.name]))
+        this.$emit('update:collapsed', _xor(this.collapsed, [group.name]))
       } else {
-        this.$emit('update:opened', _xor(this.opened, [item.name]))
+        this.$emit('update:opened', _xor(this.opened, [group.name]))
       }
     },
     expandAll () {
@@ -139,13 +139,13 @@ export default {
       const val = (this.collapsed && model.length === 0) || (!this.collapsed && model.length < this.groups.length) ? this.groups.map(g => g.name) : []
       this.$emit(evt, val)
     },
-    renderLeaf (item, depth) {
+    renderLayerRow (item, group, depth) {
       let cmp
       const indentStyle = {
         paddingLeft: `${30 * depth}px`
       }
       if (this.$scopedSlots.leaf) {
-        cmp = this.$scopedSlots.leaf({ item, depth })
+        cmp = this.$scopedSlots.leaf({ item, group, depth })
         cmp[0].data.style = indentStyle
 
         // v2
@@ -209,33 +209,33 @@ export default {
           </tr>
       )})
     },
-    renderGroupContent (items, depth) {
-      const children = items.map(item => item.layers ? this.renderGroup(item, depth) : this.renderLeaf(item, depth))
+    renderGroupContent (group, depth) {
+      const children = group.layers.map(item => item.layers ? this.renderGroup(item, depth) : this.renderLayerRow(item, group, depth))
       if (this.detail) {
-        const index = items.findIndex(l => l.id === this.detail)
+        const index = group.layers.findIndex(l => l.id === this.detail)
         if (index !== -1) {
-          children.splice(index + 1, 0, ...this.renderLayerDetail(items[index], depth + 1))
+          children.splice(index + 1, 0, ...this.renderLayerDetail(group.layers[index], depth + 1))
         }
       }
       return children
     },
-    renderGroup (item, depth) {
-      // const open = this.expanded?.includes(item.name)
+    renderGroup (group, depth) {
+      // const open = this.expanded?.includes(group.name)
       const open = this.collapsed
-        ? !this.collapsed.includes(item.name)
-        : this.opened?.includes(item.name) ?? false
+        ? !this.collapsed.includes(group.name)
+        : this.opened?.includes(group.name) ?? false
 
       const groupIcon = open ? 'folder-open' : 'folder'
-      const children = open ? this.renderGroupContent(item.layers, depth + 1) : []
+      const children = open ? this.renderGroupContent(group, depth + 1) : []
       const paddingStyle = {
         paddingLeft: `${30 * depth}px`,
       }
       const groupNode = (
-        <tr key={item.name} class={['group', {[this.selectedClass]: this.groupKey(item) === this.selected}]}>
+        <tr key={group.name} class={['group', {[this.selectedClass]: this.groupKey(group) === this.selected}]}>
           <td
             colspan={this.columns.length + 1}
-            onClick={() => this.$emit('click:row', item)}
-            key={item.name}
+            onClick={() => this.$emit('click:row', group)}
+            key={group.name}
           >
             <div class="f-row-ac" style={paddingStyle}>
               <v-icon
@@ -243,9 +243,9 @@ export default {
                 size="24"
                 name={groupIcon}
                 role="button"
-                vOn:click_stop={() => this.toggleGroup(item)}
+                vOn:click_stop={() => this.toggleGroup(group)}
               />
-              <span>{item.name}</span>
+              <span>{group.name}</span>
             </div>
           </td>
         </tr>
@@ -291,9 +291,9 @@ export default {
     }
   },
   render () {
-    const items = this.displayedItems
-    const children = this.renderGroupContent(items, 0)
-    // const children = items.map(item => item.layers ? this.renderGroup(item, 0) : this.renderLeaf(item, 0))
+    const layers = this.displayedItems
+    const children = this.renderGroupContent({ layers }, 0)
+    // const children = layers.map(item => item.layers ? this.renderGroup(item, 0) : this.renderLayerRow(item, 0))
     const headers = [
       this.renderLayersHeader(),
       ...this.columns.map(col => this.renderHeaderColumn(col))

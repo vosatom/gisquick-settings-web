@@ -46,12 +46,12 @@
           :columns="[]"
           :collapsed.sync="collapsed"
         >
-          <template v-slot:leaf="{ item }">
+          <template v-slot:leaf="{ item, group }">
             <!-- :disabled="settings.layers[item.id].hidden" -->
             <v-checkbox
               :label="item.title"
               :value="topicLayersLookup[item.id]"
-              @input="toggleLayer(item)"
+              @input="toggleLayer(item, group)"
             />
           </template>
         </layers-table>
@@ -106,10 +106,14 @@ export default {
       // if (this.selectedIndex >= 0) {
       this.topics.splice(this.selectedIndex, 1)
     },
-    toggleLayer (layer) {
+    toggleLayer (layer, group) {
       if (this.topicLayersLookup[layer.id]) {
         this.activeTopic.visible_overlays = this.activeTopic.visible_overlays.filter(id => id != layer.id)
       } else {
+        if (group?.mutually_exclusive) {
+          const exclude = group.layers.filter(l => this.topicLayersLookup[l.id] && l !== layer).map(l => l.id)
+          this.activeTopic.visible_overlays = this.activeTopic.visible_overlays.filter(id => !exclude.includes(id))
+        }
         this.activeTopic.visible_overlays.push(layer.id)
       }
     },

@@ -7,28 +7,28 @@
     expanded-key="expanded"
     :group-content-attrs="groupContentAttributes"
   >
-    <template v-slot:group="{ item, depth, style }">
+    <template v-slot:group="{ group, depth, style }">
       <div class="item group f-row-ac" :depth="depth" :style="style">
         <svg
           width="16"
           viewBox="0 0 16 16"
           role="button"
           class="toggle icon"
-          :class="{expanded: item.expanded}"
-          @click="toggleGroup(item)"
+          :class="{expanded: group.expanded}"
+          @click="toggleGroup(group)"
         >
           <path d="M 8,1 L 8,15"/>
-          <path class="tr" :d="item.expanded ? 'M 8,8 L 8,8' : 'M 1,8 L 15,8'"/>
+          <path class="tr" :d="group.expanded ? 'M 8,8 L 8,8' : 'M 1,8 L 15,8'"/>
         </svg>
-        <span class="label f-grow" v-text="item.name"/>
+        <span class="label f-grow" v-text="group.name"/>
         <v-switch
           class="round"
-          :value="item.visible"
-          @input="setLayerVisibility(item, $event)"
+          :value="group.visible"
+          @input="setGroupVisibility(group, $event)"
         />
       </div>
     </template>
-    <template v-slot:leaf="{ item, style }">
+    <template v-slot:leaf="{ item, group, style }">
       <!-- <div class="f-col"> -->
         <div
           class="item layer f-row-ac"
@@ -40,7 +40,7 @@
             class="f-grow"
             :label="item.title"
             :value="item.visible"
-            @input="setLayerVisibility(item, $event)"
+            @input="setLayerVisibility(item, group, $event)"
           />
           <!-- <v-btn class="icon flat small" @click="toggleLayerInfo(item)">
             <v-icon
@@ -89,7 +89,17 @@ export default {
     toggleLayerInfo (layer) {
       this.expandedLayer = this.expandedLayer !== layer ? layer : null
     },
-    setLayerVisibility (layer, visible) {
+    setGroupVisibility (group, visible) {
+      group.visible = visible
+    },
+    setLayerVisibility (layer, group, visible) {
+      console.log(group)
+      if (group?.mutually_exclusive) {
+        const offLayers = group.layers.filter(l => l.visible && l !== layer)
+        offLayers.forEach(l => {
+          l.visible = false
+        })
+      }
       layer.visible = visible
     },
     groupContentAttributes (item) {

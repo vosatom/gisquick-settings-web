@@ -6,21 +6,21 @@
     :items="tree"
     :expanded="expanded"
   >
-    <template v-slot:group="{ item, expanded, style }">
+    <template v-slot:group="{ group: folder, expanded, style }">
       <div
         class="item folder f-row-ac"
-        :class="item.info.flag"
+        :class="folder.info.flag"
         :style="style"
-        @contextmenu="$emit('contextmenu', { evt: $event, item })"
+        @contextmenu="$emit('contextmenu', { evt: $event, item: folder })"
       >
         <v-icon
           size="24"
           role="button"
           :name="expanded ? 'folder-open' : 'folder'"
-          @click="toggleFolder(item)"
+          @click="toggleFolder(folder)"
         />
-        <span v-text="item.name" class="f-grow"/>
-        <span class="info">{{ item.info.filesCount }} files, {{ $format.filesize(item.info.size) }}</span>
+        <span v-text="folder.name" class="f-grow"/>
+        <span class="info">{{ folder.info.filesCount }} files, {{ $format.filesize(folder.info.size) }}</span>
       </div>
     </template>
     <template v-slot:leaf="{ item, style }">
