@@ -52,12 +52,9 @@
       </template>
 
       <!-- eslint-disable-next-line -->
-      <template v-slot:cell(widget)="{ item }">
+      <!-- <template v-slot:cell(widget)="{ item }">
         <div class="f-row-ac f-space-between">
-          <span v-if="attrsSettings[item.name] && attrsSettings[item.name].widget">
-            {{ widgetMap[attrsSettings[item.name].widget].text }}
-          </span>
-          <span v-else class="mr-2">{{ item.widget }}</span>
+          <span v-text="(attrsSettings[item.name] && attrsSettings[item.name].widget) || item.widget"/>
           <v-menu
             aria-label="Settings"
             transition="slide-y"
@@ -72,23 +69,34 @@
             </template>
           </v-menu>
         </div>
-      </template>
+      </template> -->
 
       <!-- eslint-disable-next-line -->
-      <!-- <template v-slot:cell(widget)="{ item }">
+      <template v-slot:cell(widget)="{ item }">
         <v-select
-          v-if="item.type === 'text'"
-          class="filled"
-          :items="contentTypes"
-          v-model="attrsSettings[item.name].widget"
-        />
-      </template> -->
+          :items="widgets"
+          :value="attrsSettings[item.name] && attrsSettings[item.name].widget"
+          @input="selectWidget(item, $event)"
+        >
+          <template v-slot:selection="{ item: option, text }">
+            <template v-if="!option.value">
+              <v-icon name="qgis"/>
+              <span class="f-grow">{{ item.widget }}</span>
+            </template>
+            <span v-else class="f-grow" v-text="text"/>
+          </template>
+          <template v-slot:item="{ item: option }">
+            <span class="f-grow m-2" v-text="option.value ? option.text : item.widget"/>
+            <v-icon v-if="option.icon" :name="option.icon" class="m-2"/>
+          </template>
+        </v-select>
+      </template>
 
       <!-- eslint-disable-next-line -->
       <template v-slot:cell(format)="{ item }">
         <v-select
           v-if="item.type === 'int' || item.type === 'float'"
-          placeholder="-"
+          placeholder="—"
           :items="numericFormatters"
           :value="attrsSettings[item.name] && attrsSettings[item.name].format"
           @input="setFormatter(item, $event)"
@@ -157,6 +165,7 @@
           class="info-panel f-grow"
           :feature="features[0]"
           :layer="layer"
+          :project="infopanelProject"
         />
         <!-- <generic-info-panel
           v-if="features.length > 0"
@@ -241,12 +250,14 @@
 
 <script>
 import keyBy from 'lodash/keyBy'
+import mapValues from 'lodash/mapValues'
+import pickBy from 'lodash/pickBy'
 import GeoJSON from 'ol/format/GeoJSON'
 
-import FormattersEditor from '@/components/ForrmatersEditor.vue'
-import GenericInfoPanel from '@/components/GenericInfopanel.vue'
+import FormattersEditor, { createFormatter } from '@/components/FormattersEditor.vue'
+import GenericInfoPanel, { DateWidget, ValueMapWidget } from '@/components/GenericInfopanel.vue'
 import { layerFeaturesQuery } from '@/map/featureinfo'
-import { valueMapItems } from '@/adapters/attributes'
+// import { valueMapItems } from '@/adapters/attributes'
 import { externalComponent } from '@/components-loader'
 import { TaskState, watchTask } from '@/tasks'
 
@@ -274,20 +285,18 @@ export async function loadUmdScript (url, filename) {
   })
 }
 
-const ValueMapWidget = {
-  props: {
-    attribute: Object,
-    value: {}
-  },
-  computed: {
-    map () {
-      const items = valueMapItems(this.attribute)
-      return items.reduce((data, item) => (data[item.value] = item.text, data), {})
-    }
-  },
-  render () {
-    return <span>{this.value} - {this.map[this.value]}</span>
-  }
+function formatFeatures (features, formatters) {
+  formatters = pickBy(formatters, f => f)
+  features.forEach(f => {
+    f._formattedProperties = mapValues(formatters, (formetter, name) => formetter.format(f.get(name)))
+
+    Object.defineProperty(f, 'getFormatted', {
+      // configurable: true,
+      value: function (key) {
+        return this._formattedProperties[key] ?? this.get(key)
+      }
+    })
+  })
 }
 
 export default {
@@ -360,39 +369,23 @@ export default {
         }
       ].filter(c => c)
     },
-    contentTypes () {
-      return [
-        {
-          text: 'Text',
-          value: null
-        }, {
-          text: 'Hyperlink',
-          value: 'url'
-        }, {
-          text: 'Image',
-          value: 'image/*'
-        }, {
-          text: 'Media image file',
-          value: 'media;image/*'
-        }
-      ]
-    },
     numericFormatters () {
       const defined = this.settings.formatters ?? []
       return [
+        { text: '—', value: undefined },
         ...defined.map(i => ({ text: i.name, value: i.name })),
-        // { separator: true, text: 'Action' },
-        { separator: true },
+        { text: 'Actions', separator: true },
+        // { text: 'Remove formatting', value: '__remove__' },
         { text: 'Manage formatters', value: '__manage__', icon: 'settings' }
       ]
     },
     widgets () {
       return [
-        { text: 'QGIS', value: null },
+        { text: 'QGIS', value: undefined, icon: 'qgis' },
         { text: 'Gisquick', separator: true },
-        { text: 'Hyperlink', value: 'url' },
-        { text: 'Image', value: 'image/*' },
-        { text: 'Media Image', value: 'media;image/*' }
+        { text: 'Hyperlink', value: 'Hyperlink' },
+        { text: 'Image', value: 'Image' },
+        { text: 'Media Image', value: 'MediaImage' }
       ]
     },
     widgetMap () {
@@ -422,6 +415,24 @@ export default {
         attributes: this.finalAttributes,
         ...settings
       }
+    },
+    infopanelProject () {
+      return {
+        name: this.project.name,
+        ows_project: this.project.name,
+        ows_url:  `/api/map/ows/${this.project.name}`
+        // formatter: name => formatters[name]
+      }
+    },
+    projectFormatters () {
+      const formatters = keyBy(this.settings.formatters, 'name')
+      return mapValues(formatters, f => createFormatter(f))
+    },
+    layerFormatters () {
+      return mapValues(
+        keyBy(this.finalAttributes.filter(attr => attr.format), 'name'),
+        attr => this.projectFormatters[attr.format]
+      )
     },
     attrTableMap () {
       return this.attributes.reduce((data, attr) => (data[attr.name] = this.layerSettings.attr_table_fields.includes(attr.name), data), {})
@@ -454,16 +465,38 @@ export default {
       }))
     },
     tableData () {
-      return this.features?.map(f => ({ _id: f.getId(), ...f.getProperties() }))
+      // return this.features?.map(f => ({ _id: f.getId(), ...f.getProperties() }))
+
+      const attrsNames = this.finalAttributes.map(a => a.name)
+      return this.features?.map(f => ({
+        _id: f.getId(),
+        ...attrsNames.reduce((obj, name) => (obj[name] = f.getFormatted(name), obj), {})
+        // ...f.getProperties(),
+        // ...f.getFormattedProperties()
+      }))
+
+      const data = this.features?.map(f => ({ _id: f.getId(), ...f.getProperties() }))
+      this.finalAttributes.forEach(attr => {
+        if (attr.format) {
+          const formatter = this.infopanelProject.formatter(attr.format)
+          data.forEach(f => {
+            f[attr.name] = formatter.format(f[attr.name])
+          })
+        }
+      })
+      return data
     },
     attrTableSlots () {
       const slots = {}
       this.finalAttributes.forEach(attr => {
+        let widget
         if (attr.widget === 'ValueMap') {
-          slots[attr.name] = {
-            component: ValueMapWidget,
-            attribute: attr
-          }
+          widget = ValueMapWidget
+        } else if (attr.type === 'date') { // and also attr.widget === 'DateTime' ?
+          widget = DateWidget
+        }
+        if (widget) {
+          slots[attr.name] = { component: widget, attribute: attr }
         }
       })
       return slots
@@ -516,11 +549,17 @@ export default {
     layerId: {
       immediate: true,
       handler: 'fetchFeatures'
+    },
+    layerFormatters () {
+      if (this.features) {
+        const features = this.features.map(f => f.clone())
+        formatFeatures(features, this.layerFormatters)
+        this.features = Object.freeze(features)
+      }
     }
   },
   methods: {
     async fetchFeatures () {
-      console.log('fetchFeatures', this.layer.name)
       const mapProjection = this.project.meta.projection.code
       const query = layerFeaturesQuery(this.layer)
 
@@ -553,6 +592,7 @@ export default {
 
       // const features = ShallowArray(parser.readFeatures(geojson, { featureProjection: mapProjection }))
       const features = Object.freeze(parser.readFeatures(geojson, { featureProjection: mapProjection }))
+      formatFeatures(features, this.layerFormatters)
       this.features = features
     },
     onDragStart (e, col) {
@@ -611,31 +651,25 @@ export default {
         ? this.attributes.map(a => a.name)
         : []
     },
-    setFormatter (attr, name) {
-      if (name === '__manage__') {
+    setFormatter (attr, value) {
+      if (value === '__manage__') {
         this.$refs.formattersDialog.show(this.settings)
       } else {
-        this.setAttributeSetting(attr, 'format', name)
-        // if (!this.attrsSettings[attr.name]) {
-        //   this.$set(this.attrsSettings, attr.name, { format: name })
-        // } else {
-        //   this.$set(this.attrsSettings[attr.name], 'format', name)
-        // }
+        this.setAttributeSetting(attr, 'format', value)
       }
     },
-    setWidget (attr, item) {
-      // this.$set(this.attrsSettings[attr.name], 'widget', item.value)
-
+    selectWidget (attr, widget) {
+      this.setAttributeSetting(attr, 'widget', widget)
+    },
+    setWidget (attr, widget) {
       // if (item.value) {
       //   this.$set(this.attrsSettings[attr.name], 'widget', item.value)
       // } else {
       //   this.$delete(this.attrsSettings[attr.name], 'widget')
       // }
       this.setAttributeSetting(attr, 'widget', item.value)
-      // this.attrsSettings[attr.name].widget = item.value
     },
     setInfopanelComponent (item) {
-      console.log('setInfopanelComponent', item)
       this.$set(this.layerSettings, 'infopanel_component', item)
 
       // this.$set(this.layerSettings, 'infopanel_component', item.value)
@@ -655,7 +689,6 @@ export default {
       }
     },
     async loadScript (f) {
-      console.log('loadScript', f)
       const objectURL = URL.createObjectURL(f)
       const script = await loadUmdScript(objectURL, f.name)
       let components = script.module.__esModule ? script.module.default : [script.module]
@@ -739,14 +772,17 @@ export default {
 }
 .info-panel-settings {
   display: grid;
-  grid-template-columns: minmax(0, 500px) 1fr;
+  grid-template-columns: 1fr 1fr;
   grid-template-rows: auto 1fr;
   .scripts {
     grid-area: 1 / 2 / 3 / 3;
+    .btn {
+      height: 32px;
+    }
   }
 }
 .info-panel {
-  max-width: 500px;
+  // max-width: 500px;
 }
 .scripts {
   ::v-deep .item {

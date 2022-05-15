@@ -1,5 +1,5 @@
 <template>
-  <div class="content">
+  <div class="generic-infopanel">
     <div class="fields">
       <template v-for="(attr, index) in attributes">
         <span class="label" :key="attr.name">{{ attr.alias || attr.name }}</span>
@@ -19,16 +19,13 @@
 
 <script>
 import keyBy from 'lodash/keyBy'
+import round from 'lodash/round'
 import format from 'date-fns/format'
 import parse from 'date-fns/parse'
+import path from 'path'
+
+import VImage from '@/components/image/Image.vue'
 import { valueMapItems } from '@/adapters/attributes'
-
-// const format = v => v
-// const parse = v => v
-
-function isAbsoluteUrl (val) {
-  return /(https?:\/\/.*\.)/i.test(val)
-}
 
 function Widget (render) {
   return {
@@ -43,7 +40,7 @@ const RawWidget = Widget((h, ctx) => (
 ))
 
 const FloatWidget = Widget((h, ctx) => (
-  <span {...ctx.data}>{ctx.props.value && ctx.props.value.toFixed(2)}</span>
+  <span {...ctx.data}>{Number.isFinite(ctx.props.value) ? round(ctx.props.value, 2) : ctx.props.value}</span>
 ))
 
 const BoolWidget = Widget((h, ctx) => (
@@ -66,7 +63,7 @@ const ImageWidget = Widget((h, ctx) => {
   ]
 })
 
-const DateWidget = Widget((h, ctx) => {
+export const DateWidget = Widget((h, ctx) => {
   let { value } = ctx.props
   const cfg = ctx.data.attrs?.attribute?.config
   if (value && cfg && cfg.display_format && cfg.field_format) {
@@ -76,7 +73,19 @@ const DateWidget = Widget((h, ctx) => {
   return <span {...ctx.data}>{value}</span>
 })
 
-const ValueMapWidget = {
+// or define as factory function with attribute as argument?
+export const DateTimeWidget = Widget((h, ctx) => {
+  let { value } = ctx.props
+  if (value) {
+    const cfg = ctx.data.attrs?.attribute?.config
+    const displayFormat = cfg?.display_format || 'yyyy-MM-dd HH:mm:ss'
+    const date = cfg?.field_format ? parse(value, cfg.field_format, new Date()) : new Date(value)
+    value = format(date, displayFormat)
+  }
+  return <span {...ctx.data}>{value}</span>
+})
+
+export const ValueMapWidget = {
   name: 'ValueMapWidget',
   props: {
     attribute: Object,
@@ -95,10 +104,11 @@ const ValueMapWidget = {
 }
 
 export default {
+  components: { VImage },
   props: {
-    project: Object,
+    feature: Object,
     layer: Object,
-    feature: Object
+    project: Object
   },
   computed: {
     attributes () {
@@ -109,18 +119,15 @@ export default {
       return this.layer.attributes
     },
     values () {
-      return this.attributes.map(attr => this.feature?.get(attr.name))
+      return this.attributes.map(attr => this.feature?.getFormatted(attr.name))
     },
     mediaWidget () {
-      // const projectPath = this.$store.state.project.config.project
-      const projectPath = this.project.name
-      // const root = `/api/project/media/${projectPath.substring(0, projectPath.lastIndexOf('/'))}/`
-      const root = `/api/project/media/${projectPath}/`
+      const root = `/api/project/static/${this.project.name}/`
       return Widget((h, ctx) => {
         if (!ctx.props.value) {
           return <span class="value"></span>
         }
-        const url = root + ctx.props.value.replace('media/', '')
+        const url = path.join(root, ctx.props.value)
         return [
           <a class="value" href={url} target="_blank">{ctx.props.value}</a>,
           <v-image class="image" src={url}/>
@@ -132,26 +139,22 @@ export default {
         const type = attr.type.split('(')[0]
         if (attr.widget === 'ValueMap') {
           return ValueMapWidget
+        } else if (attr.widget === 'Hyperlink') {
+          return UrlWidget
+        } else if (attr.widget === 'Image') {
+          return ImageWidget
+        } else if (attr.widget === 'MediaImage') {
+          return this.mediaWidget
         }
-        if (type === 'int') {
-          return RawWidget
-        } else if (type === 'DOUBLE') {
+
+        if (type === 'float' && !attr.format) {
           return FloatWidget
-        } else if (type === 'BOOL') {
+        } else if (type === 'bool') {
           return BoolWidget
-        } else if (type === 'text') {
-          if (attr.content_type === 'url') {
-            return UrlWidget
-          } else if (attr.content_type?.startsWith('media;image/')) {
-            // TODO: create special content_type for regular image files
-            const value = this.feature?.get(attr.name)
-            if (isAbsoluteUrl(value)) {
-              return ImageWidget
-            }
-            return this.mediaWidget
-          }
         } else if (type === 'date') {
           return DateWidget
+        } else if (type === 'datetime') {
+          return DateTimeWidget
         }
         return RawWidget
       })
@@ -161,7 +164,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.content {
+.generic-infopanel {
   padding: 6px;
 }
 .fields {
