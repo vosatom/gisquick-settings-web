@@ -26,6 +26,23 @@
         </div>
       </template>
     </v-dialog> -->
+
+    <!-- <v-dialog ref="confirmDeleteDialog">
+      <template v-slot="{ close }">
+        <div class="f-row-ac p-2">
+          <v-icon name="unknown"/>
+          <span class="mx-2">Are you sure to delete this project?</span>
+          <v-btn color="grey" @click="close">No</v-btn>
+          <v-btn color="primary" @click="deleteProject">Yes</v-btn>
+        </div>
+      </template>
+    </v-dialog> -->
+    <confirm-dialog
+      ref="confirmDeleteDialog"
+      :action="deleteProject"
+      icon="warning"
+      text="Are you sure to delete this project?"
+    />
     <div class="panel dark p-2">
     </div>
     <div v-if="project && settings" class="project-page f-col light">
@@ -160,6 +177,7 @@ import mapValues from 'lodash/mapValues'
 import cloneDeep from 'lodash/cloneDeep'
 import isEqual from 'lodash/isEqual'
 
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import JsonViewer from '@/components/JsonViewer.vue'
 // import JsonViewer2 from '@/components/JsonViewer2.vue'
@@ -171,7 +189,7 @@ import MapImg from '@/assets/map.svg?inline'
 
 export default {
   name: 'ProjectView',
-  components: { QgisLayersInfo, MapImg, JsonViewer, JsonViewer2 },
+  components: { ConfirmDialog, QgisLayersInfo, MapImg, JsonViewer, JsonViewer2 },
   // components: { QgisLayersInfo, MapImg, JsonPretty, JsonViewer, JsonViewer2 },
   props: {
     user: String,
@@ -222,10 +240,10 @@ export default {
       return [
         // { text: 'Download Project', action: this.downloadProject },
         { text: 'Reset Settings', action: this.resetSettings },
-        { text: 'Delete Project', action: this.deleteProject },
+        { text: 'Delete Project', action: () => this.$refs.confirmDeleteDialog.show() },
         { text: 'Debug', separator: true },
         { text: 'QGIS Meta', action: () => this.jsonDialog = 'meta' },
-        { text: 'Show settings', action: () => this.jsonDialog = 'settings' }
+        { text: 'Settings', action: () => this.jsonDialog = 'settings' }
       ]
     },
     projectErrors () {
@@ -367,7 +385,7 @@ export default {
         await this.$http.delete(`/api/project/${this.projectName}`)
         this.$router.push('/')
       } catch (err) {
-        // TODO
+        this.$notify.error('Failed to delete project')
       }
     },
     formatDate (d) {
