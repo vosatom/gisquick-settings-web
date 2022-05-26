@@ -8,6 +8,12 @@
   >
     <div class="actions f-row-ac">
       <v-btn
+        class="icon flat"
+        @click="$emit('zoomto', value)"
+      >
+        <v-icon name="zoom-to"/>
+      </v-btn>
+      <v-btn
         class="icon flat my-0"
         :color="edit ? 'primary' : ''"
         @click="$emit('update:edit', !edit)"

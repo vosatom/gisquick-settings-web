@@ -68,6 +68,7 @@
                 :value="settings.extent"
                 @input="settings.extent = roundExtent($event)"
                 @update:edit="toggleExtentEdit('extent')"
+                @zoomto="zoomToExtent"
               />
               <v-checkbox
                 label="Enable initial view extent"
@@ -205,7 +206,7 @@
 
         <!-- <div class="layers-control">
           <v-scroll-area>
-            <layers-tree :layers="layers">
+            <layers-tree :layers="layers">s
               <template v-slot:leaf-append="{ layer }">
                 <div class="symbol f-row-ac">
                   <img
@@ -217,7 +218,11 @@
             </layers-tree>
           </v-scroll-area>
         </div> -->
+        <div v-if="activeExtentEdit" class="f-row f-justify-center m-1">
+          <small>Hold <strong>Shift</strong> key to modify extent area</small>
+        </div>
       </map-view>
+
       <!-- </div> -->
 
       <!-- <v-btn class="layers-toggle icon flat" :color="showLayers ? 'primary' : ''" @click="showLayers = !showLayers">
@@ -353,7 +358,9 @@ export default {
         l => ({ ...meta.layers[l.id] }),
         (g, layers) => ({ ...g, layers, visible: true, expanded: true })
       )
-      this.layers = filterLayers(layers, l => l.type !== 'VectorLayer' || l.options.wkb_type !== 'NoGeometry')
+      // this.layers = filterLayers(layers, l => l.type !== 'VectorLayer' || l.options.wkb_type !== 'NoGeometry')
+      this.layers = filterLayers(layers, l => meta.layers_order.includes(l.id))
+      // this.layers = filterLayers(layers, l => meta.layers_order.includes(l.id) && !this.settings.layers[l.id].flags.includes('render_off'))
     },
     updateExtent(key, extent) {
       this.settings[key] = extent?.map(v => round(v, this.extentPrecision))
@@ -373,6 +380,10 @@ export default {
     },
     toggleExtentEdit (key) {
       this.activeExtentEdit = this.activeExtentEdit === key ? null : key
+    },
+    zoomToExtent (extent) {
+      const olMap = this.$refs.map.map
+      olMap.getView().fit(extent, { padding: [50, 50, 50, 50] })
     },
     zoomToScale (scale) {
       const res = scalesToResolutions([scale], this.qgisMeta.units)[0]
@@ -534,17 +545,15 @@ export default {
 
   // border: 1px solid #ddd;
   .map {
-    justify-self: end;
     grid-area: 1 / 2 / 2 / 3;
+    align-self: start;
+    justify-self: end;
     width: 720px;
-    max-height: 620px;
-
-    // align-self: center;
-    // height: 100%;
-
-    // height: 600px;
-    border: 1px solid #ddd;
-    box-sizing: content-box;
+    ::v-deep {
+      .map-canvas {
+        height: 580px;
+      }
+    }
   }
   .layers-panel {
     height: 100%;

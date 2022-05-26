@@ -13,7 +13,7 @@
       <slot name="toolbar-end"/>
     </div>
 
-    <div ref="map" class="f-grow"/>
+    <div ref="map" class="map-canvas f-grow"/>
     <div v-if="error" class="error">
       Failed to render map
     </div>
@@ -203,8 +203,13 @@ export default {
   .toolbar {
     background-color: #eee;
     // background-color: #f3f3f3;
-    border-bottom: 1px solid #ddd;
+    border: 1px solid #ccc;
     padding: 2px;
+  }
+  .map-canvas {
+    border: solid #ccc;
+    border-width: 0 1px 1px 1px;
+    box-sizing: content-box;
   }
 }
 </style>
