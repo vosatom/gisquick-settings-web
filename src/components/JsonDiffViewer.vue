@@ -23,6 +23,7 @@ function createObjectTree (obj) {
       type: 'object',
       collapsed: false,
       flags: obj.$diff && flagsObject(obj.$diff),
+      orig: obj.$diff?.orig,
       // children: Object.entries(obj).map(([k, v]) => [k, createObjectTree(v)])
       children: Object.entries(obj).filter(([k, _]) => k !== '$diff').map(([k, v]) => [k, createObjectTree(v)])
     }
@@ -49,6 +50,7 @@ const Parenthesis = {
 const ObjNode = {
   name: 'ComplexValue',
   props: {
+    path: String,
     depth: Number,
     obj: Object
   },
@@ -84,6 +86,10 @@ const ObjNode = {
     },
     simpleFieldLine (field, content, last) {
       const flag = this.obj.flags?.[field]
+      const oldVal = flag === 'changed' && this.obj.orig[field]
+      if (oldVal) {
+        content = <span><v-tooltip><span style="word-break: break-word;">{oldVal}</span></v-tooltip>{content}</span>
+      }
       return (
         <span class={flag ? `line ${flag}` : 'line'} style={this.indentStyle}>
           {this.renderIndent(this.depth)}
@@ -124,14 +130,15 @@ const ObjNode = {
       const flag = this.obj.flags?.[field]
       const cls = flag && flag !== 'changed' ? `line ${flag}` : 'line'
 
+      const path = this.path ? `${this.path}.${field}` : field
       return [
         <span class={cls}>
           {this.renderIndent(this.depth)}
-          {field && <span class="key">"{field}":</span>}
+          {field !== null && <span class="key">"{field}":</span>}
           <span class="toggle" onClick={toggle}>{parenthesis.open}</span>
           <br/>
         </span>,
-        <ObjNode depth={this.depth + 1} obj={v}/>,
+        <ObjNode depth={this.depth + 1} obj={v} path={path}/>,
         <span class={cls}>
           {this.renderIndent(this.depth)}
           <span class="toggle" onClick={toggle}>{parenthesis.close}</span>
@@ -145,13 +152,14 @@ const ObjNode = {
       const flag = this.obj.flags?.[index]
       const cls = flag && flag !== 'changed' ? `line ${flag}` : 'line'
 
+      const path = this.path ? `${this.path}[${index}]` : `[${index}`
       return [
         <span class={cls}>
           {this.renderIndent(this.depth)}
           <span class="toggle" onClick={toggle}>{parenthesis.open}</span>
           <br/>
         </span>,
-        <ObjNode depth={this.depth + 1} obj={v}/>,
+        <ObjNode depth={this.depth + 1} obj={v} path={path}/>,
         <span class={cls}>
           {this.renderIndent(this.depth)}
           <span class="toggle" onClick={toggle}>{parenthesis.close}</span>

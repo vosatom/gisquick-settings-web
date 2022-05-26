@@ -100,7 +100,7 @@ const ObjNode = {
       return [
         <div class="line">
           {this.renderIndent(this.depth)}
-          {field && <span class="key">"{field}":</span>}
+          {field !== null && <span class="key">"{field}":</span>}
           <span class="toggle" onClick={toggle}>{parenthesis.open}</span>
         </div>,
         <ObjNode depth={this.depth + 1} obj={v}/>,

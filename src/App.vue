@@ -10,14 +10,14 @@
     <portal-target name="menu" class="menu">
       <!-- <div class="dark f-row-ac">Placeholder</div> -->
     </portal-target>
-    <div class="app-menu f-row-ac f-justify-end">
+    <div class="app-menu f-row-ac f-justify-end dark">
       <img :src="pluginStatusImg" class="plugin-status mr-2"/>
       <v-menu
         aria-label="Menu"
         transition="slide-y"
         align="rr;bb,tt"
         class="m-2"
-        content-class="popup-menu xdark"
+        content-class="popup-menu"
         :items="menuItems"
       >
         <template v-slot:activator="{ toggle }">
@@ -228,23 +228,22 @@ html, body, .app {
     grid-row: 1 / 2;
     grid-column: 3 / 4;
     min-width: 92px;
-    img {
-      height: 24px;
-      width: 24px;
+    .plugin-status {
+      height: 22px;
     }
   }
 }
 
-.app-header {
-  flex: 0 0 48px;
-  background-color: var(--color-dark);
-  .logo {
-    height: 28px;
-  }
-  .plugin-status {
-    height: 24px;
-  }
-}
+// .app-header {
+//   flex: 0 0 48px;
+//   background-color: var(--color-dark);
+//   .logo {
+//     height: 28px;
+//   }
+//   .plugin-status {
+//     height: 22px;
+//   }
+// }
 .page-content {
   overflow: auto;
 }

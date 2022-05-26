@@ -56,7 +56,9 @@
         <router-link class="m-2" :to="{name: 'topics'}">Topics</router-link>
         <router-link class="m-2" :to="{name: 'access'}">Permissions</router-link>
         <div class="v-separator"/>
-        <v-btn v-if="project.settings" class="small" :to="{name: 'update'}">
+
+        <!-- <v-btn v-if="project.settings" class="small" :to="{name: 'update'}"> -->
+        <v-btn class="small" :to="{name: 'update'}">
           <v-icon name="qgis" class="mr-2"/>
           <span>Update</span>
         </v-btn>
@@ -184,6 +186,7 @@ import JsonViewer from '@/components/JsonViewer.vue'
 import JsonViewer2 from '@/components/JsonDiffViewer.vue'
 import { scalesToResolutions, ProjectionsScales } from '@/utils/scales'
 import { TaskState, watchTask } from '@/tasks'
+import { objectDiff } from '@/utils/diff'
 import MapImg from '@/assets/map.svg?inline'
 
 
@@ -238,12 +241,13 @@ export default {
     },
     projectMenu () {
       return [
-        // { text: 'Download Project', action: this.downloadProject },
+        { text: 'Download Project', link: `/api/project/download/${this.project.name}` },
         { text: 'Reset Settings', action: this.resetSettings },
         { text: 'Delete Project', action: () => this.$refs.confirmDeleteDialog.show() },
         { text: 'Debug', separator: true },
         { text: 'QGIS Meta', action: () => this.jsonDialog = 'meta' },
-        { text: 'Settings', action: () => this.jsonDialog = 'settings' }
+        { text: 'Settings', action: () => this.jsonDialog = 'settings' },
+        { text: 'Settings changes', action: () => this.jsonDialog = 'settings_diff' }
       ]
     },
     projectErrors () {
@@ -259,6 +263,9 @@ export default {
         data = { title: 'QGIS Meta', json: this.project.meta }
       } else if (this.jsonDialog === 'settings') {
         data =  { title: 'Gisquick Settings', json: this.settings }
+      } else if (this.jsonDialog === 'settings_diff') {
+        const json = objectDiff(this.settings, this.project.settings)
+        data = { title: 'Gisquick Settings', json }
       }
       if (data && this.jsonRouteFilter) {
         const { name, params } = this.$route
