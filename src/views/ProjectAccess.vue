@@ -34,6 +34,12 @@
       v-if="settings.auth.roles"
       class="roles-settings mt-4"
     >
+      <confirm-dialog
+        ref="confirmDeleteDialog"
+        :action="removeRole"
+        icon="warning"
+        text="Are you sure to delete access group?"
+      />
       <template>
         <!-- <div class="toolbar f-row-ac">
           <v-btn @click="addRole">
@@ -58,10 +64,10 @@
           <template v-slot:prepend>
             <div class="toolbar f-row-ac">
               <span class="label px-2 f-grow">Groups</span>
-              <v-btn class="icon" @click="addRole">
+              <v-btn class="icon small m-1" @click="addRole">
                 <v-icon name="plus"/>
               </v-btn>
-              <v-btn class="icon" :disabled="!selectedRole" @click="removeRole">
+              <v-btn class="icon small m-1" :disabled="!selectedRole" @click="$refs.confirmDeleteDialog.show()">
                 <v-icon name="delete_forever"/>
               </v-btn>
             </div>
@@ -82,7 +88,7 @@
         </v-list>
       </template>
 
-      <div v-if="selectedRole" class="role-settings">
+      <div v-if="selectedRole" class="role-settings f-col">
         <text-tabs-header
           :items="roleTabs"
           v-model="roleTab"
@@ -235,12 +241,12 @@ import pickBy from 'lodash/pickBy'
 import has from 'lodash/has'
 import UsersList from '@/components/UsersList.vue'
 import LayersTable from '@/components/LayersTable.vue'
-import VList from '@/ui/List2.vue'
 import RadioGroup from '@/ui/RadioGroup.vue'
 import TextTabsHeader from '@/ui/TextTabsHeader.vue'
 import VTabsHeader from '@/ui/TabsHeader.vue'
 import AttributePermissionsFlags from '@/components/AttributePermissionsFlags.vue'
 import LayerPermissionsFlags from '@/components/LayerPermissionsFlags.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 import { transformLayersTree } from '@/utils/layers'
 import { layerCapabilities, layerPermissionsCapabilities } from '@/flags'
@@ -268,7 +274,7 @@ export function initLayersPermissions (layers) {
 
 export default {
   name: 'ProjectAccess',
-  components: { UsersList, LayersTable, VList, VTabsHeader, TextTabsHeader, RadioGroup, AttributePermissionsFlags, LayerPermissionsFlags },
+  components: { ConfirmDialog, UsersList, LayersTable, VTabsHeader, TextTabsHeader, RadioGroup, AttributePermissionsFlags, LayerPermissionsFlags },
   props: {
     project: Object,
     settings: Object
@@ -535,12 +541,6 @@ export default {
     }
   }
 }
-.role-settings {
-  .text-tabs-header {
-    height: 32px;
-    margin: 0 0 6px 0;
-  }
-}
 .role-config {
   .i-field {
     max-width: 500px;
@@ -569,6 +569,8 @@ export default {
   // position: sticky;
   // top: 0;
   background-color: #eee;
+  border: 1px solid #ccc;
+  border-bottom: none;
 }
 .error {
   color: var(--color-red);
@@ -592,5 +594,10 @@ export default {
 .desc-text {
   opacity: 0.6;
   font-size: 13.5px;
+}
+.layers-table {
+  margin: 6px;
+  border: 1px solid #ddd;
+  border-top: none;
 }
 </style>

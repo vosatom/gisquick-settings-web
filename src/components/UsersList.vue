@@ -85,12 +85,12 @@
         </template>
         <template v-slot:item="{ item }">
           <v-icon v-if="item.invalid" name="warning" color="orange" class="mr-2"/>
-          <span class="f-grow">
+          <span class="f-grow mr-2">
             {{ item.username }} <span v-if="item.full_name"> ({{ item.full_name }})</span>
           </span>
           <v-btn
             v-show="selected === item.username"
-            class="remove icon"
+            class="remove icon small m-0"
             tabindex="-1-"
             @click.stop="removeUser(item.username)"
           >

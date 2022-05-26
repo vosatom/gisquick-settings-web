@@ -3,9 +3,9 @@
     <!-- <div class="toolbar dark">
       <span class="title">Topics</span>
     </div> -->
-    <div class="f-col list box">
+    <div class="f-col panel box">
       <v-list
-        class="f-grow"
+        class="flat f-grow m-0"
         item-text="title"
         :items="topics"
         :selected="selectedIndex"
@@ -134,7 +134,7 @@ export default {
     grid-row: 1 / 2;
     grid-column: 1 / 3;
   }
-  .list {
+  .panel {
     grid-row: 2 / 4;
     grid-column: 1 / 2;
   }
@@ -152,8 +152,5 @@ export default {
     border: 1px solid #ccc;
     // border-radius: 3px;
   }
-}
-.v-list {
-  min-width: 240px;
 }
 </style>
