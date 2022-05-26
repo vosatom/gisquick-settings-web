@@ -1,5 +1,5 @@
 <template>
-  <div v-if="sortedProjects.length" class="projects light">
+  <div v-if="formattedProjects.length" class="projects light">
     <!-- <div class="expander" v-text="Array(120).fill('_').join(' ')"/> -->
     <div class="toolbar f-row-ac">
       <span class="title m-2">Projects</span>

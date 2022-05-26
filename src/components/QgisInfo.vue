@@ -2,7 +2,7 @@
   <div class="qgis-info p-2">
     <div class="item">
       <span class="label">Projection:</span>
-      <span v-text="meta.projection.code"/>
+      <span v-text="meta.projection"/>
     </div>
     <!-- <hr/> -->
     <div class="item">
