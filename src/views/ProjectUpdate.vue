@@ -192,8 +192,7 @@ export default {
 
         const newFiles = this.clientFiles.filter(f => !sfMap[f.path])
         const updatedFiles = this.clientFiles.filter(f => sfMap[f.path] && sfMap[f.path].hash !== f.hash)
-        const removedFiles = this.serverFiles.filter(f => !cfMap[f.path])
-        console.log('removedFiles', removedFiles.map(f => f.path))
+        const removedFiles = this.serverFiles.filter(f => !cfMap[f.path] && !f.path.startsWith('web/components'))
 
         const newPaths = new Set(newFiles.map(f => f.path))
         const updatedPaths = new Set(updatedFiles.map(f => f.path))
