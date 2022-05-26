@@ -61,16 +61,22 @@ export default {
   methods: {
     toggle (flag) {
       const { name, value } = flag
-      if (name === 'view' && value) {
-        // this.$emit('input', [])
-        this.value.splice(0, this.value.length)
+      if (value) {
+        this.value.splice(this.value.indexOf(name), 1)
       } else {
-        if (value) {
-          this.value.splice(this.value.indexOf(name), 1)
-        } else {
-          this.value.push(name)
-        }
+        this.value.push(name)
       }
+      // ver. 2
+      // if (name === 'view' && value) {
+      //   // this.$emit('input', [])
+      //   this.value.splice(0, this.value.length)
+      // } else {
+      //   if (value) {
+      //     this.value.splice(this.value.indexOf(name), 1)
+      //   } else {
+      //     this.value.push(name)
+      //   }
+      // }
     }
   }
 }

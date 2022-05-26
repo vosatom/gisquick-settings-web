@@ -182,7 +182,7 @@
               <div class="f-col f-grow">
                 <span class="title" v-text="item.module"/>
                 <div>Components: {{ item.components.join(', ') }}</div>
-                <small>File: <a target="_blank" :href="`/api/project/file/${project.name}/web/${item.path}`" v-text="item.path"/></small>
+                <small>File: <a target="_blank" :href="`/api/project/media/${project.name}/${item.path}`" v-text="item.path"/></small>
               </div>
               <v-btn class="icon" @click="deleteScript(item)">
                 <v-icon name="delete_forever"/>

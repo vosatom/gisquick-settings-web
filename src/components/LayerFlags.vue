@@ -16,19 +16,21 @@
     <template v-slot:selection="">
       <div class="selection f-row-ac f-justify-end f-grow">
         <template v-if="!flagsSet.has('excluded')">
-          <v-icon v-if="flagsSet.has('hidden')" name="visibility_off"/>
-          <template v-else>
+          <!-- <v-icon v-if="flagsSet.has('hidden')" name="visibility_off"/> -->
+          <!-- <template v-else> -->
             <!-- <v-icon v-if="flagsSet.has('view')" name="visibility"/> -->
 
             <!-- <v-icon name="identification" :color="capabilities.query && flagsSet.has('query') ? 'primary' : '#ccc'"/>
             <v-icon name="pencil" :color="capabilities.edit && flagsSet.has('edit') ? 'primary' : '#ccc'"/>
             <v-icon name="download" :color="capabilities.export && flagsSet.has('export') ? 'primary' : '#ccc'"/> -->
 
+            <v-icon v-if="flagsSet.has('hidden')" name="visibility_off" color="primary"/>
+            <v-icon v-if="flagsSet.has('render_off')" name="map_off" color="primary"/>
             <v-icon name="identification" :color="capabilities.query ? flagsSet.has('query') ? 'primary' : '#aaa' : '#ddd'"/>
             <v-icon name="pencil" :color="capabilities.edit ? flagsSet.has('edit') ? 'primary' : '#aaa' : '#ddd'"/>
             <v-icon name="download" :color="capabilities.export ? flagsSet.has('export') ? 'primary' : '#aaa' : '#ddd'"/>
 
-          </template>
+          <!-- </template> -->
         </template>
       <v-icon v-else name="disabled"/>
       </div>
@@ -93,17 +95,30 @@ export default {
           value: 'excluded',
           icon: 'disabled'
         }, {
-          text: 'Flags',
+          text: 'Visibility',
           separator: true
         }, {
           text: 'Hidden',
           value: 'hidden',
           icon: 'visibility_off',
           disabled: excluded
+        }, {
+          text: 'Disable rendering',
+          value: 'render_off',
+          icon: 'map_off',
+          disabled: excluded
+          // text: 'Layers Tree',
+          // value: 'render_off',
+          // icon: 'check',
+          // disabled: excluded
+
         // }, {
         //   text: 'Visible',
         //   value: 'view',
         //   disabled: hidden
+        }, {
+          text: 'Data',
+          separator: true
         }, {
           text: 'Queryable',
           value: 'query',
