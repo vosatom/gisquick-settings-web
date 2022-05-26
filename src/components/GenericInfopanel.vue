@@ -122,7 +122,7 @@ export default {
       return this.attributes.map(attr => this.feature?.getFormatted(attr.name))
     },
     mediaWidget () {
-      const root = `/api/project/static/${this.project.name}/`
+      const root = `/api/project/media/${this.project.name}/`
       return Widget((h, ctx) => {
         if (!ctx.props.value) {
           return <span class="value"></span>
@@ -136,14 +136,14 @@ export default {
     },
     widgets () {
       return this.attributes.map(attr => {
-        const type = attr.type.split('(')[0]
-        if (attr.widget === 'ValueMap') {
+        const { type, widget } = attr
+        if (widget === 'ValueMap') {
           return ValueMapWidget
-        } else if (attr.widget === 'Hyperlink') {
+        } else if (widget === 'Hyperlink') {
           return UrlWidget
-        } else if (attr.widget === 'Image') {
+        } else if (widget === 'Image') {
           return ImageWidget
-        } else if (attr.widget === 'MediaImage') {
+        } else if (widget === 'MediaImage') {
           return this.mediaWidget
         }
 

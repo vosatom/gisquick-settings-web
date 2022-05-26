@@ -46,6 +46,6 @@ export function externalComponent (project, cname) {
     return cmp
   }
   const mod = Object.values(project.scripts).find(i => i.components.includes(cname))
-  const resource = `/api/project/static/${project.name}/${mod.path}`
+  const resource = `/api/project/media/${project.name}/${mod.path}`
   return () => getComponent(resource, cname)
 }
