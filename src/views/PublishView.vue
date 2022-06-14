@@ -1,11 +1,17 @@
 <template>
   <div class="publish light f-col">
-    <plugin-disconnected v-if="!connected"/>
+    <plugin-disconnected v-if="!connected" class="f-grow"/>
     <template v-else-if="projectInfo">
 
       <v-dialog ref="jsonViewer">
         <template v-slot="{ data }">
           <json-viewer :data="data"/>
+        </template>
+      </v-dialog>
+
+      <v-dialog ref="layerNamesDialog" title="QGIS Server layers names">
+        <template v-slot="{ data, close }">
+          <short-names-editor :meta="data" @project-update="close"/>
         </template>
       </v-dialog>
 
@@ -23,51 +29,64 @@
           <span class="title">Layers</span>
         </div>
         <qgis-layers-info :meta="projectInfo"/>
+
+        <div v-if="errors" class="errors f-col mt-2">
+          <div class="header errors f-row-ac dark px-4">
+            <v-icon name="warning" class="mr-2"/>
+            <span class="title">Errors</span>
+          </div>
+
+          <template v-if="errors.duplicateLayersNames">
+            <span class="p-2"><strong>Layers does not have unique names.</strong> Duplicit names (or short names):</span>
+            <ul>
+              <li v-for="(layers, n) in errors.duplicateLayersNames" :key="n">
+                <strong v-text="n"/> <span>({{ layers.join('; ') }})</span>
+              </li>
+            </ul>
+          </template>
+
+          <template v-if="errors.invalidLayersNames">
+            <strong class="p-2">Invalid QGIS server layers names:</strong>
+            <ul>
+              <li v-for="n in errors.invalidLayersNames" :key="n" v-text="n"/>
+            </ul>
+          </template>
+
+          <template v-if="errors.invalidLayersNames || errors.duplicateLayersNames">
+            <div class="hint p-2">
+              <span>It is recommended to assign a unique <strong>Short name</strong> for every layer, which should start with an unaccented alphabetical letter, followed by any alphanumeric letters, dot, dash or underscore.</span>
+              <!-- <span>It must start with an unaccented alphabetical letter, followed by any alphanumeric letters, dot, dash or underscore.</span> -->
+              <p>
+                <span>You can configure them in the QGIS: </span>
+                <span class="breadcrumb">
+                  <strong>Layer Properties</strong>
+                  <v-icon name="arrow-right" size="12"/>
+                  <strong>QGIS Server</strong>
+                  <!-- <v-icon name="arrow-right" size="12"/>
+                  <strong>Short name</strong> -->
+                </span>
+                <span>, or directly from web interface:</span>
+              </p>
+            </div>
+            <v-btn class="outlined" @click="$refs.layerNamesDialog.show(projectInfo)">Update layers names in QGIS project</v-btn>
+          </template>
+
+          <template v-if="errors.filesOutsideDirectory">
+            <strong class="p-2">Data files outside of project's directory:</strong>
+            <ul>
+              <li v-for="n in errors.filesOutsideDirectory" :key="n" v-text="n"/>
+            </ul>
+          </template>
+        </div>
+
         <div v-if="wfsNotEnabled" class="note">
           <v-icon name="unknown"/>
           <span class="m-2">Vector layers without WFS service enabled cannot be queryable.</span>
           <v-btn class="small" color="orange" @click="enableWFS">Enable WFS</v-btn>
         </div>
       </div>
-      <div v-if="errors" class="card errors f-col">
-        <div class="header errors f-row-ac dark px-4">
-          <v-icon name="warning" class="mr-2"/>
-          <span class="title">Errors</span>
-        </div>
 
-        <template v-if="errors.duplicateLayersNames">
-          <span class="p-2"><strong>Layers does not have unique names.</strong> Layers with duplicit names (or short names):</span>
-          <ul>
-            <li v-for="n in errors.duplicateLayersNames" :key="n" v-text="n"/>
-          </ul>
-        </template>
-
-        <template v-if="errors.invalidLayersNames">
-          <strong class="p-2">Invalid layers names:</strong>
-          <ul>
-            <li v-for="n in errors.invalidLayersNames" :key="n" v-text="n"/>
-          </ul>
-          <p class="hint p-2">
-            <span>It is recommended set a <strong>Short name</strong> property without spaces and special characters in</span>
-            <span class="breadcrumb mx-1">
-              <strong>Layer Properties</strong>
-              <v-icon name="arrow-right" size="12"/>
-              <strong>QGIS Server</strong>
-              <!-- <v-icon name="arrow-right" size="12"/>
-              <strong>Short name</strong> -->
-            </span>
-          </p>
-        </template>
-
-        <template v-if="errors.filesOutsideDirectory">
-          <strong class="p-2">Data files outside of project's directory:</strong>
-          <ul>
-            <li v-for="n in errors.filesOutsideDirectory" :key="n" v-text="n"/>
-          </ul>
-        </template>
-      </div>
-
-      <div v-else class="card files f-col">
+      <div v-if="!errors" class="card files f-col">
         <div class="header f-row-ac dark px-4">
           <span class="title">Files</span>
           <span class="f-grow"/>
@@ -155,13 +174,18 @@
 
 <script>
 import isEmpty from 'lodash/isEmpty'
+import countBy from 'lodash/countBy'
+import pickBy from 'lodash/pickBy'
+import mapValues from 'lodash/mapValues'
 
+import ShortNamesEditor from '@/components/ShortNamesEditor.vue'
 import QgisInfo from '@/components/QgisInfo.vue'
 import FilesTree from '@/components/FilesTree.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import PluginDisconnected from '@/components/PluginDisconnected.vue'
 import JsonViewer from '@/components/JsonDiffViewer.vue'
 // import JsonViewer from '@/components/JsonViewer2.vue'
+import { isValidLayerName } from '@/utils/layers'
 import { TaskState, watchTask } from '@/tasks'
 import { createUpload } from '@/upload'
 
@@ -184,11 +208,9 @@ const SourceIcons = {
   url: 'globe',
 }
 
-const LayerNameRegex = new RegExp('^[a-zA-Z][a-zA-Z0-9_.-]*$')
-
 export default {
   name: 'PublishView',
-  components: { FilesTree, QgisInfo, QgisLayersInfo, PluginDisconnected, JsonViewer },
+  components: { FilesTree, QgisInfo, QgisLayersInfo, PluginDisconnected, JsonViewer, ShortNamesEditor },
   data () {
     return {
       name: '',
@@ -257,19 +279,13 @@ export default {
       const errors = {}
       const layers = Object.values(this.projectInfo.layers)
       const names = layers.map(l => l.name)
-      const nSet = new Set(names)
-      if (nSet.size !== names.length) {
-        // const duplicates = names.filter(n => {
-        //   if (nSet.has(n)) {
-        //     nSet.delete(n)
-        //   } else {
-        //     return true
-        //   }
-        // })
-        const duplicates = layers.filter((l, i) => i !== names.indexOf(l.name))
-        errors.duplicateLayersNames = duplicates.map(l => l.name)
+      const duplicates = pickBy(countBy(names), count => count > 1)
+      if (!isEmpty(duplicates)) {
+        // errors.duplicateLayersNames = Object.keys(duplicates)
+        errors.duplicateLayersNames = mapValues(duplicates, (_, name) => layers.filter(l => l.name === name).map(l => l.title))
       }
-      const invalidNames = names.filter(n => !LayerNameRegex.test(n))
+
+      const invalidNames = names.filter(n => !isValidLayerName(n))
       if (invalidNames.length) {
         errors.invalidLayersNames = invalidNames
       }
@@ -354,7 +370,7 @@ export default {
       })
     },
     checkAvailability () {
-      console.log('TODO: check availability', this.name)
+      // console.log('TODO: check availability', this.name)
     },
     async createProject () {
       const projectName = `${this.user.username}/${this.name}`
@@ -401,13 +417,13 @@ export default {
   // width: clamp(600px, 100%, 1200px);
   grid-column: 2 / 3;
 }
-.layers-table {
-  flex: 0 0 auto;
-  // overflow: auto;
-  ::v-deep td.src {
-    white-space: normal;
-  }
-}
+// .layers-table {
+//   flex: 0 0 auto;
+//   // overflow: auto;
+//   ::v-deep td.src {
+//     white-space: normal;
+//   }
+// }
 .files {
   border: 1px solid #eee;
   .load {
@@ -436,6 +452,7 @@ export default {
 .errors {
   .header {
     background-color: var(--color-red);
+    height: 32px;
   }
   .hint {
     font-size: 13px;
@@ -470,5 +487,9 @@ export default {
   width: clamp(50vw, 960px, 80vw);
   min-height: 90vh;
   padding: 12px;
+}
+.short-names-editor {
+  width: clamp(400px, 600px, 90vw);
+  overflow: auto;
 }
 </style>

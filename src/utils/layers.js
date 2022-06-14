@@ -71,3 +71,21 @@ export function transformLayersTree2 (tree, transformLayer, transformGroup) {
     }
   })
 }
+
+const isAlphaNum = RegExp.prototype.test.bind(/[a-zA-Z0-9]/)
+
+export function shortName (layername) {
+  const normalized = removeDiacritics(layername).replace(/[^a-z0-9_\-\.]/gmi, ' ').replace(/\s+/g, ' ').trim()
+  const parts = normalized.split(' ')
+  let name = parts[0]
+  parts.slice(1).forEach(p => {
+    if (isAlphaNum(name.slice(-1)) && isAlphaNum(p.charAt(0))) {
+      name += '_'
+    }
+    name += p
+  })
+  return name
+}
+
+// const LayerNameRegex = new RegExp('^[a-zA-Z][a-zA-Z0-9_.-]*$')
+export const isValidLayerName = RegExp.prototype.test.bind(/^[a-zA-Z][a-zA-Z0-9_.-]*$/)

@@ -31,7 +31,6 @@ export default {
       this.$refs.dialog.close()
     },
     show (data) {
-      console.log('show', data)
       // this.$refs.dialog.show({ action })
       this.$refs.dialog.show(data)
     },
