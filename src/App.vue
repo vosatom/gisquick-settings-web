@@ -49,9 +49,9 @@
         </template>
       </v-menu>
     </div> -->
-    <router-view v-if="user" class="page-content"/>
+    <router-view v-if="!showLoginDialog" class="page-content"/>
     <login-dialog
-      :value="!user"
+      :value="showLoginDialog"
       login-required
       password-reset-url=""
       @login="onLogin"
@@ -96,6 +96,9 @@ export default {
   computed: {
     user () {
       return this.$root.user
+    },
+    showLoginDialog () {
+      return !this.$route.meta.public && !this.user
     },
     pluginStatusImg () {
       return this.$ws?.pluginConnected ? require('./assets/qgis-icon32.svg') : require('./assets/qgis-icon-black32.svg')
