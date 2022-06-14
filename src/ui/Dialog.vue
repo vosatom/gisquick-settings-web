@@ -90,7 +90,7 @@ export default {
 .dialog {
   text-align: left;
   font-size: 14px;
-  .header {
+  > .header {
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
@@ -100,7 +100,7 @@ export default {
     .title {
       grid-area: 1 / 1 / 2 / 3;
       margin: 0 6px;
-      font-size: 22px;
+      font-size: 20px;
       justify-self: center;
       max-width: calc(100% - 100px);
     }

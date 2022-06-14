@@ -6,6 +6,8 @@
     :focus="focus"
     :error="error"
     :label="label"
+    :validator="validator"
+    :value="value"
   >
     <div
       class="input"
@@ -118,7 +120,7 @@ export default {
     value: [String, Number],
     name: String,
     autocomplete: String,
-    error: String,
+    error: [String, Error, Boolean],
     color: {
       type: String,
       default: 'primary'
@@ -134,7 +136,8 @@ export default {
     multiline: Boolean,
     displayFormat: String,
     validChars: String,
-    height: [String, Number]
+    height: [String, Number],
+    validator: Function
     // valueFormat: String
   },
   data () {

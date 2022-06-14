@@ -6,7 +6,7 @@
       v-text=label
     />
     <slot/>
-    <span v-if="error" class="error" v-text="errorText"/>
+    <span v-if="errorText" class="error" v-text="errorText"/>
   </div>
 </template>
 
@@ -30,21 +30,35 @@ export default {
   props: {
     label: String,
     focus: Function,
-    error: [String, Error],
-    color: String
+    error: [String, Error, Boolean],
+    color: String,
+    validator: Function,
+    value: {}
   },
   computed: {
     baseColorStyle () {
       return this.color ? colorVars(this.color) : {}
     },
     statusStyle () {
-      return this.error ? colorVars('red', 'status-color') : {}
+      return this.inputError ? colorVars('red', 'status-color') : {}
     },
     styles () {
       return { ...this.baseColorStyle, ...this.statusStyle }
     },
+    validatorError () {
+      return this.validator?.(this.value)
+    },
+    inputError () {
+      return this.error || this.validatorError
+    },
     errorText () {
-      return this.error instanceof Error ? this.error.message : this.error
+      const error = this.inputError
+      if (error instanceof Error) {
+        return error.message
+      } else if (typeof(error) === 'boolean') {
+        return ''
+      }
+      return error
     }
   },
   methods: {
@@ -63,7 +77,8 @@ export default {
 <style lang="scss" scoped>
 .i-field {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  // grid-template-rows: auto 1fr auto; // gap doesn't work nice when optional elements are not rendered
+  grid-auto-flow: row;
   margin: var(--gutter);
   position: relative;
   // transition: all .4s cubic-bezier(.25,.8,.25,1);
@@ -136,7 +151,7 @@ export default {
   &.inline {
     align-items: center;
     grid-auto-flow: column;
-    grid-template-rows: unset;
+    // grid-template-rows: unset;
     grid-template-columns: auto 1fr;
     gap: 6px;
 
