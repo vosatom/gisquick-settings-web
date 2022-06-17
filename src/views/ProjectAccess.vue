@@ -157,16 +157,13 @@
         >
           <!-- eslint-disable-next-line -->
           <template v-slot:leaf.perms="{ item }">
-            <div class="f-row-ac f-justify-center">
-              <v-btn
-                v-if="item.attributes"
-                class="icon flat"
-                :color="selectedRole.permissions.layers[item.id].includes('view') ? 'primary' : '#aaa'"
-                @click="toggleBaseLayerPermission(item)"
-              >
-                <v-icon name="visibility" size="18"/>
-              </v-btn>
-            </div>
+            <v-btn
+              class="icon flat"
+              :color="selectedRole.permissions.layers[item.id].includes('view') ? 'primary' : '#aaa'"
+              @click="toggleBaseLayerPermission(item)"
+            >
+              <v-icon name="visibility" size="18"/>
+            </v-btn>
           </template>
         </layers-table>
         <layers-table
@@ -368,35 +365,25 @@ export default {
       )
     },
     baseLayersColumns () {
-      return [
-        { text: 'Permissions', value: 'perms', header: { attrs: { width: 1 } } }
-      ]
+      return [{
+        text: 'Permissions',
+        value: 'perms',
+        align: 'center',
+        header: { attrs: { width: 1 } }
+      }]
     },
-    // overlaysColumns () {
-    //   return [
-    //     {
-    //       text: 'View',
-    //       value: 'view'
-    //     }, {
-    //       text: 'Query',
-    //       value: 'query'
-    //     }, {
-    //       text: 'Insert',
-    //       value: 'insert'
-    //     }, {
-    //       text: 'Update',
-    //       value: 'update'
-    //     }, {
-    //       text: 'Delete',
-    //       value: 'delete'
-    //     }
-    //   ]
-    // },
     overlaysColumns () {
-      return [
-        { text: 'Permissions', value: 'perms', header: { attrs: { width: 1 } } },
-        { text: 'Attributes', value: 'attrs', header: { attrs: { width: 1 } } },
-      ]
+      return [{
+        text: 'Permissions',
+        value: 'perms',
+        align: 'center',
+        header: { attrs: { width: 1 } }
+      }, {
+        text: 'Attributes',
+        value: 'attrs',
+        align: 'center',
+        header: { attrs: { width: 1 } }
+      }]
     },
     projectUsers () {
       if (this.tasks.users.success) {
