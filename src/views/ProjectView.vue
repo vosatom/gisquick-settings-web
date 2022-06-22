@@ -43,8 +43,7 @@
       icon="warning"
       text="Are you sure to delete this project?"
     />
-    <div class="panel dark p-2">
-    </div>
+    <div class="panel dark p-2"/>
     <div v-if="project && settings" class="project-page f-col light">
       <portal to="menu">
       <nav class="menubar2 dark f-grow f-row-ac">
@@ -190,6 +189,14 @@ import { objectDiff } from '@/utils/diff'
 import MapImg from '@/assets/map.svg?inline'
 
 
+function validatedSettings (settings) {
+  // temporary
+  settings.topics?.filter(t => !t.id).forEach(t => {
+    t.id = t.title.toLowerCase().replace(/ /, '_')
+  })
+  return settings
+}
+
 export default {
   name: 'ProjectView',
   components: { ConfirmDialog, QgisLayersInfo, MapImg, JsonViewer, JsonViewer2 },
@@ -273,6 +280,8 @@ export default {
           data.json = data.json.layers
         } else if (name === 'attributes') {
           data.json = data.json.layers[params.layerId]
+        } else if (name === 'topics') {
+          data.json = data.json.topics
         }
       }
       return data
@@ -337,7 +346,7 @@ export default {
           roles: null,
           users: null
         },
-        base_layers: [],
+        base_layers: meta.base_layers?.filter(id => meta.layers_tree.some(item => item.id === id)) ?? [],
         extent: meta.extent,
         layers,
         title: meta.title,
@@ -368,7 +377,7 @@ export default {
       const { data } = await watchTask(task, this.fetchTask)
       if (this.fetchTask.success) {
         const { meta, settings } = data
-        this.settings = settings ? cloneDeep(settings) : this.newSettings(meta)
+        this.settings = settings ? cloneDeep(validatedSettings(settings)) : this.newSettings(meta)
         this.refSettings = cloneDeep(this.settings)
       }
     },

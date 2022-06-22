@@ -391,8 +391,8 @@ export default {
         this.diffs.changedLayers.forEach(id => {
           const layerMeta = this.projectInfo.layers[id]
           if (layerMeta.attributes) {
-            const currentAttrs = layerMeta.attributes.map(a => a.name)
-            const origAttrs = this.project.meta.layers[id].attributes.map(a => a.name)
+            const currentAttrs = layerMeta.attributes?.map(a => a.name)
+            const origAttrs = this.project.meta.layers[id].attributes?.map(a => a.name)
             const newAttrs = difference(currentAttrs, origAttrs)
             const removedAttrs = difference(origAttrs, currentAttrs)
             if (newAttrs.length || removedAttrs.length) {

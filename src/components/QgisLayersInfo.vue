@@ -116,7 +116,7 @@ export default {
       return mapValues(this.meta.layers, l => {
         let info
         const { provider_type: provider, source_params: source } = l
-        if (provider === 'wms') {
+        if (provider === 'wms' || (provider === 'vectortile' && source.url)) {
           info = {
             type: 'url',
             text: source.url
