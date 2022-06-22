@@ -90,7 +90,7 @@ export default {
   data () {
     return {
       sortBy: '',
-      sortDir: 'asc',
+      sortDir: 'desc',
       fetchTask: TaskState(),
       filter: ''
     }
@@ -116,10 +116,10 @@ export default {
     sortingItems () {
       return [{
         text: 'Creation Date',
-        value: 'created.datetime'
+        value: 'created.raw'
       }, {
         text: 'Last Updated',
-        value: 'updated.datetime'
+        value: 'updated.raw'
       }, {
         text: 'Title',
         value: 'title'
@@ -140,9 +140,9 @@ export default {
         projects = projects.filter(p => regex.test(removeDiacritics(p.title)) || regex.test(removeDiacritics(p.name)))
       }
       if (this.sortBy) {
-        return orderBy(projects, this.sortBy, this.sortDir)
+        return orderBy(projects, this.sortBy || 'title', this.sortDir)
       }
-      return projects
+      return orderBy(projects, 'title', 'asc')
     }
   },
   watch: {
@@ -154,6 +154,7 @@ export default {
   methods: {
     formatDate (d) {
       return {
+        raw: d,
         date: this.$format.date(d),
         datetime: this.$format.datetime(d)
       }
