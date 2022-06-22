@@ -6,6 +6,7 @@
     <div class="f-col panel box">
       <v-list
         class="flat f-grow m-0"
+        empty-text="No Topics"
         item-text="title"
         :items="topics"
         :selected="selectedIndex"
@@ -96,7 +97,11 @@ export default {
   },
   methods: {
     addTopic () {
+      do {
+        var id = Math.random().toString(36).substr(2, 5)
+      } while (this.topics.some(t => t.id === id))
       this.topics.push({
+        id,
         title: 'New',
         abstract: '',
         visible_overlays: []

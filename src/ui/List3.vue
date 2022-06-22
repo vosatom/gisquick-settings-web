@@ -167,7 +167,7 @@ export default {
     ::v-deep label {
       margin-bottom: 2px;
     }
-    .list-items {
+     .empty, .list-items {
       border: 1px solid var(--border-color, #ddd);
     }
   }
@@ -197,8 +197,17 @@ export default {
   }
   .empty {
     flex-grow: 1;
-    padding-block: 6px;
+    padding: 6px;
     opacity: 0.6;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  &.flat {
+    .empty {
+      padding: 6px 0;
+    }
   }
 }
 </style>

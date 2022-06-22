@@ -75,16 +75,7 @@
 import LayerFlags from '@/components/LayerFlags.vue'
 import LayersTable from '@/components/LayersTable.vue'
 import { layersGroups, transformLayersTree } from '@/utils/layers'
-
-// like lodash's pull function, but works with Vue arrays reactivity
-function pull (list, ...values) {
-  for (const v of values) {
-    const i = list.indexOf(v)
-    if (i !== -1) {
-      list.splice(i, 1)
-    }
-  }
-}
+import { pull } from '@/utils/collections'
 
 export default {
   name: 'ProjectLayers',

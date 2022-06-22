@@ -54,6 +54,7 @@
 
         <v-list
           class="roles-panel"
+          empty-text="Empty"
           :items="settings.auth.roles"
           :selected="selectedIndex"
           @click-item="selectRole"
@@ -177,7 +178,12 @@
           @click:row="toggleAttributes"
         >
           <!-- eslint-disable-next-line -->
-          <template v-slot:leaf.attrs="{ item }">
+          <template v-slot:leaf.perms="{ item }">
+            <layer-permissions-flags
+              :capabilities="layersPermissionsCapabilities[item.id]"
+              :value="layersPerms[item.id]"
+            />
+            <div class="v-separator"/>
             <v-btn
               v-if="item.attributes"
               class="icon flat"
@@ -185,15 +191,9 @@
               @click="toggleAttributes(item)"
             >
               <v-icon name="attribute-table" size="18"/>
+              <!-- <v-icon name="arrow-down" size="12" class="ml-2" opacity="0.5"/> -->
+              <!-- or maybe toggle button style? -->
             </v-btn>
-          </template>
-
-          <!-- eslint-disable-next-line -->
-          <template v-slot:leaf.perms="{ item }">
-            <layer-permissions-flags
-              :capabilities="layersPermissionsCapabilities[item.id]"
-              :value="layersPerms[item.id]"
-            />
           </template>
 
           <!-- eslint-disable-next-line -->
@@ -207,7 +207,6 @@
                 class="f-justify-end"
               />
             </td>
-            <td/>
           </template>
 
           <!-- eslint-disable-next-line -->
@@ -218,6 +217,28 @@
             />
           </template> -->
         </layers-table>
+
+        <v-list
+          v-if="selectedRole && roleTab === 'topics'"
+          class="topics-perms"
+          label="Visible Topics"
+          :items="settings.topics"
+        >
+          <template v-slot:item="{ item: topic, index }">
+            <div class="topic-item">
+              <span class="title" v-text="topic.title"/>
+              <v-checkbox :value="roleTopicsSet.has(topic.id)" @input="toggleTopicVisibility(topic.id)"/>
+              <span class="layers">
+                <span
+                  v-for="layer in topicsLayers[index]"
+                  :key="layer.id"
+                  :disabled="!layer.visible"
+                  v-text="layer.title"
+                />
+              </span>
+            </div>
+          </template>
+        </v-list>
       </div>
     </div>
   </div>
@@ -245,6 +266,7 @@ import AttributePermissionsFlags from '@/components/AttributePermissionsFlags.vu
 import LayerPermissionsFlags from '@/components/LayerPermissionsFlags.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
+import { pull } from '@/utils/collections'
 import { transformLayersTree } from '@/utils/layers'
 import { layerCapabilities, layerPermissionsCapabilities } from '@/flags'
 import { TaskState, watchTask } from '@/tasks'
@@ -333,9 +355,10 @@ export default {
     roleTabs () {
       return [
         { label: 'Role Settings', key: 'settings' },
-        { label: 'Base Layers', key: 'base-layers' },
-        { label: 'Layers & Attributes', key: 'overlays' }
-      ]
+        { label: 'Base Layers', key: 'base-layers', disabled: !this.settings.base_layers.length },
+        { label: 'Layers & Attributes', key: 'overlays', disabled: !this.overlays.length },
+        { label: 'Topics', key: 'topics', disabled: !this.settings.topics.length }
+      ].filter(i => !i.disabled)
     },
     selectedRole () {
       return this.settings.auth?.roles?.[this.selectedIndex]
@@ -378,11 +401,6 @@ export default {
         value: 'perms',
         align: 'center',
         header: { attrs: { width: 1 } }
-      }, {
-        text: 'Attributes',
-        value: 'attrs',
-        align: 'center',
-        header: { attrs: { width: 1 } }
       }]
     },
     projectUsers () {
@@ -399,6 +417,16 @@ export default {
       return mapValues(this.project.meta.layers, l => layerPermissionsCapabilities(
         this.layersProjectCapabilities[l.id], this.settings.layers[l.id]?.flags, this.layersPerms[l.id])
       )
+    },
+    roleTopicsSet () {
+      return new Set(this.selectedRole?.permissions.topics)
+    },
+    topicsLayers () {
+      return this.settings.topics.map(t => t.visible_overlays.map(lid => ({
+        id: lid,
+        title: this.project.meta.layers[lid].title,
+        visible: this.layersPerms[lid].includes('view')
+      })))
     }
   },
   mounted () {
@@ -414,7 +442,10 @@ export default {
         type: 'users',
         ...params,
         users: [],
-        permissions: initLayersPermissions(this.project.meta.layers)
+        permissions: {
+          ...initLayersPermissions(this.project.meta.layers),
+          topics: this.settings.topics.map(t => t.id)
+        }
       }
     },
     setAuthType (type) {
@@ -465,6 +496,17 @@ export default {
         this.$set(this.settings.auth, 'roles', null)
       }
       // this.settings.auth.roles = enable ? [] : null
+    },
+    toggleTopicVisibility (id) {
+      const { permissions } = this.selectedRole
+      if (!permissions.topics) {
+        this.$set(permissions, 'topics', [])
+      }
+      if (this.roleTopicsSet.has(id)) {
+        pull(permissions.topics, id)
+      } else {
+        permissions.topics.push(id)
+      }
     }
   }
 }
@@ -586,5 +628,42 @@ export default {
   margin: 6px;
   border: 1px solid #ddd;
   border-top: none;
+  // .detail {
+  //   .flags {
+  //     margin-right: 39px;
+  //   }
+  // }
+}
+.topics-perms {
+  // max-width: 500px;
+  .topic-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    width: 100%;
+    // flex-grow: 1;
+    padding-block: 4px;
+    cursor: default;
+    .title {
+      font-weight: 500;
+    }
+    .checkbox {
+      grid-area: 1 / 2 / 3 / 3;
+    }
+    .layers {
+      font-size: 13px;
+      opacity: 0.85;
+      > * {
+        &[disabled="disabled"] {
+          text-decoration: line-through;
+          opacity: 0.5;
+        }
+        &:not(:last-child) {
+          &::after {
+            content: ", ";
+          }
+        }
+      }
+    }
+  }
 }
 </style>
