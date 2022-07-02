@@ -10,6 +10,7 @@ import ProjectFiles from '@/views/ProjectFiles.vue'
 import ProjectMap from '@/views/ProjectMap.vue'
 import ProjectLayers from '@/views/ProjectLayers.vue'
 import LayerAttributes from '@/views/LayerAttributes.vue'
+import LayerSettings from '@/views/LayerSettings.vue'
 import PublishView from '@/views/PublishView.vue'
 import ProjectTopics from '@/views/ProjectTopics.vue'
 import ProjectAccess from '@/views/ProjectAccess.vue'
@@ -75,6 +76,12 @@ const routes = [
         name: 'attributes',
         component: LayerAttributes,
         // props: true
+        props: route => pick(route.params, ['layerId'])
+      },
+      {
+        path: 'layers/settings/:layerId',
+        name: 'layer-settings',
+        component: LayerSettings,
         props: route => pick(route.params, ['layerId'])
       },
       {
