@@ -336,6 +336,7 @@ export default {
   transition: all .4s cubic-bezier(.25,.8,.25,1);
   outline: none;
   cursor: default;
+  line-height: normal; // (nice center alignment of span and input elements)
 
   .placeholder {
     opacity: 0.6;

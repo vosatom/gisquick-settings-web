@@ -21,6 +21,7 @@ export default {
       type: String,
       default: 'items'
     },
+    baseIndent: [String, Number],
     indent: {
       type: [String, Number],
       default: 26
@@ -28,6 +29,9 @@ export default {
     groupContentAttrs: Function
   },
   computed: {
+    numBaseIndent () {
+      return parseInt(this.baseIndent)
+    },
     numIndent () {
       return parseInt(this.indent)
     }
@@ -42,9 +46,7 @@ export default {
         : Boolean(this.expanded?.[group[this.itemKey]])
     },
     indendStyle (depth) {
-      // const baseIndent = 6
-      // return this.indent ? { paddingLeft: `${baseIndent + this.numIndent * depth}px` } : null
-      return this.indent ? { paddingLeft: `${this.numIndent * depth}px` } : null
+      return this.indent ? { paddingLeft: `${this.numBaseIndent + this.numIndent * depth}px` } : null
     },
     renderGroup (h, group, depth) {
       const style = this.indendStyle(depth)

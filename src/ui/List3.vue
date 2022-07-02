@@ -18,7 +18,6 @@
   >
     <document-listener
       v-if="focused"
-      stacked
       :key="_uid"
       src="list"
       @click="onDocumentClick"
@@ -189,7 +188,8 @@ export default {
       // font-weight: 500;
     }
     &.highlighted {
-      background-color: #eee;
+      // background-color: #eee;
+      background-color: var(--highlight-color);
     }
     &:not(:first-child):not(.highlighted) {
       border-top-color: rgba(#D3D3D3, 0.25);

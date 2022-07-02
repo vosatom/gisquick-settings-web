@@ -7,7 +7,6 @@
   >
     <document-listener
       v-if="focused"
-      stacked
       :key="_uid"
       src="list"
       @click="onDocumentClick"

@@ -59,7 +59,7 @@
             v-else
             :key="row"
             :class="{even: row % 2, selected: selectedLookup[item[itemKey]]}"
-            @click="$emit('row-click', item)"
+            @click="$emit('row-click', item, row)"
           >
             <td
               v-for="(col, index) in columns"

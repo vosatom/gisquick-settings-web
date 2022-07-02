@@ -129,6 +129,7 @@ export default {
   user-select: none;
   cursor: pointer;
   margin: 6px;
+  line-height: normal;
   &[disabled] {
     opacity: 0.75;
     cursor: not-allowed;

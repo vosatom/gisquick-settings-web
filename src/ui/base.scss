@@ -149,16 +149,18 @@
   --tooltip-bg: #555;
   --tooltip-color: #fff;
   --popup-bg:#fff;
+  --highlight-color: #eee;
 }
 
 .dark {
   color: #fff;
   --icon-color: #fff;
   --fill-color: rgba(0, 0, 0, 0.8);
-  --border-color: #fff;
+  --border-color: rgba(255, 255, 255, 0.6);
   --tooltip-bg: #bbb;
   --tooltip-color: #333;
   --popup-bg: #333;
+  --highlight-color: rgba(250, 230, 230, 0.2);
 
   .popup-list {
     color: #fff;
@@ -189,7 +191,9 @@ hr {
 // Vertical separator
 .v-separator {
   align-self: stretch;
-  background-color: #77777744;
+  background-color: var(--border-color);
+  opacity: 0.45;
+
   width: 1px;
   flex-shrink: 0;
   margin: 6px 4px;
@@ -215,17 +219,4 @@ small {
 
 .shadow-2 {
   box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 3px 3px rgba(0,0,0,0.15);
-}
-
-.panel-header {
-  background-color: var(--color-dark);
-  color: #fff;
-  height: 30px;
-  flex-shrink: 0;
-
-  .title {
-    text-transform: uppercase;
-    font-weight: 500;
-    font-size: 15px;
-  }
 }
