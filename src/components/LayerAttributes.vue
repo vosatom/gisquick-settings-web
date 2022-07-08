@@ -24,7 +24,7 @@
         />
         <div class="v-separator"/>
         <v-menu
-          aria-label="Project actions"
+          aria-label="More options"
           transition="slide-y"
           align="rr;bb,tt"
           content-class="popup-menu"
@@ -77,7 +77,6 @@
         <template v-slot:header(export)="{ column }">
           <v-checkbox
             :label="column.label"
-            class="xf-justify-center"
             :value="layerSettings.export_fields && layerSettings.export_fields.length > 0"
             @input="toggleAll('export_fields')"
           />
@@ -109,9 +108,9 @@
             class="f-col py-2"
             v-text="item.name"
             draggable="true"
-            @dragstart="attrDragHandlers.dragstart($event, item)"
-            @dragover.prevent="attrDragHandlers.dragover($event, item)"
-            @drop="attrDragHandlers.drop($event, item)"
+            @dragstart="reorderHandlers.dragstart($event, item.name)"
+            @dragover.prevent="reorderHandlers.dragover($event, item.name)"
+            @drop="reorderHandlers.drop($event, item.name)"
           />
         </template>
 
@@ -169,21 +168,6 @@
             >
               <v-icon name="circle-i-outline" size="18"/>
             </v-btn>
-
-            <!-- <v-btn
-              class="icon flat"
-              :color="attrTableMap[item.name] ? 'primary' : '#aaa'"
-              @click="toggleAttribute('attr_table_fields', item.name, !attrTableMap[item.name])"
-            >
-              <v-icon name="attribute-table" size="18"/>
-            </v-btn>
-            <v-btn
-              class="icon flat"
-              :color="infoPanelSet.has(item.name) ? 'primary' : '#aaa'"
-              @click="toggleAttribute('info_panel_fields', item.name, !infoPanelSet.has(item.name))"
-            >
-              <v-icon name="circle-i-outline" size="18"/>
-            </v-btn> -->
           </div>
         </template>
 
@@ -213,10 +197,15 @@
         </template>
       </v-table>
     </section>
+    <!-- <small class="switch f-row-ac m-1">
+      <v-icon name="circle-i-outline" class="m-1" size="16"/>
+      <span>You can change order of attributes with Drag&Drop</span>
+    </small> -->
 
     <section class="card f-col">
       <div class="header f-row-ac px-2 dark">
         <span class="title">Data Preview</span>
+        <!-- <span class="title">Data Preview - {{ previewMode === 'table' ? 'Table' : 'Info Panel' }}</span> -->
         <v-spinner v-if="loading" class="m-2" size="18" width="2"/>
         <div class="f-grow"/>
         <v-btn
@@ -239,18 +228,18 @@
           :columns="attributeTableColumns"
           item-key="_id"
           :items="tableData"
+          :loading="loading"
           :selected="selectedFeatureId"
           @row-click="(f, row) => selectedRow = row"
         >
           <template v-slot:header(default)="{ column }">
             <div
-              draggable="true"
               :class="{drop: dragOver === column}"
               v-text="column.label"
-              @dragstart="onDragStart($event, column)"
-              @dragover.prevent="onDragOver($event, column)"
-              @dragend="onDragEnd(column)"
-              @drop="onDrop(column)"
+              draggable="true"
+              @dragstart="reorderHandlers.dragstart($event, column.key)"
+              @dragover.prevent="reorderHandlers.dragover($event, column.key)"
+              @drop="reorderHandlers.drop($event, column.key)"
             />
           </template>
           <template v-for="(slot, name) in attrTableSlots" v-slot:[`cell(${name})`]="{ item }">
@@ -332,12 +321,11 @@
         <div class="scripts f-col">
           <v-select
             label="Component"
-            class="filled xinline"
+            class="filled"
             :items="scriptsItems"
             :value="layerSettings.infopanel_component"
             @input="setInfopanelComponent"
           />
-          <div class="my-2"/>
           <p class="note my-4 mx-2">
             You can completely customize appearance of layer's Info Panel by creating your own Vue.js component.
             For more information, wait for official documentation. 
@@ -390,7 +378,6 @@
 
 <script>
 import intersection from 'lodash/intersection'
-import isEqual from 'lodash/isEqual'
 import keyBy from 'lodash/keyBy'
 import mapValues from 'lodash/mapValues'
 import pickBy from 'lodash/pickBy'
@@ -403,6 +390,7 @@ import { excludedFieldsSet } from '@/adapters/attributes'
 import { externalComponent } from '@/components-loader'
 import { TaskState, watchTask } from '@/tasks'
 import { pull } from '@/utils/collections'
+import { isEmpty } from 'ol/extent'
 
 export async function loadUmdScript (url, filename) {
   return new Promise((resolve, reject) => {
@@ -473,7 +461,6 @@ export default {
         layoutOption = {
           text: 'Disable separate order layouts',
           action: () => {
-            console.log(this.layerSettings.fields_order)
             this.layerSettings.fields_order = {
               global: this.layoutAttributes.map(a => a.name)
             }
@@ -498,6 +485,11 @@ export default {
           text: 'Reset Visibility',
           action: () => {
             this.$delete(this.layerSettings, 'excluded_fields')
+          }
+        }, {
+          text: 'Reset Order',
+          action: () => {
+            this.$delete(this.layerSettings, 'fields_order')
           }
         }
       ]
@@ -596,8 +588,8 @@ export default {
       return keyBy(this.attributes, 'name')
     },
     layoutAttributes () {
-      if (this.layerSettings.fields_order) {
-        const fields = this.layerSettings.fields_order[this.orderLayout || 'global']
+      const fields = this.layerSettings.fields_order?.[this.orderLayout || 'global']
+      if (fields) {
         return fields.map(name => this.attrsMap[name])
       }
       return this.attributes
@@ -623,12 +615,21 @@ export default {
     layer () {
       const { id, name } = this.project.meta.layers[this.layerId]
       const { attributes: _, ...settings } = this.layerSettings
-      return {
+      const layer = {
         id,
         name,
         attributes: this.finalAttributes,
         ...settings
       }
+      if (this.layerSettings.fields_order) {
+        layer.info_panel_fields = this.layerSettings.fields_order.infopanel || this.layerSettings.fields_order.global
+        // ? attr_table_fields
+      }
+      if (this.excludedInfopanelFields.size) {
+        layer.info_panel_fields = layer.info_panel_fields || this.finalAttributes.map(a => a.name)
+        layer.info_panel_fields = layer.info_panel_fields.filter(n => !this.excludedInfopanelFields.has(n))
+      }
+      return layer
     },
     selectedFeature () {
       return this.features[this.selectedRow]
@@ -687,7 +688,8 @@ export default {
       let fields
       if (this.layerSettings.fields_order) {
         fields = this.layerSettings.fields_order.table || this.layerSettings.fields_order.global
-      } else {
+      }
+      if (!fields) {
         fields = this.attributes.map(a => a.name)
       }
       const excluded = this.excludedTableFields
@@ -782,65 +784,35 @@ export default {
       }
       return items
     },
-    attrDragHandlers () {
+    reorderHandlers () {
       let dragSrc
       return {
         dragstart: (e, attr) => {
-          dragSrc = attr.name
+          dragSrc = attr
           e.dataTransfer.effectAllowed = 'move'
         },
         dragover: (e, attr) => {
-          e.dataTransfer.dropEffect = dragSrc !== attr.name ? 'move' : 'none'
+          e.dataTransfer.dropEffect = dragSrc !== attr ? 'move' : 'none'
         },
         drop: (e, attr) => {
-          const target = attr.name
-          if (!this.orderLayout && !this.layerSettings.fields_order) {
+          if (!this.orderLayout && !this.layerSettings.fields_order?.global) {
             this.$set(this.layerSettings, 'fields_order', { global: this.attributes.map(a => a.name) })
           }
           const layout = this.layerSettings.fields_order[this.orderLayout || 'global']
-
-          // v3
           const sIndex = layout.indexOf(dragSrc)
-          const dIndex = layout.indexOf(target)
+          const dIndex = layout.indexOf(attr)
           layout.splice(sIndex, 1)
           layout.splice(dIndex, 0, dragSrc)
+          console.log(layout)
         }
       }
     }
   },
-  mounted () {
-    // this.fetchFeatures()
+  created () {
+    this.initStateFromSettings(this.layerSettings)
+    this.fetchFeatures()
   },
   watch: {
-    layerSettings: {
-      immediate: true,
-      handler (ls) {
-        // if (!ls.attr_table_fields) {
-        //   this.$set(ls, 'attr_table_fields', this.attributes.map(a => a.name))
-        // }
-        // if (!ls.info_panel_fields) {
-        //   this.$set(ls, 'info_panel_fields', this.attributes.map(a => a.name))
-        // }
-        this.attributes.forEach(attr => {
-          if (!ls.attributes?.[attr.name]) {
-            // console.log('missing attributes settings', attr.name)
-            // this.$set(ls.attributes, attr.name, { widget: null })
-            // this.$set(ls.attributes, attr.name, { widget: undefined })
-          }
-        })
-        if (ls.excluded_fields) {
-          const { infopanel, table } = ls.excluded_fields
-          this.linkedVisibility = isEqual(infopanel, table)
-        }
-        this.orderLayout = ls.fields_order?.infopanel ? 'infopanel' : null
-      }
-    },
-    layerId: {
-      immediate: true,
-      handler () {
-        this.fetchFeatures()
-      }
-    },
     layerFormatters () {
       if (this.features) {
         const features = this.features.map(f => f.clone())
@@ -850,6 +822,13 @@ export default {
     }
   },
   methods: {
+    initStateFromSettings (ls) {
+      if (ls.excluded_fields) {
+        const { infopanel, table } = ls.excluded_fields
+        this.linkedVisibility = !infopanel?.length && !table?.length
+      }
+      this.orderLayout = ls.fields_order?.infopanel ? 'infopanel' : null
+    },
     async fetchFeatures (page = 1) {
       const mapProjection = this.project.meta.projection.code
       // fetch only attributes, without geometry
@@ -914,37 +893,6 @@ export default {
         this.selectedRow += 1
       }
     },
-    onDragStart (e, col) {
-      this.dragSource = col
-      e.dataTransfer.effectAllowed = 'move'
-    },
-    onDragOver (e, col) {
-      if (col !== this.dragSource) {
-        this.dragOver = col
-      }
-      e.dataTransfer.dropEffect = col !== this.dragSource ? 'move' : 'none'
-    },
-    onDragEnd (col) {
-      this.dragSource = null
-      this.dragOver = null
-    },
-    onDrop (col) {
-      if (col === this.dragSource) {
-        return
-      }
-      const attrs = this.layerSettings.attr_table_fields
-      // v1 - swap columns
-      // const sIndex = attrs.indexOf(this.dragSource.key)
-      // const dIndex = attrs.indexOf(col.key)
-      // this.$set(attrs, sIndex, col.key)
-      // this.$set(attrs, dIndex, this.dragSource.key)
-
-      // v2
-      const sIndex = attrs.indexOf(this.dragSource.key)
-      attrs.splice(sIndex, 1)
-      const dIndex = attrs.indexOf(col.key)
-      attrs.splice(sIndex === dIndex ? dIndex + 1 : dIndex, 0, this.dragSource.key)
-    },
     toggleAttribute (field, name, val) {
       if (!this.layerSettings[field]) {
         this.$set(this.layerSettings, field, [])
@@ -956,24 +904,12 @@ export default {
         list.splice(list.indexOf(name), 1)
       }
     },
-    addExcludedField (key, name) {
-      const excluded = this.layerSettings.excluded_fields
-      if (!excluded[key]) {
-        this.$set(excluded, key, [name])
-      } else {
-        excluded[key].push(name)
-      }
-    },
-    removeExcludedField (key, name) {
-      const excluded = this.layerSettings.excluded_fields
-
-    },
     toggleFieldVisibility (model, name) {
       const isExcluded = this[model === 'table' ? 'excludedTableFields' : 'excludedInfopanelFields'].has(name)
       const excluded = this.layerSettings.excluded_fields ?? {}
-      let { global = [], table = [], infopanel = [] } = excluded
+      let { global = [], table = [], infopanel = [] } = pickBy(excluded)
       // 'extract' globally excluded fields
-      const newExcluded = {
+      let newExcluded = {
         infopanel: infopanel.concat(global),
         table: table.concat(global)
       }
@@ -997,7 +933,14 @@ export default {
         newExcluded.infopanel = newExcluded.infopanel.filter(n => !mutual.includes(n))
         newExcluded.table = newExcluded.table.filter(n => !mutual.includes(n))
       }
-      this.$set(this.layerSettings, 'excluded_fields', newExcluded)
+      newExcluded = pickBy(newExcluded, v => v.length)
+      const empty = !Object.keys(newExcluded).length // seems like lodash's isEmpty not working here on reactive data
+      console.log('empty', empty, 'lodash', isEmpty(newExcluded))
+      if (empty) {
+        this.$delete(this.layerSettings, 'excluded_fields')
+      } else {
+        this.$set(this.layerSettings, 'excluded_fields', newExcluded)
+      }
     },
     setAttributeSetting (attr, key, value) {
       if (!this.layerSettings.attributes) {
@@ -1102,6 +1045,11 @@ export default {
 <style lang="scss" scoped>
 @import '@/card.scss';
 
+.header {
+  ::v-deep .input {
+    height: 28px;
+  }
+}
 .table-container {
   border: 1px solid var(--border-color);
   .select {
@@ -1115,9 +1063,27 @@ export default {
     }
   }
 }
-.drop {
-  // background-color: var(--color-primary);
-  opacity: 0.3;
+.table-container {
+  ::v-deep {
+    table {
+      border-bottom: 1px solid #ddd;
+    }
+    thead {
+      th[role="columnheader"] {
+        height: 40px;
+        padding-block: 5px;
+      }
+      tr.progress th {
+        top: 40px!important;
+      }
+    }
+    td {
+      white-space: nowrap;
+      max-width: 600px; // TODO: multiple sizes dependent by columns count
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+  }
 }
 .info-panel-settings {
   display: grid;
@@ -1129,7 +1095,7 @@ export default {
   }
   .scripts {
     // grid-area: 2 / 2 / 3 / 3;
-    grid-area: 1 / 2 / 2 / 3;
+    grid-area: 1 / 2 / 3 / 3;
     .btn {
       height: 32px;
     }
@@ -1140,6 +1106,7 @@ export default {
     // margin-right: 6px;
     // border-top: 1px solid #ddd;
     background-color: #fff;
+    align-self: end;
   }
 }
 .scripts {
