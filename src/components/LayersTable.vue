@@ -1,5 +1,6 @@
 <script>
 import _xor from 'lodash/xor'
+import mapValues from 'lodash/mapValues'
 
 import { layersGroups, filterLayers, layersList } from '@/utils/layers'
 import { sanitize, escapeRegExp, removeDiacritics } from '@/ui/utils/text'
@@ -91,7 +92,8 @@ export default {
     selectedClass: {
       type: String,
       default: 'selected'
-    }
+    },
+    labelRenderData: Object
   },
   data () {
     return {
@@ -139,6 +141,15 @@ export default {
       const val = (this.collapsed && model.length === 0) || (!this.collapsed && model.length < this.groups.length) ? this.groups.map(g => g.name) : []
       this.$emit(evt, val)
     },
+    itemBoundRenderData (item) {
+      if (this.labelRenderData?.on) {
+        return {
+          ...this.labelRenderData,
+          on: mapValues(this.labelRenderData.on, l => e => l(e, item))
+        }
+      }
+      return this.labelRenderData
+    },
     renderLayerRow (item, group, depth) {
       let cmp
       const indentStyle = {
@@ -169,6 +180,7 @@ export default {
             class="title f-row-ac f-shrink"
             style={indentStyle}
             onClick={() => this.$emit('click:row', item)}
+            {...this.itemBoundRenderData(item)}
           >
             <v-icon name={icon} size="24" class="mr-2"/>
             {label}
@@ -237,7 +249,7 @@ export default {
             onClick={() => this.$emit('click:row', group)}
             key={group.name}
           >
-            <div class="f-row-ac" style={paddingStyle}>
+            <div class="f-row-ac" style={paddingStyle} {...this.itemBoundRenderData(group)}>
               <v-icon
                 class="mr-2"
                 size="24"

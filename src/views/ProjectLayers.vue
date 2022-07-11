@@ -4,31 +4,43 @@
       <span>Layers</span>
     </portal> -->
     <span class="label">Base Layers</span>
-    <v-btn
+    <!-- <v-btn
       class="switch small m-0"
       color="yellow"
       :disabled="!selected"
       @click="swapSelectedLayer"
     >
       <v-icon name="swap"/>
-      <!-- <span class="ml-2">Swap</span> -->
-    </v-btn>
+    </v-btn> -->
     <span class="label">Overlays</span>
     <layers-table
       class="base-layers"
       :items="baseLayers"
-      :columns="[]"
+      :columns="baseLayersColumns"
       :collapsed.sync="collapsed.baseLayers"
       :selected="selected"
+      :label-render-data="dragEvents"
       @click:row="onClick"
-    />
+      @dragover.native.prevent="onLayerDragOver"
+      @drop.native="onLayerDrop(baseLayers)"
+    >
+      <!-- eslint-disable-next-line -->
+      <template v-slot:leaf.settings="{ item }">
+        <v-btn class="icon flat mx-auto" :to="`layers/settings/${item.id}`">
+          <v-icon name="settings"/>
+        </v-btn>
+      </template>
+    </layers-table>
     <layers-table
       class="overlays"
       :items="overlays"
-      :columns="overlaysHeaders"
+      :columns="overlaysColumns"
       :collapsed.sync="collapsed.overlays"
       :selected="selected"
+      :label-render-data="dragEvents"
       @click:row="onClick"
+      @dragover.native.prevent="onLayerDragOver"
+      @drop.native="onLayerDrop(overlays)"
     >
       <!-- eslint-disable-next-line -->
       <template v-slot:leaf.flags="{ item }">
@@ -41,15 +53,6 @@
 
       <!-- eslint-disable-next-line -->
       <template v-slot:leaf.attributes="{ item }">
-        <!-- <router-link
-          v-if="item.attributes"
-          :disabled="!item.flags.includes('query')"
-          class="f-row-ac f-justify-center"
-          :to="`layers/attributes/${item.id}`"
-        >
-          <v-icon name="attribute-table" size="18"/>
-        </router-link> -->
-
         <v-btn
           v-if="item.attributes"
           class="icon flat mx-auto"
@@ -61,6 +64,16 @@
       </template>
 
       <!-- eslint-disable-next-line -->
+      <template v-slot:leaf.settings="{ item }">
+        <v-btn
+          class="icon flat mx-auto"
+          :to="`layers/settings/${item.id}`"
+        >
+          <v-icon name="settings"/>
+        </v-btn>
+      </template>
+
+      <!-- eslint-disable-next-line -->
       <!-- <template v-slot:leaf.publish="{ item }">
         <v-checkbox
           class="f-justify-center"
@@ -68,6 +81,10 @@
         />
       </template> -->
     </layers-table>
+    <small class="switch f-row-ac m-1">
+      <v-icon name="circle-i-outline" class="m-1" size="16"/>
+      <span>Drag top level items to change layers category</span>
+    </small>
   </div>
 </template>
 
@@ -98,29 +115,26 @@ export default {
     }
   },
   computed: {
-    // baseLayersHeaders () {
-    //   return [
-    //     {
-    //       text: 'Publish',
-    //       value: 'publish'
-    //     }
-    //   ]
-    // },
-    overlaysHeaders () {
+    baseLayersColumns () {
+      return [{
+        text: 'Settings',
+        value: 'settings',
+        header: { width: 1 },
+        align: 'center'
+      }]
+    },
+    overlaysColumns () {
       return [
         {
-        //   text: 'Publish',
-        //   value: 'publish'
-        // }, {
-        //   text: 'Hidden',
-        //   value: 'hidden'
-        // }, {
           text: 'Flags',
           value: 'flags',
           align: 'right'
         }, {
-          text: 'Attributes',
-          value: 'attributes'
+        //   text: 'Attributes',
+        //   value: 'attributes'
+        // }, {
+          text: 'Settings',
+          value: 'settings'
         }
       ]
     },
@@ -156,13 +170,45 @@ export default {
       return tree
         .filter(n => n.layers)
         .reduce((data, g) => (data[g.name] = layersGroups(g.layers).map(sg => sg.name), data), {})
+    },
+    dragEvents () {
+      return {
+        attrs: {
+          draggable: 'true'
+        },
+        on: {
+          dragstart: (e, item) => {
+            const key = item.id || item.name
+            const isTopLevelItem = this.project.meta.layers_tree.some(i => (i.id || i.name) === key)
+            if (isTopLevelItem) {
+              this.dragLayer = item
+               e.dataTransfer.effectAllowed = 'move'
+            } else {
+               e.dataTransfer.effectAllowed = 'none'
+            }
+            // e.dataTransfer.effectAllowed = isTopLevelItem ? 'move' : 'none'
+          },
+          dragend: () => {
+            this.dragLayer = null
+          }
+        }
+      }
     }
   },
   methods: {
     onClick (item) {
       const key = item.id || item.name
       if (this.project.meta.layers_tree.some(i => (i.id || i.name) === key)) {
-        this.selected = key
+        // this.selected = key
+      }
+    },
+    onLayerDragOver (e) {
+      // e.dataTransfer.dropEffect = this.dragLayer ? 'move' : 'none'
+      // ev.dataTransfer.effectAllowed = "move"
+    },
+    onLayerDrop (targetList) {
+      if (!targetList.includes(this.dragLayer)) {
+        this.swapLayer(this.dragLayer)
       }
     },
     // swapSelectedLayer () {
@@ -182,6 +228,25 @@ export default {
     //     pull(sOpen, ...opened)
     //   }
     // },
+    swapLayer (layer) {
+      const key = layer.id || layer.name
+      const { base_layers: base } = this.settings
+      const isBaseLayer = base.includes(key)
+      if (isBaseLayer) {
+        pull(base, key)
+      } else {
+        base.push(key)
+      }
+
+      // update collapsed groups models
+      const isGroup = !!this.project.meta.layers_tree.find(i => (i.id || i.name) === key)?.layers
+      if (isGroup) {
+        const [sList, dList] = isBaseLayer ? Object.values(this.collapsed) : Object.values(this.collapsed).reverse()
+        const collapsed = sList.filter(name => name === key || this.groupsInfo[key].includes(name))
+        dList.push(...collapsed)
+        pull(sList, ...collapsed)
+      }
+    },
     swapSelectedLayer () {
       const { base_layers: base } = this.settings
       const isBaseLayer = base.includes(this.selected)
@@ -216,17 +281,23 @@ export default {
 <style lang="scss" scoped>
 .layers-settings {
   display: grid;
-  grid-template-columns: 1fr auto auto 1fr;
-  gap: 6px;
+  // grid-template-columns: 1fr auto auto 1fr;
+  grid-template-columns: 1fr 1fr;
+  // gap: 4px;
+  column-gap: 6px;
 }
+// .switch {
+//   grid-column: 2 / 4;
+// }
+// .base-layers {
+//   grid-column: 1 / 3;
+// }
+// .overlays {
+//   grid-column: 3 / 5;
+// }
 .switch {
-  grid-column: 2 / 4;
-}
-.base-layers {
   grid-column: 1 / 3;
-}
-.overlays {
-  grid-column: 3 / 5;
+  justify-self: center;
 }
 .layers-table {
   border: solid #ddd;
@@ -241,9 +312,9 @@ export default {
   // opacity: 0.7;
 
   font-size: 13px;
-  background-color: #555;
-  color: #fff;
-  height: 24px;
+  // background-color: #555;
+  // color: #fff;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
