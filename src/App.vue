@@ -1,6 +1,6 @@
 <template>
   <div class="app">
-    <div class="header-bg elevation-3"/>
+    <div class="header-bg"/>
     <!-- <div class="logo f-row-ac m-2">
       <img src="./assets/text_logo_dark.svg"/>
     </div> -->
@@ -203,7 +203,10 @@ html, body, .app {
   grid-template-columns: minmax(auto, 1fr) minmax(auto, 1200px) 1fr;
   grid-template-rows: 48px 1fr;
   // row-gap: 6px;
-  gap: 6px;
+  // column-gap: 1px;
+  // gap: 6px;
+  // gap: 1px;
+  // row-gap: 1px;
   @media (max-width: 1450px) {
     grid-template-columns: auto 1fr auto;
   }
@@ -211,6 +214,11 @@ html, body, .app {
     background-color: #3d3d3d;
     grid-column: 1 / 4;
     grid-row: 1 / 2;
+    // border-bottom: 1px solid #222;
+    // margin-bottom: 1px;
+    // box-shadow: 0 2px 7px rgba(0,0,0,0.2), 0 3px 3px rgba(0,0,0,0.15);
+    box-shadow: 0 3px 3px rgba(0,0,0,0.2);
+    z-index: 1;
   }
   .logo {
     grid-row: 1 / 2;
@@ -218,6 +226,7 @@ html, body, .app {
     max-width: 250px;
     height: 100%;
     // width: 100%;
+    z-index: 1;
     img {
       height: 28px;
     }
@@ -226,11 +235,13 @@ html, body, .app {
     grid-row: 1 / 2;
     grid-column: 2 / 3;
     display: flex;
+    z-index: 1;
   }
   .app-menu {
     grid-row: 1 / 2;
     grid-column: 3 / 4;
     min-width: 92px;
+    z-index: 1;
     .plugin-status {
       height: 22px;
     }

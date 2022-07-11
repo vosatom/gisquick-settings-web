@@ -183,17 +183,19 @@
               :capabilities="layersPermissionsCapabilities[item.id]"
               :value="layersPerms[item.id]"
             />
-            <div class="v-separator"/>
-            <v-btn
-              v-if="item.attributes"
-              class="icon flat"
-              :color="attributesDetail === item.id ? '' : '#aaa'"
-              @click="toggleAttributes(item)"
-            >
-              <v-icon name="attribute-table" size="18"/>
-              <!-- <v-icon name="arrow-down" size="12" class="ml-2" opacity="0.5"/> -->
-              <!-- or maybe toggle button style? -->
-            </v-btn>
+            <template v-if="item.attributes">
+              <div class="v-separator"/>
+              <v-btn
+                class="icon flat"
+                :color="attributesDetail === item.id ? '' : '#aaa'"
+                @click="toggleAttributes(item)"
+              >
+                <v-icon name="attribute-table" size="18"/>
+                <!-- <v-icon name="arrow-down" size="12" class="ml-2" opacity="0.5"/> -->
+                <!-- or maybe toggle button style? -->
+              </v-btn>
+            </template>
+            <div v-else class="end-padding"/>
           </template>
 
           <!-- eslint-disable-next-line -->
@@ -391,16 +393,16 @@ export default {
       return [{
         text: 'Permissions',
         value: 'perms',
-        align: 'center',
-        header: { attrs: { width: 1 } }
+        align: 'right',
+        header: { width: 1 },
       }]
     },
     overlaysColumns () {
       return [{
         text: 'Permissions',
         value: 'perms',
-        align: 'center',
-        header: { attrs: { width: 1 } }
+        align: 'right',
+        header: { width: 1 }
       }]
     },
     projectUsers () {
@@ -665,5 +667,8 @@ export default {
       }
     }
   }
+}
+.end-padding {
+  width: 40px;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="topics mb-2">
+  <div class="topics">
     <!-- <div class="toolbar dark">
       <span class="title">Topics</span>
     </div> -->

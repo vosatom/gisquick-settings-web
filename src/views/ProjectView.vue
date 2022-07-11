@@ -43,58 +43,57 @@
       icon="warning"
       text="Are you sure to delete this project?"
     />
-    <div class="panel dark p-2"/>
     <div v-if="project && settings" class="project-page f-col light">
       <portal to="menu">
-      <nav class="menubar2 dark f-grow f-row-ac">
-      <!-- <nav class="menubar f-row-ac mb-2 px-2"> -->
-        <router-link class="general m-2" :to="{name: 'project'}">General</router-link>
-        <router-link class="m-2" :to="{name: 'files'}">Files</router-link>
-        <router-link class="m-2" :to="{name: 'map'}">Map</router-link>
-        <router-link class="m-2" :to="{name: 'layers'}">Layers</router-link>
-        <router-link class="m-2" :to="{name: 'topics'}">Topics</router-link>
-        <router-link class="m-2" :to="{name: 'access'}">Permissions</router-link>
-        <div class="v-separator"/>
+        <nav class="menubar2 dark f-grow f-row-ac">
+        <!-- <nav class="menubar f-row-ac mb-2 px-2"> -->
+          <router-link class="general m-2" :to="{name: 'project'}">General</router-link>
+          <router-link class="m-2" :to="{name: 'files'}">Files</router-link>
+          <router-link class="m-2" :to="{name: 'map'}">Map</router-link>
+          <router-link class="m-2" :to="{name: 'layers'}">Layers</router-link>
+          <router-link class="m-2" :to="{name: 'topics'}">Topics</router-link>
+          <router-link class="m-2" :to="{name: 'access'}">Permissions</router-link>
+          <div class="v-separator"/>
 
-        <!-- <v-btn v-if="project.settings" class="small" :to="{name: 'update'}"> -->
-        <v-btn class="small" :to="{name: 'update'}">
-          <v-icon name="qgis" class="mr-2"/>
-          <span>Update</span>
-        </v-btn>
-        <div class="f-grow"/>
-        <v-btn
-          v-if="project.state === 'published'"
-          :href="`/?PROJECT=${project.name}`"
-          class="small"
-        >
-          <v-icon name="map" class="mr-2"/>
-          <span>Map</span>
-        </v-btn>
-        <v-btn
-          class="small"
-          :disabled="!settingsChanged || projectErrors.length > 0"
-          @click="saveSettings"
-        >
-          <v-icon name="save" class="mr-2"/>
-          <!-- <span v-if="refSettings">Save</span> -->
-          <span v-if="project.settings">Save</span>
-          <span v-else>Publish</span>
-        </v-btn>
-        <v-icon v-if="projectErrors.length" name="warning" color="red"/>
-        <v-menu
-          aria-label="Project actions"
-          transition="slide-y"
-          align="rr;bb,tt"
-          content-class="popup-menu"
-          :items="projectMenu"
-        >
-          <template v-slot:activator="{ toggle }">
-            <v-btn aria-label="Menu" class="icon" @click="toggle">
-              <v-icon name="menu-dots"/>
-            </v-btn>
-          </template>
-        </v-menu>
-      </nav>
+          <!-- <v-btn v-if="project.settings" class="small" :to="{name: 'update'}"> -->
+          <v-btn class="small" :to="{name: 'update'}">
+            <v-icon name="qgis" class="mr-2"/>
+            <span>Update</span>
+          </v-btn>
+          <div class="f-grow"/>
+          <v-btn
+            v-if="project.state === 'published'"
+            :href="`/?PROJECT=${project.name}`"
+            class="small"
+          >
+            <v-icon name="map" class="mr-2"/>
+            <span>Map</span>
+          </v-btn>
+          <v-btn
+            class="small"
+            :disabled="!settingsChanged || projectErrors.length > 0"
+            @click="saveSettings"
+          >
+            <v-icon name="save" class="mr-2"/>
+            <!-- <span v-if="refSettings">Save</span> -->
+            <span v-if="project.settings">Save</span>
+            <span v-else>Publish</span>
+          </v-btn>
+          <v-icon v-if="projectErrors.length" name="warning" color="red"/>
+          <v-menu
+            aria-label="Project actions"
+            transition="slide-y"
+            align="rr;bb,tt"
+            content-class="popup-menu"
+            :items="projectMenu"
+          >
+            <template v-slot:activator="{ toggle }">
+              <v-btn aria-label="Menu" class="icon" @click="toggle">
+                <v-icon name="menu-dots"/>
+              </v-btn>
+            </template>
+          </v-menu>
+        </nav>
       </portal>
 
       <div v-if="$route.name === 'project'" class="f-col page-content">
@@ -168,6 +167,11 @@
         <span class="ml-2">Delete Project</span>
       </v-btn>
     </div>
+
+    <portal-target name="left-panel" class="left-panel f-col"/>
+    <portal-target name="right-panel" class="right-panel f-col"/>
+    <!-- <div class="right-panel f-col">
+    </div> -->
   </div>
 </template>
 
@@ -278,7 +282,7 @@ export default {
         const { name, params } = this.$route
         if (name === 'layers') {
           data.json = data.json.layers
-        } else if (name === 'attributes') {
+        } else if (name === 'attributes' || name === 'layer-settings') {
           data.json = data.json.layers[params.layerId]
         } else if (name === 'topics') {
           data.json = data.json.topics
@@ -425,6 +429,8 @@ export default {
   overflow: hidden;
   // display: grid;
   // grid-template-columns: auto 1fr;
+  border-top: solid 4px #3d3d3d;
+  border-bottom: solid 4px #3d3d3d;
   @media (max-width: 1200px) {
     grid-column: 2 / 4;
   }
@@ -471,6 +477,9 @@ export default {
   // background-color: var(--color-primary);
   // background-color: var(--color-dark);
   background: linear-gradient(to right, #444, hsl(0, 4%, 35%));
+  background: linear-gradient(175deg, rgb(83, 91, 119), hsl(0, 4%, 35%));
+  // background: linear-gradient(to right, rgb(82, 43, 78), hsl(0, 4%, 35%));
+  border: 1px solid rgba(#bbb, 0.4);
   .thumbnail {
     // max-height: 120px;
     // max-width: 100%;
@@ -560,5 +569,21 @@ export default {
       font-weight: 500;
     }
   }
+}
+.left-panel {
+  grid-area: 2 / 1 / 3 / 2;
+  // background-position-x: -100;
+  // background-origin: 0 0;
+}
+.left-panel, .right-panel {
+  min-height: 0;
+  max-height: 100%;
+  // background-color: rgb(83, 91, 119);
+  background-color: #3d3d3d;
+  // background-color: #505050;
+  // background-color: #e0e0e0;
+
+  // background: url('~@/assets/bg3.svg') no-repeat;
+  background-size: auto 100%;
 }
 </style>

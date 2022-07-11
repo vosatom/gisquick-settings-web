@@ -2,6 +2,7 @@
   <v-tree-view
     item-children="children"
     item-key="path"
+    base-indent="4"
     indent="22"
     :items="tree"
     :expanded="expanded"

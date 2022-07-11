@@ -103,7 +103,7 @@ export default {
           icon: 'visibility_off',
           disabled: excluded
         }, {
-          text: 'Disable rendering',
+          text: 'Renderless',
           value: 'render_off',
           icon: 'map_off',
           disabled: excluded

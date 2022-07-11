@@ -10,7 +10,7 @@
     <!-- <text-tabs-header :items="tabsMenu" v-model="tab"/> -->
     <div class="map-section f-grow">
       <div class="settings f-col">
-        <text-tabs-header :items="tabsMenu" v-model="tab" class="mx-0"/>
+        <text-tabs-header :items="tabsMenu" v-model="tab"/>
         <!-- <v-tabs-header :items="tabsMenu" v-model="tab"/> -->
         <v-scroll-area>
           <v-tabs :items="tabsMenu" v-model="tab">
@@ -84,6 +84,7 @@
                 :value="settings.initial_extent"
                 @input="settings.initial_extent = roundExtent($event)"
                 @update:edit="toggleExtentEdit('initial_extent')"
+                @zoomto="zoomToExtent"
               />
             </template>
 
@@ -114,7 +115,7 @@
                 </v-menu> -->
               </div>
               <thumbnail-editor v-if="thumbnailSrc" ref="thumbnailEditor" :src="thumbnailSrc"/>
-              <div v-else class="thumbnail">
+              <div v-else class="thumbnail f-col">
                 <img v-if="project.thumbnail" :src="`/api/project/thumbnail/${project.name}`"/>
                 <div v-else class="f-col-ac">
                   <map-img class="placeholder" width="110"/>
@@ -161,12 +162,11 @@
             </template>
           </v-tabs>
         </v-scroll-area>
-
       </div>
-      <!-- <div class="map"/> -->
-      <!-- <div class="map"> -->
+
       <map-view
         ref="map"
+        class="m-2"
         :project="project.name"
         :layers="visibleLayers"
         :config="project.meta"
@@ -177,16 +177,11 @@
             <!-- <v-icon name="overlays"/> -->
             <v-icon size="24" name="layers2"/>
           </v-btn>
-          <!-- <div class="v-separator"/> -->
-          <!-- <v-btn @click="reloadProject">Reload Project</v-btn> -->
         </template>
         <template v-slot:toolbar-end>
           <v-btn class="icon" @click="reloadProject">
             <v-tooltip slot="tooltip" text="Reload project on QGIS server"/>
-            <!-- <v-icon name="server_reload" size="24"/> -->
-            <!-- <v-icon name="server_reload2" size="24"/> -->
             <v-icon name="server_reload" size="24"/>
-            <!-- <v-icon name="server_reload4"/> -->
           </v-btn>
         </template>
         
@@ -223,33 +218,27 @@
         </div>
       </map-view>
 
-      <!-- </div> -->
-
-      <!-- <v-btn class="layers-toggle icon flat" :color="showLayers ? 'primary' : ''" @click="showLayers = !showLayers">
-        <v-icon name="overlays"/>
-      </v-btn> -->
-
-      <transition name="slide-left">
-        <div class="layers-panel f-col" v-if="showLayers">
-          <div class="header dark">
-            Layers
+      <portal :to="panelTarget">
+        <transition name="slide-left">
+          <div class="layers-panel f-col light" v-if="pageVisible && showLayers">
+            <div class="header">
+              Layers
+            </div>
+            <v-scroll-area>
+              <layers-tree :layers="layers">
+                <template v-slot:leaf-append="{ layer }">
+                  <div class="symbol f-row-ac">
+                    <img
+                      v-if="legends[layer.id]"
+                      :src="`data:image/png;base64, ${legends[layer.id]}`"
+                    />
+                  </div>
+                </template>
+              </layers-tree>
+            </v-scroll-area>
           </div>
-          <div class="toolbar f-row-ac">
-          </div>
-          <v-scroll-area>
-            <layers-tree :layers="layers">
-              <template v-slot:leaf-append="{ layer }">
-                <div class="symbol f-row-ac">
-                  <img
-                    v-if="legends[layer.id]"
-                    :src="`data:image/png;base64, ${legends[layer.id]}`"
-                  />
-                </div>
-              </template>
-            </layers-tree>
-          </v-scroll-area>
-        </div>
-      </transition>
+        </transition>
+      </portal>
     </div>
   </div>
 </template>
@@ -259,6 +248,7 @@ import round from 'lodash/round'
 import mapValues from 'lodash/mapValues'
 import { extend } from 'ol/extent'
 
+import Page from '@/mixins/Page'
 import LayersTree from '@/components/LayersTree.vue'
 import ScalesList from '@/components/ScalesList.vue'
 // import ExtentField from '@/components/ExtentField.vue'
@@ -277,6 +267,7 @@ import { extentPrecision } from '@/utils/units'
 export default {
   name: 'ProjectMap',
   components: { LayersTree, MapView, MapImg, DrawExtent, ExtentField, ScalesList, ThumbnailEditor, VTabsHeader, TextTabsHeader },
+  mixins: [ Page ],
   props: {
     project: Object,
     settings: Object
@@ -292,11 +283,13 @@ export default {
     }
   },
   computed: {
+    panelTarget () {
+      return window.innerWidth > 1700 ? 'right-panel' : 'left-panel'
+    },
     qgisMeta () {
       return this.project.meta
     },
     groups () {
-      // return layersGroups(this.qgisMeta.layers)
       return layersGroups(this.qgisMeta.layers_tree)
     },
     flatLayers () {
@@ -532,9 +525,10 @@ export default {
   overflow: hidden;
 }
 .header {
-  background-color: var(--color-dark);
+  background-color: #eee;
+  border-bottom: 1px solid #ddd;
   font-weight: 500;
-  padding: 3px 8px;
+  padding: 4px 8px;
 }
 .map-section {
   display: grid;
@@ -548,25 +542,25 @@ export default {
     grid-area: 1 / 2 / 2 / 3;
     align-self: start;
     justify-self: end;
-    width: 720px;
+    width: clamp(400px, 720px, 100%);
+    // width: clamp(400px, 100%, 720px);
     ::v-deep {
       .map-canvas {
         height: 580px;
       }
     }
   }
-  .layers-panel {
-    height: 100%;
-    grid-area: 1 / 2 / 2 / 3;
-    justify-self: end;
-    position: relative;
-    background-color: #fff;
-    overflow: hidden;
-    border: 1px solid #ddd;
-  }
+}
+.layers-panel {
+  height: 100%;
+
+  position: relative;
+  background-color: #fff;
+  overflow: hidden;
+  // border-right: 1px solid #ddd;
+  margin: 4px;
 }
 .layers-tree {
-  width: 300px;
   overflow: auto;
   .symbol {
     width: 20px;
@@ -592,20 +586,13 @@ export default {
 // }
 
 .settings {
-  // border: 1px solid #ddd;
-  // margin-right: 2px;
+  // border-right: 3px solid #ddd;
   overflow: hidden;
-  // .tabs {
-  //   overflow: auto;
-  // }
 }
 .thumbnail {
   border: 1px dashed var(--border-color, #ddd);
   img {
     width: 100%;
-  }
-  .placeholder {
-    
   }
 }
 </style>

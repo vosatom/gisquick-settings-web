@@ -282,12 +282,9 @@ export default {
       if (slot) {
         return slot(column)
       }
-      // const extra = { width: '1', ...column.header }
-      // return <th class={`header text-${column.align || 'center'}`} {...extra} width={column.header?.width || 1}>{column.text}</th>
-      // const params = { attrs: { width:}}
-      // const extra = { attrs: { width: '1' }, class: 'test' }
-
-      return <th class={`header text-${column.align || 'left'}`} {...column?.header}>{column.text}</th>
+      const data = { attrs: column.header }
+      const align = column.header?.align || column.align || 'left'
+      return <th class={`header text-${align}`} {...data}>{column.text}</th>
     }
   },
   render () {
