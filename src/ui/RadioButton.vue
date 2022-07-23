@@ -51,7 +51,9 @@ export default {
     disabled: Boolean,
     label: String,
     value: {},
-    val: {}
+    val: {
+      default: true
+    }
   },
   data () {
     return {
@@ -83,6 +85,7 @@ export default {
   margin: 6px;
   outline: none;
   cursor: pointer;
+  line-height: normal;
   &[disabled] {
     opacity: 0.75;
     cursor: not-allowed;

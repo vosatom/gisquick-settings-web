@@ -37,11 +37,10 @@ export default {
   font-weight: 500;
   color: #fff;
   white-space: nowrap;
-  &:not(.top) {
-    border-radius: 3px;
-    margin: 6px;
-    padding: 3px 5px;
-  }
+
+  border-radius: 3px;
+  margin: 6px;
+  padding: 3px 5px;
   &.top {
     position: absolute;
     left: calc(100% - 8px);

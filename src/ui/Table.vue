@@ -353,7 +353,7 @@ export default {
     // color: var(--color-primary);
     text-align: left;
     th {
-      padding: 6px 12px;
+      padding: 4px 12px;
       border-bottom: 4px solid;
       height: 36px;
       user-select: none;
@@ -420,7 +420,7 @@ export default {
       }
     }
     td {
-      padding: 4px 12px;
+      padding: 2px 12px;
       height: 32px;
       &.datetime {
         word-spacing: 16px;
