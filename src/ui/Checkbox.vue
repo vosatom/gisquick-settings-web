@@ -2,7 +2,7 @@
   <div
     role="checkbox"
     class="checkbox"
-    :class="{focused, checked}"
+    :class="{focused, checked, indeterminate}"
     :disabled="disabled"
     :aria-disabled="disabled"
     :aria-checked="checked ? 'true' : 'false'"
@@ -38,6 +38,19 @@
         rx="2"
       />
       <path
+        v-if="indeterminate !== undefined"
+        ref="indeterminatePath"
+        class="checkbox--indeterminate"
+        d="m 6,10 8,0"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke="#fff"
+        stroke-width="2"
+        :stroke-dasharray="indeterminateLength"
+        :stroke-dashoffset="indeterminate ? 0 : indeterminateLength"
+      />
+      <path
         ref="checkPath"
         class="checkbox--check"
         d="m 5,10.7 4.1,3.6 6,-7.8"
@@ -47,7 +60,7 @@
         stroke="#fff"
         stroke-width="2"
         :stroke-dasharray="checkLength"
-        :stroke-dashoffset="checked ? 0 : checkLength"
+        :stroke-dashoffset="checked && !indeterminate ? 0 : checkLength"
       />
     </svg>
     <slot>
@@ -69,6 +82,7 @@ export default {
     falseValue: {
       default: false
     },
+    indeterminate: Boolean,
     label: String,
     trueValue: {
       default: true
@@ -79,7 +93,8 @@ export default {
   data () {
     return {
       focused: false,
-      checkLength: 16
+      checkLength: 16,
+      indeterminateLength: 8
     }
   },
   computed: {
@@ -97,7 +112,8 @@ export default {
     }
   },
   mounted () {
-    this.checkLength = this.$refs.checkPath.getTotalLength()
+    // this.checkLength = this.$refs.checkPath.getTotalLength()
+    // this.indeterminateLength = this.$refs.indeterminatePath.getTotalLength()
   },
   methods: {
     toggleValue () {
@@ -130,6 +146,7 @@ export default {
   cursor: pointer;
   margin: 6px;
   line-height: normal;
+  min-height: 22px;
   &[disabled] {
     opacity: 0.75;
     cursor: not-allowed;
@@ -139,7 +156,7 @@ export default {
       box-shadow: 1px 2px 6px rgba(var(--color-rgb), 0.35);
     }
   }
-  &.checked {
+  &.checked, &.indeterminate {
     .fill {
       fill: var(--color);
     }
@@ -160,7 +177,10 @@ export default {
     will-change: box-shadow;
     flex-shrink: 0;
     .checkbox--check {
-      transition: stroke-dashoffset 0.18s cubic-bezier(0.4,0,0.6,1) 0ms;
+      transition: stroke-dashoffset 0.18s cubic-bezier(0.4,0,0.6,1);
+    }
+    .checkbox--indeterminate {
+      transition: stroke-dashoffset 0.18s cubic-bezier(0.4,0,0.6,1);
     }
   }
   .label {
