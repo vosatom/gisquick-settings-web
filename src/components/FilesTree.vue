@@ -3,7 +3,7 @@
     item-children="children"
     item-key="path"
     base-indent="4"
-    indent="22"
+    :indent="selected ? 28 : 22"
     :items="tree"
     :expanded="expanded"
   >
@@ -14,6 +14,13 @@
         :style="style"
         @contextmenu="$emit('contextmenu', { evt: $event, item: folder })"
       >
+        <v-checkbox
+          v-if="selected"
+          :disabled="selectedData[folder.path].disabled"
+          :value="selectedData[folder.path].checked"
+          :indeterminate="selectedData[folder.path].indeterminate"
+          @input="setSelectedDir(folder, $event)"
+        />
         <v-icon
           size="24"
           role="button"
@@ -31,6 +38,12 @@
         :style="style"
         @contextmenu="$emit('contextmenu', { evt: $event, item })"
       >
+        <v-checkbox
+          v-if="selected"
+          :disabled="isDisabled(item)"
+          :value="isSelected(item.path)"
+          @input="setSelected(item, $event)"
+        />
         <v-icon :name="iconsSet[item.ext] || 'file-outline'" size="24"/>
         <span v-text="item.name" class="f-grow"/>
         <div
@@ -52,6 +65,8 @@
 import findKey from 'lodash/findKey'
 import Path from 'path'
 // import { win32 as dirname } from 'path-dirname'
+
+import { pull } from '@/utils/collections'
 
 function compareFiles (a, b) {
   if (a.children && b.children) {
@@ -142,6 +157,16 @@ export function sortTree (tree) {
   return tree
 }
 
+function createDirIndex (tree, index = {}) {
+  tree.forEach(ch => {
+    if (ch.children) {
+      index[ch.path] = ch
+      createDirIndex(ch.children, index)
+    }
+  })
+  return index
+}
+
 const FileIconSet = {
   qgs: 'qgis',
   qgz: 'qgis',
@@ -159,11 +184,14 @@ export default {
   props: {
     files: Array,
     flags: Object,
-    progress: Object
+    progress: Object,
+    selected: Array,
+    disabled: Function
   },
   data () {
     return {
-      expanded: {}
+      expanded: {},
+      selectedData: {}
     }
   },
   computed: {
@@ -180,14 +208,153 @@ export default {
         return tree
       }
       return []
+    },
+    dirsIndex () {
+      return this.tree ? createDirIndex(this.tree) : {}
+    }
+  },
+  watch: {
+    dirsIndex: {
+      immediate: true,
+      handler: 'initSelectedData'
+    },
+    selected (n, o) {
+      if (n !== o) {
+        this.initSelectedData()
+      }
     }
   },
   methods: {
+    isDisabled (item) {
+      return this.disabled?.(item)
+    },
     toggleFolder (item) {
       this.expanded = { ...this.expanded, [item.path]: !this.expanded[item.path] }
     },
-    showMenu (e) {
-      console.log(e)
+    // immutable
+    // setSelected (item, val) {
+    //   const selected = val
+    //     ? [...this.selected, item.path]
+    //     : this.selected.filter(p => item.path !== p)
+    //   this.updateParentSelectedState(item, selected)
+    //   this.$emit('update:selected', selected)
+    // },
+    // with data mutation
+    setSelected (item, val) {
+      if (val) {
+        this.selected.push(item.path)
+      } else {
+        pull(this.selected, item.path)
+      }
+      this.updateParentSelectedState(item, this.selected)
+    },
+    getFolderFiles (path, predicate = () => true, list = []) {
+      const dir = this.dirsIndex[path]
+      dir?.children.forEach(ch => {
+        if (ch.children) {
+          this.getFolderFiles(ch.path, predicate, list)
+        } else if (predicate(ch)) {
+          list.push(ch.path)
+        }
+      })
+      return list
+    },
+    // model with files only
+    setSelectedDir (item, val) {
+      const paths = this.getFolderFiles(item.path, i => !this.isDisabled(i))
+      // immutable
+      // let selected
+      // if (val) {
+      //   selected = [...this.selected, ...paths.filter(p => !this.selected.includes(p))]
+      // } else {
+      //   const exclude = new Set(paths)
+      //   selected = this.selected.filter(p => !exclude.has(p))
+      // }
+      // this.$emit('update:selected', selected)
+
+      // with data mutation
+      if (val) {
+        this.selected.push(...paths.filter(p => !this.selected.includes(p)))
+      } else {
+        pull(this.selected, ...paths)
+      }
+      const selected = this.selected
+
+      // v1) simple but with unnecessary computations
+      this.updateSelectedState(item, selected, true)
+
+      // v2) slighty more effective update of folders subtree update
+      // this.selectedData[item.path] = {
+      //   checked: val,
+      //   indeterminate: false
+      // }
+      // item.children.filter(i => i.children).forEach(dir => this.updateSelectedState(dir, selected, true))
+      this.updateParentSelectedState(item, selected)
+    },
+    isSelected (path) {
+      return this.selected.includes(path)
+    },
+    // with selection model v2 (files + dirs)
+    // isParentSelected (path) {
+    //   const dir = Path.dirname(path)
+    //   if (dir !== '.') {
+    //     return this.isSelected(dir)
+    //   }
+    //   return false
+    // },
+    // isSelected (path) {
+    //   if (this.selected.includes(path)) {
+    //     return true
+    //   }
+    //   return this.isParentSelected(path)
+    // },
+    updateSelectedState (folder, selected, recursive) {
+      let checked = 0, indeterminate = 0, disabled = 0
+      folder.children.forEach(ch => {
+        if (ch.children) {
+          if (recursive || !this.selectedData[ch.path]) {
+            this.updateSelectedState(ch, selected, recursive)
+          }
+          const s = this.selectedData[ch.path]
+          if (s.checked) {
+            checked += 1
+          }
+          if (s.indeterminate) {
+            indeterminate += 1
+          }
+          if (s.disabled) {
+            disabled += 1
+          }
+        } else {
+          if (this.isDisabled(ch)) {
+            disabled += 1
+          }
+          if (selected.includes(ch.path)) {
+            checked += 1
+          }
+        }
+      })
+      const state = {
+        disabled: disabled === folder.children.length,
+        checked: checked > 0,
+        indeterminate: indeterminate > 0 || (checked > 0 && checked < folder.children.length)
+      }
+      this.selectedData[folder.path] = state
+    },
+    updateParentSelectedState (item, selected) {
+      const dir = Path.dirname(item.path)
+      if (dir !== '.') {
+        const parent = this.dirsIndex[dir]
+        this.updateSelectedState(parent, selected)
+        this.updateParentSelectedState(parent, selected)
+      }
+    },
+    initSelectedData () {
+      this.selectedData = {}
+      if (this.selected) {
+        const tree = { path: '', children: this.tree }
+        this.updateSelectedState(tree, this.selected)
+      }
     }
   }
 }
@@ -225,6 +392,9 @@ export default {
   &.deleted {
     color: var(--color-red);
     --icon-color: currentColor;
+  }
+  .checkbox {
+    margin: 3px;
   }
 }
 .size {
