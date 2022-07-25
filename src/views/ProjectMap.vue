@@ -119,7 +119,7 @@
                 <img v-if="project.thumbnail" :src="`/api/project/thumbnail/${project.name}`"/>
                 <div v-else class="f-col-ac">
                   <map-img class="placeholder" width="110"/>
-                  <small class="uppercase">No Thumbnail</small>
+                  <small class="uppercase mb-2">No Thumbnail</small>
                 </div>
               </div>
               <div v-if="thumbnailSrc" class="f-row-ac light mb-2">
@@ -485,8 +485,13 @@ export default {
       const f = new FormData()
       f.append('image', image, 'thumbnail.png')
 
-      await this.$http.post(`/api/project/thumbnail/${this.project.name}`, f)
-      this.project.thumbnail = true
+      try {
+        await this.$http.post(`/api/project/thumbnail/${this.project.name}`, f)
+        this.project.thumbnail = true
+        this.$notify.success('Thumbnail was saved')
+      } catch (err) {
+        this.$notify.error('Failed to save thumbnail')
+      }
       /*
       console.log('save', params)
       const width = params[6]

@@ -1,5 +1,25 @@
 <template>
   <div style="display: contents;">
+    <v-dialog :value="!!showErrors" @closed="showErrors = false">
+      <div v-if="projectErrors" class="error-dialog f-col">
+        <div class="toolbar dark f-row-ac px-2">
+          <span class="title">Errors</span>
+          <div class="f-grow"/>
+          <v-btn class="icon" @click="showErrors = false">
+            <v-icon name="x"/>
+          </v-btn>
+        </div>
+        <div class="errors p-2">
+          <p class="my-2">Project settings contains errors. Please fix all errors in order to update project.</p>
+          <ul>
+            <li v-for="(err, i) in projectErrors" :key="i">
+              <span v-text="err"/>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </v-dialog>
+
     <v-dialog :value="!!jsonDialog" @closed="jsonDialog = null">
       <div v-if="jsonDialogData" class="json-dialog f-col">
         <div class="toolbar dark f-row-ac px-2">
@@ -45,7 +65,7 @@
     />
     <div v-if="project && settings" class="project-page f-col light">
       <portal to="menu">
-        <nav class="menubar2 dark f-grow f-row-ac">
+        <nav class="menubar2 dark f-grow f-row-ac my-2">
         <!-- <nav class="menubar f-row-ac mb-2 px-2"> -->
           <router-link class="general m-2" :to="{name: 'project'}">General</router-link>
           <router-link class="m-2" :to="{name: 'files'}">Files</router-link>
@@ -79,7 +99,10 @@
             <span v-if="project.settings">Save</span>
             <span v-else>Publish</span>
           </v-btn>
-          <v-icon v-if="projectErrors.length" name="warning" color="red"/>
+          <v-btn v-if="projectErrors.length" class="icon" @click="showErrors = true">
+            <v-icon name="warning" color="red"/>
+          </v-btn>
+          <!-- <v-icon v-if="projectErrors.length" name="warning" color="red"/> -->
           <v-menu
             aria-label="Project actions"
             transition="slide-y"
@@ -110,11 +133,10 @@
             <!-- <map-img v-else width="100%"/> -->
           </div>
           <div class="text f-col px-2">
-            <!-- <v-icon v-if="!settings.title" name="warning" color="orange" class="mr-2"/> -->
             <v-text-field
               color="yellow"
               class="title m-0"
-              placeholder="- No Title -"
+              placeholder="No Title"
               v-model="settings.title"
               lazy
             >
@@ -155,7 +177,7 @@
         />
       </keep-alive>
     </div>
-    <div v-else-if="fetchTask.pending">
+    <div v-else-if="fetchTask.pending" class="f-col-ac m-4">
       <v-spinner/>
     </div>
     <div v-else-if="fetchTask.error" class="f-col-ac">
@@ -217,7 +239,8 @@ export default {
       jsonRouteFilter: false,
       jsonDialog: null,
       editTitle: false,
-      project: null
+      project: null,
+      showErrors: false
     }
   },
   computed: {
@@ -258,13 +281,18 @@ export default {
         { text: 'Debug', separator: true },
         { text: 'QGIS Meta', action: () => this.jsonDialog = 'meta' },
         { text: 'Settings', action: () => this.jsonDialog = 'settings' },
-        { text: 'Settings changes', action: () => this.jsonDialog = 'settings_diff' }
+        { text: 'Unsaved changes', action: () => this.jsonDialog = 'settings_diff', disabled: !this.settingsChanged }
       ]
     },
     projectErrors () {
       const errors = []
-      if (!this.settings.scales?.length > 0) {
-        errors.push('Invalid map scales')
+      if (this.settings) {
+        if (!this.settings.title) {
+          errors.push('Project title is not defined')
+        }
+        if (!this.settings.scales?.length > 0) {
+          errors.push('Map scales are not defined')
+        }
       }
       return errors // errors.length ? errors : null
     },
@@ -466,6 +494,9 @@ export default {
       font-weight: 500;
     }
   }
+  .btn.small {
+    padding-inline: 2px;
+  }
 }
 
 .header {
@@ -478,7 +509,8 @@ export default {
   // background-color: var(--color-dark);
   background: linear-gradient(to right, #444, hsl(0, 4%, 35%));
   background: linear-gradient(175deg, rgb(83, 91, 119), hsl(0, 4%, 35%));
-  // background: linear-gradient(to right, rgb(82, 43, 78), hsl(0, 4%, 35%));
+  background: linear-gradient(175deg, rgb(42, 60, 80), hsl(0, 4%, 35%));
+  // background: linear-gradient(175deg, rgb(42, 53, 70), hsl(0, 4%, 35%));
   border: 1px solid rgba(#bbb, 0.4);
   .thumbnail {
     // max-height: 120px;
@@ -515,6 +547,10 @@ export default {
           opacity: 0;
         }
       }
+      ::v-deep input::placeholder {
+        color: var(--color-orange);
+        opacity: 0.75;
+      }
     }
   }
   .details {
@@ -550,18 +586,17 @@ export default {
   }
 }
 .vjs-tree, .json-viewer, .json-diff-viewer {
-  width: clamp(50vw, 960px, 80vw);
+  width: clamp(50vw, 1260px, 80vw);
   min-height: 90vh;
   padding: 12px;
   overflow: auto;
 }
-.json-dialog {
-  overflow: hidden;
+.dialog {
   .toolbar {
     height: 38px;
     flex-shrink: 0;
     background-color: #444;
-    background-color: var(--color-orange);
+    background-color: var(--color-dark);
     border-bottom: 1px solid #ddd;
     --fill-color: #fff;
     .title {
@@ -569,6 +604,14 @@ export default {
       font-weight: 500;
     }
   }
+  .error-dialog {
+    .toolbar {
+      background-color: var(--color-red);
+    }
+  }
+}
+.json-dialog {
+  overflow: hidden;
 }
 .left-panel {
   grid-area: 2 / 1 / 3 / 2;
@@ -585,5 +628,17 @@ export default {
 
   // background: url('~@/assets/bg3.svg') no-repeat;
   background-size: auto 100%;
+}
+.errors {
+  min-width: 320px;
+  max-width: 400px;
+  font-size: 15px;
+  ul {
+    padding-left: 20px;
+    font-weight: 500;
+    li {
+      padding-block: 3px;
+    }
+  }
 }
 </style>

@@ -207,7 +207,7 @@ export default {
       // ev.dataTransfer.effectAllowed = "move"
     },
     onLayerDrop (targetList) {
-      if (!targetList.includes(this.dragLayer)) {
+      if (this.dragLayer && !targetList.includes(this.dragLayer)) {
         this.swapLayer(this.dragLayer)
       }
     },

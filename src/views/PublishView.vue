@@ -1,8 +1,16 @@
 <template>
   <div class="publish light f-col">
     <plugin-disconnected v-if="!connected" class="f-grow"/>
+    <error-message
+      v-else-if="$ws.pluginUpdateRequired"
+      class="my-auto"
+      title="Warning"
+      color="orange"
+    >
+      Your QGIS plugin is not supported anymore.<br/>
+      Please update your plugin in order to continue.
+    </error-message>
     <template v-else-if="projectInfo">
-
       <v-dialog ref="jsonViewer">
         <template v-slot="{ data }">
           <json-viewer :data="data"/>
@@ -17,11 +25,24 @@
 
       <div class="card info f-col">
         <div class="header f-row-ac dark px-4">
-          <span class="title">Basic Information</span>
-          <div class="f-grow"/>
-          <v-btn @click="$refs.jsonViewer.show(projectInfo)">Show JSON</v-btn>
+          <span class="title">Overview</span>
         </div>
         <qgis-info :meta="projectInfo"/>
+        <div v-if="0" class="px-2 f-col-ac">
+          <small>
+            <a class="link-btn" @click="$refs.jsonViewer.show(projectInfo)">
+              <span>Show Raw Gisquick Metadata</span>
+            </a>
+          </small>
+        </div>
+        <div v-else class="note px-2">
+          <span>
+            For more information or troubleshooting, you can
+            <a class="link-btn" @click="$refs.jsonViewer.show(projectInfo)">
+              <span>show full Gisquick Metadata</span>
+            </a>
+          </span>
+        </div>
       </div>
 
       <div class="card layers f-col">
@@ -46,7 +67,7 @@
           </template>
 
           <template v-if="errors.invalidLayersNames">
-            <strong class="p-2">Invalid QGIS server layers names:</strong>
+            <strong class="p-2">Invalid QGIS Server layers names:</strong>
             <ul>
               <li v-for="n in errors.invalidLayersNames" :key="n" v-text="n"/>
             </ul>
@@ -80,7 +101,7 @@
         </div>
 
         <div v-if="wfsNotEnabled" class="note">
-          <v-icon name="unknown"/>
+          <v-icon name="circle-i-outline"/>
           <span class="m-2">Vector layers without WFS service enabled cannot be queryable.</span>
           <v-btn class="small" color="orange" @click="enableWFS">Enable WFS</v-btn>
         </div>
@@ -101,7 +122,7 @@
         </div>
         <v-btn
           v-if="!tasks.clientFiles.data"
-          class="load"
+          class="load my-4"
           color="primary"
           :loading="tasks.clientFiles.pending"
           @click="fetchLocalFiles"
@@ -161,14 +182,24 @@
         </v-btn>
       </div>
     </template>
-    <div v-else-if="pluginError" class="plugin-error f-col">
-      <div class="title f-row-ac my-2">
-        <v-icon name="warning" color="red"/>
-        <span class="mx-2">Error:</span>
-        <span v-text="pluginError.msg"/>
+    <template v-else-if="pluginError">
+      <error-message
+        v-if="pluginError.code === 404"
+        class="my-auto"
+        title="Warning"
+        color="primary"
+      >
+        No project is currently opened in QGIS
+      </error-message>
+      <div v-else class="plugin-error f-col p-2">
+        <div class="title f-row-ac my-2">
+          <v-icon name="warning" color="red"/>
+          <span class="mx-2">Error:</span>
+          <span v-text="pluginError.msg"/>
+        </div>
+        <div v-if="pluginError.details" v-text="pluginError.details" class="traceback"/>
       </div>
-      <div v-if="pluginError.details" v-text="pluginError.details" class="traceback"/>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -178,6 +209,7 @@ import countBy from 'lodash/countBy'
 import pickBy from 'lodash/pickBy'
 import mapValues from 'lodash/mapValues'
 
+import ErrorMessage from '@/components/ErrorMessage.vue'
 import ShortNamesEditor from '@/components/ShortNamesEditor.vue'
 import QgisInfo from '@/components/QgisInfo.vue'
 import FilesTree from '@/components/FilesTree.vue'
@@ -210,7 +242,7 @@ const SourceIcons = {
 
 export default {
   name: 'PublishView',
-  components: { FilesTree, QgisInfo, QgisLayersInfo, PluginDisconnected, JsonViewer, ShortNamesEditor },
+  components: { ErrorMessage, FilesTree, QgisInfo, QgisLayersInfo, PluginDisconnected, JsonViewer, ShortNamesEditor },
   data () {
     return {
       name: '',
@@ -267,7 +299,7 @@ export default {
     filesOutsideDirectory () {
       const layers = Object.values(this.projectInfo.layers)
       const dataFiles = layers.reduce((files, l) => {
-        const { file } = l.source_params
+        const file = l.source_params?.file
         if (file && file.startsWith('..')) {
           files.add(file)
         }
@@ -340,7 +372,7 @@ export default {
       }
     },
     async fetchProjectInfo (skipLayersWithError=false) {
-      if (!this.connected) {
+      if (!this.connected || this.$ws.pluginUpdateRequired) {
         return
       }
       this.pluginError = null
@@ -413,6 +445,9 @@ export default {
 <style lang="scss" scoped>
 @import '@/card.scss';
 
+.card {
+  border: 1px solid #e3e3e3;
+}
 .publish {
   // width: clamp(600px, 100%, 1200px);
   grid-column: 2 / 3;
@@ -425,7 +460,6 @@ export default {
 //   }
 // }
 .files {
-  border: 1px solid #eee;
   .load {
     align-self: center;
     justify-self: center;
@@ -471,7 +505,8 @@ export default {
   // align-self: center;
   align-items: center;
   justify-content: center;
-  border-top: 1px solid var(--border-color);
+  // border-top: 1px solid var(--border-color);
+  border-top: 1px solid #e3e3e3;
   background-color: #f4f4f4;
   color: #777;
   --icon-color: #777;

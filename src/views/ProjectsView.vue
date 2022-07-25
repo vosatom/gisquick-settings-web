@@ -2,7 +2,7 @@
   <div v-if="formattedProjects.length" class="projects light">
     <!-- <div class="expander" v-text="Array(120).fill('_').join(' ')"/> -->
     <div class="toolbar f-row-ac">
-      <span class="title m-2">Projects</span>
+      <span class="title mx-2">Projects</span>
       <v-text-field class="filled" placeholder="Search" v-model="filter">
         <template v-slot:append>
           <v-icon name="search" class="mx-2"/>
@@ -246,9 +246,9 @@ export default {
 .toolbar {
   // background-color: rgb(255, 255, 255);
   .title {
-    font-size: 24px;
-    font-weight: bold;
-    text-transform: uppercase;
+    font-size: 26px;
+    font-weight: 500;
+    opacity: 0.85;
   }
   .select.sort {
     min-width: 130px;

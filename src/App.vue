@@ -11,7 +11,12 @@
       <!-- <div class="dark f-row-ac">Placeholder</div> -->
     </portal-target>
     <div class="app-menu f-row-ac f-justify-end dark">
-      <img :src="pluginStatusImg" class="plugin-status mr-2"/>
+      <div class="f-row-ac mr-2">
+        <img :src="pluginStatusImg" height="22"/>
+        <v-tooltip>
+          <span v-text="clientInfo || 'QGIS Plugin is not connected'"/>
+        </v-tooltip>
+      </div>
       <v-menu
         aria-label="Menu"
         transition="slide-y"
@@ -21,34 +26,13 @@
         :items="menuItems"
       >
         <template v-slot:activator="{ toggle }">
-          <v-btn aria-label="Menu" class="icon" @click="toggle">
-            <v-icon name="menu"/>
+          <v-btn aria-label="Menu" class="icon ml-0" @click="toggle">
+            <v-icon name="account" size="24"/>
           </v-btn>
         </template>
       </v-menu>
     </div>
 
-    <!-- <div class="app-header f-row-ac dark px-2">
-      <router-link class="f-row" to="/">
-        <img class="logo m-2" src="./assets/text_logo_dark.svg"/>
-      </router-link>
-      <span class="f-grow"/>
-      <img :src="pluginStatusImg" class="plugin-status mr-2"/>
-      <v-menu
-        aria-label="Menu"
-        transition="slide-y"
-        align="rr;bb,tt"
-        class="m-2"
-        content-class="popup-menu xdark"
-        :items="menuItems"
-      >
-        <template v-slot:activator="{ toggle }">
-          <v-btn aria-label="Menu" class="icon" @click="toggle">
-            <v-icon name="menu"/>
-          </v-btn>
-        </template>
-      </v-menu>
-    </div> -->
     <router-view v-if="!showLoginDialog" class="page-content"/>
     <login-dialog
       :value="showLoginDialog"
@@ -57,9 +41,7 @@
       @login="onLogin"
     />
     <change-password-dialog ref="changePasswordDialog"/>
-    <!-- <portal-target name="dialogs"/> -->
     <popup-layer class="light"/>
-    <!-- <v-btn @click="$refs.notification.showError('test')">Show notification</v-btn> -->
     <v-notification ref="notification">
       <!-- <template v-slot="{icon, msg}">
         <v-icon v-if="icon" :name="icon"/>
@@ -90,7 +72,8 @@ export default {
   },
   data () {
     return {
-      initialized: false
+      initialized: false,
+      ws: null
     }
   },
   computed: {
@@ -101,7 +84,10 @@ export default {
       return !this.$route.meta.public && !this.user
     },
     pluginStatusImg () {
-      return this.$ws?.pluginConnected ? require('./assets/qgis-icon32.svg') : require('./assets/qgis-icon-black32.svg')
+      return this.ws?.pluginConnected ? require('./assets/qgis-icon32.svg') : require('./assets/qgis-icon-black32.svg')
+    },
+    clientInfo () {
+      return this.ws?.clientInfo
     },
     menuItems () {
       return [
@@ -159,9 +145,10 @@ export default {
       const ws = WebsocketMessenger(`${protocol}://${location.host}/ws/app`)
       Vue.util.defineReactive(ws, 'connected')
       Vue.util.defineReactive(ws, 'pluginConnected')
-        ws.onopen().then(() => {
+      ws.onopen().then(() => {
         this.initialized = true
       })
+      this.ws = ws
       Vue.prototype.$ws = ws
     }
   }

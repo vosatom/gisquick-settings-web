@@ -154,9 +154,9 @@ export default {
         })
         // interactions: defaultInteractions({mouseWheelZoom: false}).extend([zoomInteraction])
       })
-      // if (process.env.NODE_ENV === 'development') {
-      //   window.olmap = this.map
-      // }
+      if (process.env.NODE_ENV === 'development') {
+        window.olmap = this.map
+      }
     },
     getImage () {
       return this.wmsSource.image_.getImage()

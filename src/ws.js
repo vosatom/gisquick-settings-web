@@ -1,3 +1,17 @@
+const minSupportedVersion = '2.4.0'
+
+function compareVersions (v1, v2) {
+  const p1 = v1.split('.').map(v => parseInt(v))
+  const p2 = v2.split('.').map(v => parseInt(v))
+  let d = p2[0] - p1[0]
+  if (d === 0) {
+    d = p2[1] - p1[1]
+  }
+  if (d === 0) {
+    d = p2[2] - p1[2]
+  }
+  return d
+}
 
 export default function WebsocketMessenger (url) {
   let listeners = []
@@ -8,7 +22,9 @@ export default function WebsocketMessenger (url) {
   const ws = {
     connected: false,
     pluginConnected: false,
+    pluginVersion: null,
     clientInfo: '',
+    pluginUpdateRequired: false,
 
     bind (type, callback) {
       listeners.push({ type, callback })
@@ -22,7 +38,7 @@ export default function WebsocketMessenger (url) {
         const msg = { type: name, data }
         socket.send(JSON.stringify(msg))
       } else {
-        console.log('ws:send readyState', socket.readyState)
+        console.warn('ws:send readyState', socket.readyState)
       }
     },
     request (name, data) {
@@ -56,7 +72,7 @@ export default function WebsocketMessenger (url) {
       }, 30 * 1000)
     }
     socket.onclose = () => {
-      console.log('ws.onclose')
+      // console.log('ws.onclose')
       ws.connected = false
       if (timer !== null) {
         clearInterval(timer)
@@ -64,7 +80,7 @@ export default function WebsocketMessenger (url) {
       }
       // reconnect
       setTimeout(() => {
-        console.log('ws:reconnecting...')
+        // console.log('ws:reconnecting...')
         socket = new WebSocket(url)
         init()
       }, 5000)
@@ -74,7 +90,18 @@ export default function WebsocketMessenger (url) {
       if (msg.type === 'PluginStatus') {
         const connected = msg.status === 200
         ws.pluginConnected = connected
-        ws.clientInfo = connected && msg.data.client
+        const clientInfo = connected ? msg.data.client : null
+        if (clientInfo !== ws.clientInfo) {
+          ws.clientInfo = clientInfo
+          if (clientInfo) {
+            const pluginVersion = clientInfo.split(' ')[0]?.split('/')[1]
+            ws.pluginVersion = pluginVersion
+            ws.pluginUpdateRequired = compareVersions(minSupportedVersion, pluginVersion) < 0
+          } else {
+            ws.pluginVersion = null
+            ws.pluginUpdateRequired = null
+          }
+        }
       }
 
       if (activeRequests[msg.type]) {

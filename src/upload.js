@@ -5,9 +5,7 @@ export function createUpload (ws, files, project) {
     files: {},
     totalProgress: 0
   }
-  let totalSize = 0
   files.forEach(f => {
-    totalSize += f.size
     info.files[f.path] = {
       size: f.size,
       progress: 0
@@ -16,17 +14,15 @@ export function createUpload (ws, files, project) {
 
   let task
   function onProgressMessage(msg) {
-    const data = msg.data
+    const { total, files } = msg.data
 
-    Object.entries(data).forEach(([file, progress]) => {
+    Object.entries(files).forEach(([file, progress]) => {
       const fileUpload = info.files[file]
       if (fileUpload) {
-        fileUpload.progress = fileUpload.size > 0 ? 100 * (progress / fileUpload.size) : 100
+        fileUpload.progress = progress
       }
     })
-
-    const uploaded = Object.values(info.files).reduce((sum, info) => sum + info.progress * info.size, 0)
-    info.totalProgress = totalSize !== 0 ? uploaded / totalSize : 100
+    info.totalProgress = total
 
     const finished = info.totalProgress === 100
     if (task && task.onProgress) {

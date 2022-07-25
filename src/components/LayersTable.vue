@@ -93,6 +93,7 @@ export default {
       type: String,
       default: 'selected'
     },
+    classes: Object,
     labelRenderData: Object
   },
   data () {
@@ -198,8 +199,12 @@ export default {
         const comp = <div class={wrapperCls}>{innerContent}</div>
         return <td class={column.tdClass}>{comp}</td>
       })
+      let classes = this.classes?.[item.id]
+      if (this.leafKey(item) === this.selected) {
+        classes = [classes, 'selected']
+      }
       return (
-        <tr key={item.id} class={{[this.selectedClass]: this.leafKey(item) === this.selected}}>
+        <tr key={item.id} class={classes}>
           <td class="title">{cmp}</td>
           {values}
         </tr>
@@ -384,8 +389,8 @@ export default {
     .title {
       // min-width: 200px;
       // --icon-color: var(--color-red);
-      --icon-color: var(--color-primary);
-      color: var(--color-primary);
+      --icon-color: var(--status-color, var(--color-primary));
+      color: var(--status-color, var(--color-primary));
       // font-weight: 500;
     }
     .single-line {

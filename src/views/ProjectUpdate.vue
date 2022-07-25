@@ -1,61 +1,70 @@
 <template>
-  <div class="update page-content f-col">
-    <plugin-disconnected v-if="!connected"/>
+  <div class="update page-content f-col f-grow">
+    <plugin-disconnected v-if="!connected" class="my-auto"/>
+    <error-message
+      v-else-if="$ws.pluginUpdateRequired"
+      class="my-auto"
+      title="Warning"
+      color="orange"
+    >
+      Your QGIS plugin is not supported anymore.<br/>
+      Please update your plugin in order to continue.
+    </error-message>
     <template v-else-if="projectInfo">
-      <div v-if="projectInfo.file !== project.meta.file" class="f-row-ac warning p-2">
-        <v-icon name="warning"/>
-        <span class="ml-2">Project filename doesn't match!</span>
-      </div>
-      <!-- <json-viewer v-if="diffs.raw" :data="diffs.raw"/> -->
-      <div v-if="diffs.raw2" class="m-2">
-        <div class="f-row-ac">
-          <strong>Metadata Differences</strong>
-          <v-btn color="primary" class="flat small my-0 n-case" @click="showMetaDiff = !showMetaDiff">
-            <span v-text="showMetaDiff ? 'Hide' : 'Show'"/>
-          </v-btn>
-        </div>
-        <json-viewer v-if="showMetaDiff" :data="diffs.raw2"/>
-      </div>
-      <div v-else class="p-2">No changes in QGIS metadata!</div>
-
-      <div v-if="diffs.raw2" class="m-2">
-        <div class="f-row-ac">
-          <strong>Summary of layer changes</strong>
-          <v-btn color="primary" class="flat small my-0 n-case" @click="showLayerSummary = !showLayerSummary">
-            <span v-text="showLayerSummary ? 'Hide' : 'Show'"/>
-          </v-btn>
-        </div>
-
-        <div v-if="showLayerSummary" class="f-row">
-          <div
-            v-for="[label, list], in [['New', layersSummary.newLayers], ['Removed', layersSummary.removedLayers], ['Changed', layersSummary.changedLayers]]"
-            :key="label"
-            class="mx-4 my-2"
-          >
-            <span class="subtitle">{{ label }}:</span>
-            <ul>
-              <li v-for="n in list" :key="n" v-text="n"/>
-            </ul>
+      <v-dialog v-model="showMetadata">
+        <div v-if="diffs.raw2" class="metadata-view f-col">
+          <div class="toolbar dark f-row-ac px-2">
+            <span class="title">Gisquick Metadata</span>
+            <div class="f-grow"/>
+            <v-checkbox class="filter p-2 m-0 shadow-1" label="Only changes" v-model="showMetadataDiff"/>
+            <v-btn class="icon" @click="showMetadata = false">
+              <v-icon name="x"/>
+            </v-btn>
           </div>
+          <json-viewer :data="showMetadataDiff ? diffs.raw2 : projectInfo"/>
         </div>
+      </v-dialog>
 
-        <!-- <div class="ml-4">
-          <span class="subtitle">New:</span> {{ diffs.newLayers.join(', ') }}
+      <div class="card f-col">
+        <div class="header f-row-ac dark px-4">
+          <span class="title">Overview</span>
         </div>
-        <div class="ml-4">
-          <span class="subtitle">Removed:</span> {{ diffs.removedLayers.join(', ') }}
+        <div class="info-grid">
+          <span class="label">QGIS Project File</span>
+          <span v-if="currentProjectFile === lastProjectFile" v-text="currentProjectFile"/>
+          <div v-else class="f-col-as">
+            <strong class="warning f-row-ac">
+              <v-icon color="orange" name="warning" class="mr-2"/>
+              <span>Project file doesn't match</span>
+            </strong>
+            <div class="info-grid nested my-2">
+              <span class="label">Current</span>
+              <span v-text="currentProjectFile"/>
+              <span class="label">Previous</span>
+              <span v-text="lastProjectFile"/>
+            </div>
+          </div>
+          <!-- <span class="label">Projection</span>
+          <span v-text="projectInfo.projection"/> -->
+          <span class="label">Gisquick Metadata</span>
+          <span v-if="diffs.raw2">
+            <a class="link-btn" @click="showMetadata = true">
+              <span>Show</span>
+            </a>
+          </span>
+          <span v-else>Without change</span>
         </div>
-        <div class="ml-4">
-          <span class="subtitle">Changed:</span> {{ diffs.changedLayers.join(', ') }}
-        </div> -->
-
-        <!-- <div><strong>Layers with changed attributes:</strong> {{ diffs.changedAttrsLayers }}</div> -->
       </div>
+
+      <!-- <div v-if="diffs.raw2" class="m-2">
+        <div><strong>Layers with changed attributes:</strong> {{ diffs.changedAttrsLayers }}</div>
+      </div> -->
+
       <div class="card f-col">
         <div class="header f-row-ac dark px-4">
           <span class="title">Layers</span>
         </div>
-        <qgis-layers-info :meta="projectInfo"/>
+        <qgis-layers-info :meta="projectInfo2" :classes="diffLayersClasses"/>
       </div>
 
       <div class="card f-col">
@@ -74,7 +83,7 @@
 
         <v-btn
           v-if="!clientFiles || !serverFiles"
-          class="load"
+          class="load my-4"
           color="primary"
           @click="fetchFiles"
         >
@@ -85,60 +94,87 @@
           :files="filesDiff.files"
           :flags="filesDiff.flags"
           :progress="uploadProgress && uploadProgress.files"
+          :selected="updateOpts.files ? selectedFiles : null"
+          :disabled="isFileDisabled"
         />
         <template v-if="filesDiff">
           <hr/>
-          <div class="p-2">
-            <small>New Files: {{ filesDiff.new.length }}, </small>
-            <small>Modified Files: {{ filesDiff.updated.length }}, </small>
-            <small>Files to remove: {{ filesDiff.removed.length }}</small>
+          <div class="statusbar p-2">
+            <small>New files: {{ filesDiff.new.length }}, </small>
+            <small>Modified files: {{ filesDiff.updated.length }}, </small>
+            <small>Missing files: {{ filesDiff.removed.length }}</small>
           </div>
         </template>
       </div>
 
-      <div class="f-row-ac m-2 f-justify-center">
-        <template v-if="diffs.raw2">
+      <div class="update-card f-col-ac py-4 xshadow-2">
+        <div v-if="projectChangesDetected" class="content f-col">
+          <v-checkbox label="Update QGIS project" v-model="updateOpts.qgisProject"/>
+          <div class="f-row-ac">
+            <v-checkbox
+              label="Update files"
+              :disabled="!filesDiff"
+              v-model="updateOpts.files"/>
+            <div class="f-grow"/>
+            <div xv-if="updateOpts.files" class="files-options f-row-ac">
+              <v-radio-btn
+                label="All"
+                :disabled="!updateOpts.files"
+                :value="updateOpts.files && !selectedFiles"
+                @input="selectedFiles = null"
+              />
+              <v-radio-btn
+                label="Selected"
+                :disabled="!updateOpts.files"
+                :value="updateOpts.files && !!selectedFiles"
+                @input="enableFilesSelection"
+              />
+            </div>
+          </div>
           <v-btn
+            class="round"
             color="primary"
-            :disabled="!diffs || !clientFiles"
+            :disabled="!updateOpts.qgisProject && !updateOpts.files"
+            :loading="!!uploadProgress"
             @click="updateProject"
           >
-            Update Project
+            <v-icon name="upload" class="mr-2"/>
+            <span>Update</span>
           </v-btn>
-          <v-checkbox
-            :disabled="!filesDiff"
-            label="Update all files"
-            v-model="shouldUpdateAllFiles"
-          />
-        </template>
-        <v-btn
-          v-else-if="filesDiff"
-          color="primary"
-          :loading="!!uploadProgress"
-          @click="updateAllFiles"
-        >
-          Update Files
-        </v-btn>
+        </div>
         <p v-else class="p-2">No changes detected</p>
       </div>
+
     </template>
-    <div v-else-if="pluginError" class="plugin-error f-col">
-      <div class="title f-row-ac my-2">
-        <v-icon name="warning" color="red"/>
-        <span class="mx-2">Error:</span>
-        <span v-text="pluginError.msg"/>
+    <template v-else-if="pluginError">
+      <error-message
+        v-if="pluginError.code === 404"
+        class="my-auto"
+        title="Warning"
+        color="primary"
+      >
+        No project is currently opened in QGIS
+      </error-message>
+      <div v-else class="plugin-error f-col p-2">
+        <div class="title f-row-ac my-2">
+          <v-icon name="warning" color="red"/>
+          <span class="mx-2">Error:</span>
+          <span v-text="pluginError.msg"/>
+        </div>
+        <div v-if="pluginError.details" v-text="pluginError.details" class="traceback"/>
       </div>
-      <div v-if="pluginError.details" v-text="pluginError.details" class="traceback"/>
-    </div>
+    </template>
   </div>
 </template>
 
 <script>
+import path from 'path'
 import omit from 'lodash/omit'
 import isEqual from 'lodash/isEqual'
 import isEmpty from 'lodash/isEmpty'
 import difference from 'lodash/difference'
 import keyBy from 'lodash/keyBy'
+import pickBy from 'lodash/pickBy'
 import cloneDeep from 'lodash/cloneDeep'
 
 // import JsonViewer from '@/components/JsonViewer2.vue'
@@ -146,15 +182,44 @@ import JsonViewer from '@/components/JsonDiffViewer.vue'
 import FilesTree from '@/components/FilesTree.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import PluginDisconnected from '@/components/PluginDisconnected.vue'
+import ErrorMessage from '@/components/ErrorMessage.vue'
 
 // import { initLayersPermissions } from '@/views/ProjectAccess.vue'
 import { objDiff, objectDiff } from '@/utils/diff'
 import { TaskState, watchTask } from '@/tasks'
 import { createUpload } from '@/upload'
 
+function findLayer (items, id) {
+  for (const item of items) {
+    if (item.layers) {
+      const match = findLayer(item.layers, id)
+      if (match) {
+        return [item.name, ...match]
+      }
+    } else if (item.id === id) {
+      return [id]
+    }
+  }
+}
+function insertLayer (tree, path) {
+  if (path.length === 1) {
+    tree.push({ id: path[0] })
+  } else if (path.length > 1) {
+    const [name, ...rest] = path
+    const g = tree.find(i => i.name === name)
+    if (g) {
+      insertLayer(g.layers, rest)
+    } else {
+      const newGroup = { name, layers: [] }
+      tree.push(newGroup)
+      insertLayer(newGroup.layers, rest)
+    }
+  }
+}
+
 export default {
   name: 'ProjectUpdate',
-  components: { JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected },
+  components: { JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected, ErrorMessage },
   props: {
     project: Object,
     settings: Object
@@ -165,13 +230,17 @@ export default {
       pluginError: null,
       projectInfo: null,
       opened: [],
+      selectedFiles: null,
+      updateOpts: {
+        qgisProject: false,
+        files: false
+      },
       tasks: {
         clientFiles: TaskState()
       },
       uploadProgress: null,
-      showMetaDiff: false,
-      showLayerSummary: false,
-      shouldUpdateAllFiles: false
+      showMetadata: false,
+      showMetadataDiff: true
     }
   },
   computed: {
@@ -214,13 +283,16 @@ export default {
         }, {})
         return {
           files,
+          flags,
           new: newFiles,
           updated: updatedFiles,
-          removed: Array.from(removedPaths),
-          flags
+          removed: Array.from(removedPaths)
         }
       }
       return null
+    },
+    projectChangesDetected () {
+      return !!this.diffs.raw2 || !isEmpty(this.filesDiff?.flags)
     },
     // files () {
     //   if (this.clientFiles && this.serverFiles) {
@@ -269,15 +341,43 @@ export default {
       }
       return null
     },
-    layersSummary () {
-      if (this.diffs) {
+    projectInfo2 () {
+      if (this.projectInfo && this.diffs.removedLayers.length) {
+        const orig = this.project.meta
+        const tree = cloneDeep(this.projectInfo.layers_tree)
+        const layers = { ...this.projectInfo.layers }
+        this.diffs.removedLayers.forEach(id => {
+          const path = findLayer(orig.layers_tree, id)
+          insertLayer(tree, path)
+          layers[id] = orig.layers[id]
+        })
         return {
-          newLayers: this.diffs.newLayers.map(id => this.projectInfo.layers[id].title),
-          changedLayers: this.diffs.changedLayers.map(id => this.projectInfo.layers[id].title),
-          removedLayers: this.diffs.removedLayers.map(id => this.project.meta.layers[id].title)
+          layers_tree: tree,
+          layers
         }
       }
-      return null
+      return this.projectInfo
+    },
+    diffLayersClasses () {
+      const classes = {}
+      if (this.diffs) {
+        this.diffs.removedLayers.forEach(id => {
+          classes[id] = 'removed'
+        })
+        this.diffs.newLayers.forEach(id => {
+          classes[id] = 'new'
+        })
+        this.diffs.changedLayers.forEach(id => {
+          classes[id] = 'changed'
+        })
+      }
+      return classes
+    },
+    lastProjectFile () {
+      return path.join(this.project.meta.client_info.directory, this.project.meta.file)
+    },
+    currentProjectFile () {
+      return this.projectInfo && path.join(this.projectInfo.client_info.directory, this.projectInfo.file)
     }
   },
   activated () {
@@ -364,78 +464,100 @@ export default {
         // this.$notify.success('Files was uploaded')
       }
     },
-    async updateAllFiles () {
-      const files = [...this.filesDiff.new, ...this.filesDiff.updated]
-      await this.updateFiles(files, this.filesDiff.removed)
-      this.fetchServerFiles()
+    getFilesToUpdate () {
+      const files = { upload: [], remove: [] }
+      if (this.updateOpts.files) {
+        files.upload = [...this.filesDiff.new, ...this.filesDiff.updated]
+        files.remove = this.filesDiff.removed
+      } else if (this.updateOpts.qgisProject) {
+        if (this.filesDiff) {
+          files.upload = this.filesDiff?.updated.filter(f => f.path === this.projectInfo.file)
+        } else {
+          files.upload = [{
+            path: this.projectInfo.file,
+            hash: this.projectInfo.project_hash
+          }]
+        }
+      }
+      if (this.selectedFiles) {
+        const lookup = new Set(this.selectedFiles)
+        files.upload = files.upload.filter(f => lookup.has(f.path))
+        files.remove = files.remove.filter(p => lookup.has(p))
+      }
+      return files
     },
     async updateProject () {
-      const filesToUpload = this.shouldUpdateAllFiles
-        ? [...this.filesDiff.new, ...this.filesDiff.updated]
-        // : this.clientFiles.filter(f => f.path === this.projectInfo.file)
-        : this.filesDiff.updated.filter(f => f.path === this.projectInfo.file)
-      const filesToRemove = this.shouldUpdateAllFiles ? this.filesDiff.removed : []
+      const { upload: filesToUpload, remove: filesToRemove } = this.getFilesToUpdate()
+      // console.log('upload files', filesToUpload)
+      // console.log('files to remove', filesToRemove)
+      // return
 
-      const settings = cloneDeep(this.settings)
-      this.diffs.newLayers.forEach(id => {
-        const layerMeta = this.projectInfo.layers[id]
-        settings.layers[id] = { flags: [...layerMeta.flags] }
-        settings.auth.roles?.forEach(role => {
-          role.permissions.layers[id] = ['view']
-          if (layerMeta.attributes) {
-            role.permissions.attributes[id] = Object.fromEntries(layerMeta.attributes.map(a => [a.name, ['view']]))
-          }
-        })
-      })
-      if (settings.auth.roles) {
-        this.diffs.changedLayers.forEach(id => {
+      if (this.updateOpts.qgisProject) {
+        const settings = cloneDeep(this.settings)
+        this.diffs.newLayers.forEach(id => {
           const layerMeta = this.projectInfo.layers[id]
-          if (layerMeta.attributes) {
-            const currentAttrs = layerMeta.attributes?.map(a => a.name)
-            const origAttrs = this.project.meta.layers[id].attributes?.map(a => a.name)
-            const newAttrs = difference(currentAttrs, origAttrs)
-            const removedAttrs = difference(origAttrs, currentAttrs)
-            if (newAttrs.length || removedAttrs.length) {
-              settings.auth.roles?.forEach(role => {
-                removedAttrs.forEach(name => delete role.permissions.attributes[id][name])
-                newAttrs.forEach(name => {
-                  role.permissions.attributes[id][name] = ['view']
-                })
-              })
-            }
-          }
-        })
-      }
-      if (this.diffs.removedLayers.length) {
-        this.diffs.removedLayers.forEach(id => {
-          delete settings.layers[id]
+          settings.layers[id] = { flags: [...layerMeta.flags] }
           settings.auth.roles?.forEach(role => {
-            delete role.permissions.layers[id]
-            delete role.permissions.attributes[id]
+            role.permissions.layers[id] = ['view']
+            if (layerMeta.attributes) {
+              role.permissions.attributes[id] = Object.fromEntries(layerMeta.attributes.map(a => [a.name, ['view']]))
+            }
           })
         })
-        settings.topics?.forEach(t => {
-          t.visible_overlays = t.visible_overlays.filter(id => !this.diffs.removedLayers.includes(id))
-        })
+        if (settings.auth.roles) {
+          this.diffs.changedLayers.forEach(id => {
+            const layerMeta = this.projectInfo.layers[id]
+            if (layerMeta.attributes) {
+              const currentAttrs = layerMeta.attributes?.map(a => a.name)
+              const origAttrs = this.project.meta.layers[id].attributes?.map(a => a.name)
+              const newAttrs = difference(currentAttrs, origAttrs)
+              const removedAttrs = difference(origAttrs, currentAttrs)
+              if (newAttrs.length || removedAttrs.length) {
+                settings.auth.roles?.forEach(role => {
+                  removedAttrs.forEach(name => delete role.permissions.attributes[id][name])
+                  newAttrs.forEach(name => {
+                    role.permissions.attributes[id][name] = ['view']
+                  })
+                })
+              }
+            }
+          })
+        }
+        if (this.diffs.removedLayers.length) {
+          this.diffs.removedLayers.forEach(id => {
+            delete settings.layers[id]
+            settings.auth.roles?.forEach(role => {
+              delete role.permissions.layers[id]
+              delete role.permissions.attributes[id]
+            })
+          })
+          settings.topics?.forEach(t => {
+            t.visible_overlays = t.visible_overlays.filter(id => !this.diffs.removedLayers.includes(id))
+          })
+        }
+        await this.$http.post(`/api/project/meta/${this.project.name}`, omit(this.projectInfo, ['dirty', 'filesize']))
+        await this.$http.post(`/api/project/settings/${this.project.name}`, settings)
       }
-
-      // console.log('upload files', filesToUpload)
-      // console.log('update settings', settings)
-
       if (filesToUpload.length || filesToRemove.length) {
         try {
           await this.updateFiles(filesToUpload, filesToRemove)
         } catch (err) {
+          console.error(err)
           this.$notify.error(err.mesage || 'Failed to update files')
           return
         }
+        this.fetchServerFiles()
       }
-      await this.$http.post(`/api/project/meta/${this.project.name}`, this.projectInfo)
-      await this.$http.post(`/api/project/settings/${this.project.name}`, settings)
       this.$notify.success('Project was updated')
       this.reloadProject()
       const [ user, name ] = this.project.name.split('/')
       this.$router.push({ name: 'project', params: { user, name: name } })
+    },
+    enableFilesSelection () {
+      this.selectedFiles = this.updateOpts.qgisProject ? [this.projectInfo.file] : []
+    },
+    isFileDisabled (item) {
+      return !(this.filesDiff.flags?.[item.path])
     }
   }
 }
@@ -443,6 +565,12 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/card.scss';
+@import '@/info-grid.scss';
+
+.card {
+  border: 1px solid #ddd;
+  margin: 0 1px 12px 1px;
+}
 
 .files-section {
   display: grid;
@@ -474,6 +602,73 @@ ul {
     white-space: pre-line;
     font-family: monospace;
     font-size: 13px;
+  }
+}
+.files-options {
+  padding-left: 12px;
+}
+.statusbar {
+  background-color: #f2f2f2;
+}
+.update-card {
+  // background-color: #e5e5e5;
+  // width: 500px;
+  // align-self: center;
+  // background-color: var(--color-primary);
+
+  .content {
+    width: 420px;
+    align-self: center;
+    background-color: #fff;
+  }
+}
+::v-deep .layers-table {
+  tr {
+    --status-color: #2c3036;
+    color: var(--status-color, currentColor);
+    --icon-color: var(--color-status);
+  }
+  tr.new {
+    // background-color: rgba(var(--color-green-rgb), 0.3);
+    --status-color: var(--color-green);
+  }
+  tr.removed {
+    // background-color: rgba(var(--color-red-rgb), 0.3);
+    --status-color: var(--color-red);
+
+  }
+  tr.changed {
+    // background-color: rgba(var(--color-orange-rgb), 0.3);
+    --status-color: var(--color-orange);
+  }
+}
+.vjs-tree, .json-viewer, .json-diff-viewer {
+  width: clamp(50vw, 1260px, 90vw);
+  min-height: 90vh;
+  padding: 12px;
+  overflow: auto;
+}
+.metadata-view {
+  overflow: hidden;
+}
+.info-grid {
+  border: 1px solid #e7e7e7;
+  border-width: 1px 1px 0 1px;
+  &:not(.nested) {
+    margin: 4px;
+  }
+}
+.dialog {
+  .toolbar {
+    height: 38px;
+    flex-shrink: 0;
+    background-color: var(--color-dark);
+    border-bottom: 1px solid #ddd;
+    --fill-color: #fff;
+    .title {
+      font-size: 17px;
+      font-weight: 500;
+    }
   }
 }
 </style>

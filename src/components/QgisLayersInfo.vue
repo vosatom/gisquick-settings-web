@@ -4,6 +4,7 @@
     :items="layers"
     :collapsed.sync="collapsed"
     :columns="columns"
+    :classes="classes"
   >
     <!-- eslint-disable-next-line -->
     <template v-slot:leaf.queryable="{ item }">
@@ -64,7 +65,8 @@ const SourceIcons = {
 export default {
   components: { LayersTable },
   props: {
-    meta: Object
+    meta: Object,
+    classes: Object
   },
   data () {
     return {
@@ -116,7 +118,8 @@ export default {
       return mapValues(this.meta.layers, l => {
         let info
         const { provider_type: provider, source_params: source } = l
-        if (provider === 'wms' || (provider === 'vectortile' && source.url)) {
+        // 'wms', 'WFS', 'vectortile' providers
+        if (source.url) {
           info = {
             type: 'url',
             text: source.url

@@ -28,7 +28,7 @@
       </div>
       <div class="info-layout">
         <div class="f-col">
-          <span class="subheader">Info</span>
+          <span class="subheader">Information</span>
           <div class="info-grid i-card shadow-1 m-2">
             <span class="label">Name</span>
             <span v-text="layerMeta.name"/>
@@ -101,7 +101,7 @@
     </section>
     <div class="f-col">
       <layer-attributes
-        v-if="layerMeta.attributes"
+        v-if="layerMeta.attributes && isLayerQueryable"
         :key="layerId"
         :project="project"
         :settings="settings"
@@ -188,6 +188,9 @@ export default {
         })
       }
       return items
+    },
+    isLayerQueryable () {
+      return this.layerMeta.flags.includes('query')
     }
   },
   methods: {
@@ -235,6 +238,7 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/card.scss';
+@import '@/info-grid.scss';
 
 ::v-deep .card {
   // margin: 6px 1px;
@@ -331,48 +335,6 @@ section.info {
     background-color: #f7f7f7;
     // background-color: #FDF6EC;
     // background-color: rgba(var(--color-primary-rgb), 0.065);
-  }
-}
-.info-grid {
-  // min-width: 250px;
-  // min-width: 350px;
-  font-size: 14px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  > * {
-    padding: 3px 6px;
-    // border-bottom: 1px solid var(--border-color);
-    border-bottom: 1px solid #f3f3f3;
-  }
-  .label {
-    font-weight: 500;
-    text-align: right;
-    background-color: #e4e4e4;
-    &::after {
-      content: ":";
-    }
-  }
-  --icon-color: #606060;
-  :not(.label) {
-    color: #636363;
-  }
-  .separator {
-    text-align: right;
-    &.text {
-      font-size: 11.5px;
-      text-transform: uppercase;
-      font-weight: 500;
-      padding: 0px 6px;
-      color: #fff;
-      background-color: #575143;
-    }
-    &.line {
-      position: relative;
-      display: flex;
-      align-items: center;
-      background-color: #575143;
-      opacity: 0.15;
-    }
   }
 }
 .card.info {
