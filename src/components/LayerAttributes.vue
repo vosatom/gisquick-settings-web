@@ -56,29 +56,11 @@
         </template>
 
         <!-- eslint-disable-next-line -->
-        <template v-slot:header(info_panel)="{ column }">
-          <v-checkbox
-            :label="column.label"
-            class="f-justify-center"
-            :value="layerSettings.info_panel_fields.length > 0"
-            @input="toggleAll('info_panel_fields')"
-          />
-        </template>
-        <!-- eslint-disable-next-line -->
-        <template v-slot:header(attr_table)="{ column }">
-          <v-checkbox
-            :label="column.label"
-            class="xf-justify-center"
-            :value="layerSettings.attr_table_fields.length > 0"
-            @input="toggleAll('attr_table_fields')"
-          />
-        </template>
-        <!-- eslint-disable-next-line -->
         <template v-slot:header(export)="{ column }">
           <v-checkbox
             :label="column.label"
-            :value="layerSettings.export_fields && layerSettings.export_fields.length > 0"
-            @input="toggleAll('export_fields')"
+            :value="exportFieldsSet.size > 0"
+            @input="toggleExportAttributes"
           />
         </template>
 
@@ -172,27 +154,11 @@
         </template>
 
         <!-- eslint-disable-next-line -->
-        <template v-slot:cell(attr_table)="{ item }">
-          <v-checkbox
-            class="xf-justify-center"
-            :value="attrTableMap[item.name]"
-            @input="toggleAttribute('attr_table_fields', item.name, $event)"
-          />
-        </template>
-        <!-- eslint-disable-next-line -->
-        <template v-slot:cell(info_panel)="{ item }">
-          <v-checkbox
-            class="f-justify-center"
-            :value="infoPanelSet.has(item.name)"
-            @input="toggleAttribute('info_panel_fields', item.name, $event)"
-          />
-        </template>
-        <!-- eslint-disable-next-line -->
         <template v-slot:cell(export)="{ item }">
           <v-checkbox
             class="f-justify-center"
             :value="exportFieldsSet.has(item.name)"
-            @input="toggleAttribute('export_fields', item.name, $event)"
+            @input="toggleAttributeExport(item.name, $event)"
           />
         </template>
       </v-table>
@@ -229,6 +195,7 @@
           item-key="_id"
           :items="tableData"
           :loading="loading"
+          :error="loadingError"
           :selected="selectedFeatureId"
           @row-click="(f, row) => selectedRow = row"
         >
@@ -384,7 +351,8 @@ import pickBy from 'lodash/pickBy'
 import GeoJSON from 'ol/format/GeoJSON'
 
 import FormattersEditor, { createFormatter } from '@/components/FormattersEditor.vue'
-import GenericInfoPanel, { DateWidget, ValueMapWidget } from '@/components/GenericInfopanel.vue'
+import VImage from '@/components/image/Image.vue'
+import GenericInfoPanel, { DateWidget, ValueMapWidget, BoolWidget, UrlWidget, createTableImageWidget, mediaUrlFormat  } from '@/components/GenericInfopanel.vue'
 import { layerFeaturesQuery } from '@/map/featureinfo'
 import { excludedFieldsSet } from '@/adapters/attributes'
 import { externalComponent } from '@/components-loader'
@@ -432,7 +400,7 @@ function formatFeatures (features, formatters) {
 
 export default {
   name: 'LayerAttributes',
-  components: { FormattersEditor },
+  components: { FormattersEditor, VImage },
   props: {
     project: Object,
     settings: Object,
@@ -445,6 +413,8 @@ export default {
       linkedVisibility: true,
       filterExcluded: false,
       features: [],
+      loading: false,
+      loadingError: false,
       selectedRow: 0,
       limit: 5,
       pagination: null,
@@ -584,6 +554,9 @@ export default {
     attributes () {
       return this.project.meta.layers[this.layerId].attributes
     },
+    defaultAttributesOrder () {
+      return this.attributes.map(a => a.name)
+    },
     attrsMap () {
       return keyBy(this.attributes, 'name')
     },
@@ -665,6 +638,10 @@ export default {
     infoPanelSet () {
       return new Set(this.layerSettings.info_panel_fields)
     },
+    exportFieldsOrder () {
+      const fieldsOrder = this.orderLayout ? this.layerSettings?.fields_order?.table : this.layerSettings?.fields_order?.global
+      return fieldsOrder || this.defaultAttributesOrder
+    },
     exportFieldsSet () {
       return new Set(this.layerSettings.export_fields)
     },
@@ -690,7 +667,7 @@ export default {
         fields = this.layerSettings.fields_order.table || this.layerSettings.fields_order.global
       }
       if (!fields) {
-        fields = this.attributes.map(a => a.name)
+        fields = this.defaultAttributesOrder
       }
       const excluded = this.excludedTableFields
       const attributes = fields.filter(n => !excluded.has(n)).map(n => this.attrsMap[n])
@@ -715,17 +692,6 @@ export default {
         // ...f.getProperties(),
         // ...f.getFormattedProperties()
       }))
-
-      const data = this.features?.map(f => ({ _id: f.getId(), ...f.getProperties() }))
-      this.finalAttributes.forEach(attr => {
-        if (attr.format) {
-          const formatter = this.infopanelProject.formatter(attr.format)
-          data.forEach(f => {
-            f[attr.name] = formatter.format(f[attr.name])
-          })
-        }
-      })
-      return data
     },
     attrTableSlots () {
       const slots = {}
@@ -733,8 +699,16 @@ export default {
         let widget
         if (attr.widget === 'ValueMap') {
           widget = ValueMapWidget
+        } else if (attr.widget === 'Hyperlink') {
+          widget = UrlWidget
+        } else if (attr.widget === 'Image') {
+          widget = createImageWidget()
+        } else if (attr.widget === 'MediaImage') {
+          widget = createTableImageWidget(mediaUrlFormat(this.project.name))
         } else if (attr.type === 'date') { // and also attr.widget === 'DateTime' ?
           widget = DateWidget
+        } else if (attr.type === 'bool') {
+          widget = BoolWidget
         }
         if (widget) {
           slots[attr.name] = { component: widget, attribute: attr }
@@ -796,14 +770,13 @@ export default {
         },
         drop: (e, attr) => {
           if (!this.orderLayout && !this.layerSettings.fields_order?.global) {
-            this.$set(this.layerSettings, 'fields_order', { global: this.attributes.map(a => a.name) })
+            this.$set(this.layerSettings, 'fields_order', { global: this.defaultAttributesOrder })
           }
           const layout = this.layerSettings.fields_order[this.orderLayout || 'global']
           const sIndex = layout.indexOf(dragSrc)
           const dIndex = layout.indexOf(attr)
           layout.splice(sIndex, 1)
           layout.splice(dIndex, 0, dragSrc)
-          console.log(layout)
         }
       }
     }
@@ -819,6 +792,9 @@ export default {
         formatFeatures(features, this.layerFormatters)
         this.features = Object.freeze(features)
       }
+    },
+    exportFieldsOrder (fields) {
+      this.layerSettings.export_fields = fields.filter(n => this.exportFieldsSet.has(n))
     }
   },
   methods: {
@@ -832,7 +808,7 @@ export default {
     async fetchFeatures (page = 1) {
       const mapProjection = this.project.meta.projection.code
       // fetch only attributes, without geometry
-      const query = layerFeaturesQuery(this.layer, null, null, this.attributes.map(a => a.name))
+      const query = layerFeaturesQuery(this.layer, null, null, this.defaultAttributesOrder)
 
       const baseParams = {
         VERSION: '1.1.0',
@@ -845,6 +821,7 @@ export default {
       const headers = { 'Content-Type': 'text/xml' }
       let geojson, featuresCount
       this.loading = true
+      this.loadingError = false
       // await new Promise(resolve => setTimeout(resolve, 2000))
       try {
         let params = { ...baseParams, resultType: 'hits' }
@@ -861,6 +838,7 @@ export default {
         geojson = resp.data
       } catch (e) {
         console.error(e)
+        this.loadingError = 'Failed to load data'
         return
       } finally {
         this.loading = false
@@ -893,16 +871,15 @@ export default {
         this.selectedRow += 1
       }
     },
-    toggleAttribute (field, name, val) {
-      if (!this.layerSettings[field]) {
-        this.$set(this.layerSettings, field, [])
-      }
-      const list = this.layerSettings[field]
-      if (val) {
-        list.push(name)
-      } else {
-        list.splice(list.indexOf(name), 1)
-      }
+    toggleAttributeExport (name, val) {
+      const filter = val
+        ? n => this.exportFieldsSet.has(n) || n === name
+        : n => this.exportFieldsSet.has(n) && n !== name
+      this.$set(this.layerSettings, 'export_fields', this.exportFieldsOrder.filter(filter))
+    },
+    toggleExportAttributes () {
+      const newValue = this.exportFieldsSet.size > 0 ? [] : this.exportFieldsOrder
+      this.$set(this.layerSettings, 'export_fields', newValue)
     },
     toggleFieldVisibility (model, name) {
       const isExcluded = this[model === 'table' ? 'excludedTableFields' : 'excludedInfopanelFields'].has(name)
@@ -935,7 +912,7 @@ export default {
       }
       newExcluded = pickBy(newExcluded, v => v.length)
       const empty = !Object.keys(newExcluded).length // seems like lodash's isEmpty not working here on reactive data
-      console.log('empty', empty, 'lodash', isEmpty(newExcluded))
+      // console.log('empty', empty, 'lodash', isEmpty(newExcluded))
       if (empty) {
         this.$delete(this.layerSettings, 'excluded_fields')
       } else {
@@ -951,14 +928,6 @@ export default {
       } else {
         this.$set(this.attrsSettings[attr.name], key, value)
       }
-    },
-    toggleAll (field) {
-      if (!this.layerSettings[field]) {
-        this.$set(this.layerSettings, field, [])
-      }
-      this.layerSettings[field] = this.layerSettings[field].length === 0
-        ? this.attributes.map(a => a.name)
-        : []
     },
     setFormatter (attr, value) {
       if (value === '__manage__') {
@@ -1050,6 +1019,7 @@ export default {
     height: 28px;
   }
 }
+// data grid table
 .table-container {
   border: 1px solid var(--border-color);
   .select {
@@ -1071,7 +1041,6 @@ export default {
     thead {
       th[role="columnheader"] {
         height: 40px;
-        padding-block: 5px;
       }
       tr.progress th {
         top: 40px!important;
@@ -1082,6 +1051,10 @@ export default {
       max-width: 600px; // TODO: multiple sizes dependent by columns count
       text-overflow: ellipsis;
       overflow: hidden;
+      a {
+        color: var(--color-primary);
+        text-decoration: none;
+      }
     }
   }
 }

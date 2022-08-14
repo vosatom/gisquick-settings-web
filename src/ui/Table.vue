@@ -24,9 +24,6 @@
             </slot>
           </th>
         </tr>
-        <!-- <div v-if="loading" class="loading-bar">
-          <div class="highlight"/>
-        </div> -->
         <tr class="progress">
           <th :colspan="columns.length">
             <div v-if="loading" class="loading-bar">
@@ -87,13 +84,10 @@
         </template>
       </tbody>
     </table>
-    <div
-      v-if="error"
-      class="m-4"
-      color="red"
-      icon="error"
-      v-text="errorText"
-    />
+    <div v-if="error" class="error f-row-ac m-4">
+      <v-icon name="warning" class="mr-2"/>
+      <span v-text="errorText"/>
+    </div>
   </div>
   <!-- </scroll-area> -->
 </template>
@@ -214,7 +208,7 @@ export default {
       return { [this.selected]: true }
     },
     errorText () {
-      return !!this.error && (typeof this.error === 'string' ? this.error : 'Chyba')
+      return !!this.error && (typeof this.error === 'string' ? this.error : 'Error')
     }
   },
   watch: {
@@ -442,6 +436,11 @@ export default {
       }
     }
   }
+}
+.error {
+  color: var(--color-red);
+  --icon-color: currentColor;
+  font-weight: 500;
 }
 .loading-bar {
   position: absolute;

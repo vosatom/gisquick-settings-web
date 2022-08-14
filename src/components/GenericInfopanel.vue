@@ -2,12 +2,15 @@
   <div class="generic-infopanel">
     <div class="fields">
       <template v-for="(attr, index) in attributes">
-        <span class="label" :key="attr.name">{{ attr.alias || attr.name }}</span>
+        <span
+          class="label"
+          :key="attr.name"
+          v-text=" attr.alias || attr.name"
+        />
         <slot :name="attr.name" :attr="attr">
           <component
             :is="widgets[index]"
             :value="values[index]"
-            :layer="layer"
             :attribute="attr"
             class="value"
           />
@@ -30,7 +33,10 @@ import { valueMapItems } from '@/adapters/attributes'
 function Widget (render) {
   return {
     functional: true,
-    props: ['value'],
+    props: {
+      attribute: Object,
+      value: {}
+    },
     render
   }
 }
@@ -43,16 +49,18 @@ const FloatWidget = Widget((h, ctx) => (
   <span {...ctx.data}>{Number.isFinite(ctx.props.value) ? round(ctx.props.value, 2) : ctx.props.value}</span>
 ))
 
-const BoolWidget = Widget((h, ctx) => (
+export const BoolWidget = Widget((h, ctx) => (
   <div class="f-row-ac" {...ctx.data}><v-icon name={ctx.props.value ? 'check' : 'dash'}/></div>
 ))
 
 // TODO: translate 'link' (check <translate> component in JSX)
-const UrlWidget = Widget((h, ctx) => (
-  <a {...ctx.data} href={ctx.props.value} target="_blank">link</a>
+export const UrlWidget = Widget((h, ctx) => (
+  ctx.props.value
+    ? <a {...ctx.data} href={ctx.props.value} target="_blank">link</a>
+    : <span {...ctx.data}/>
 ))
 
-const ImageWidget = Widget((h, ctx) => {
+export const ImageWidget = Widget((h, ctx) => {
   const src = ctx.props.value
   if (!src) {
     return <span class="value"></span>
@@ -63,12 +71,45 @@ const ImageWidget = Widget((h, ctx) => {
   ]
 })
 
+export function mediaUrlFormat (projectName) {
+  const root = `/api/project/media/${projectName}`
+  return value => path.join(root, value)
+}
+
+export function createTableImageWidget (createUrl) {
+  return Widget((h, ctx) => {
+    const src = ctx.props.value
+    if (!src) {
+      return <span class="value"></span>
+    }
+    const url = createUrl ? createUrl(src) : src
+    return <v-image class="image" src={url} scopedSlots={{
+      default: props => (
+        <div class="f-row-ac">
+          <v-btn class="icon flat m-0">
+            <v-icon name="photo" onClick={props.openViewer}/>
+            <v-tooltip slot="tooltip" align="ll,rr,c;tt,bb" content-class="tooltip dark image">
+              <img style="width:100%; max-width: 300px; max-height:300px" src={url}/>
+            </v-tooltip>
+          </v-btn>
+          <a class="value ml-2" href={url} target="_blank">{src}</a>
+        </div>
+      )
+    }}/>
+  })
+}
+
 export const DateWidget = Widget((h, ctx) => {
   let { value } = ctx.props
   const cfg = ctx.data.attrs?.attribute?.config
   if (value && cfg && cfg.display_format && cfg.field_format) {
     const date = parse(value, cfg.field_format, new Date())
-    value = format(date, cfg.display_format)
+    const displayFormat = cfg?.display_format || 'yyyy-MM-dd'
+    try {
+      value = format(date, displayFormat)
+    } catch (err) {
+      console.error(`DateWidget: failed to format value: ${value} (${err})`)
+    }
   }
   return <span {...ctx.data}>{value}</span>
 })
@@ -80,7 +121,11 @@ export const DateTimeWidget = Widget((h, ctx) => {
     const cfg = ctx.data.attrs?.attribute?.config
     const displayFormat = cfg?.display_format || 'yyyy-MM-dd HH:mm:ss'
     const date = cfg?.field_format ? parse(value, cfg.field_format, new Date()) : new Date(value)
-    value = format(date, displayFormat)
+    try {
+      value = format(date, displayFormat)
+    } catch (err) {
+      console.error(`DateTimeWidget: failed to format value: ${value} (${err})`)
+    }
   }
   return <span {...ctx.data}>{value}</span>
 })
@@ -89,7 +134,6 @@ export const ValueMapWidget = {
   name: 'ValueMapWidget',
   props: {
     attribute: Object,
-    // layer: Object,
     value: {}
   },
   computed: {
