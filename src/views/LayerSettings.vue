@@ -76,6 +76,18 @@
               :value="layerConfig.style_url"
               @input="setOptSetting(layerSettings, 'custom.style_url', $event)"
             />
+            <!-- <v-checkbox
+              label="Test"
+              :value="layerConfig.bool"
+              @input="setOptSetting(layerSettings, 'config.bool', $event)"
+            />
+            <v-text-field
+              class="filled"
+              label="Test"
+              lazy
+              :value="layerConfig.test"
+              @input="setOptSetting(layerSettings, 'config.test', $event)"
+            /> -->
           </div>
         </div>
 

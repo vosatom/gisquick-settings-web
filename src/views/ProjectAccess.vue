@@ -205,6 +205,7 @@
                 :attribute-meta="attr"
                 :layer-capabilities="layersPermissionsCapabilities[layer.id]"
                 :layer-permissions="layersPerms[layer.id]"
+                :layer-settings="settings.layers[layer.id]"
                 :value="attrsPerms[layer.id][attr.name]"
                 class="f-justify-end"
               />
@@ -490,14 +491,11 @@ export default {
     },
     toggleRolesMode (enable) {
       if (enable) {
-        // this.settings.auth.roles = this._rolesBackupValue ?? []
         this.$set(this.settings.auth, 'roles', this._rolesBackupValue ?? [])
       } else {
         this._rolesBackupValue = this.settings.auth.roles
-        // this.settings.auth.roles = null
-        this.$set(this.settings.auth, 'roles', null)
+        this.$delete(this.settings.auth, 'roles')
       }
-      // this.settings.auth.roles = enable ? [] : null
     },
     toggleTopicVisibility (id) {
       const { permissions } = this.selectedRole
