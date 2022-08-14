@@ -20,6 +20,7 @@ export default {
     attributeMeta: Object,
     layerCapabilities: Object,
     layerPermissions: Array,
+    layerSettings: Object,
     value: Array
   },
   computed: {
@@ -28,6 +29,7 @@ export default {
     },
     flags () {
       const attrVisible = this.value.includes('view')
+      const attrExportable = this.layerSettings.export_fields?.includes(this.attributeMeta.name)
       const layerVisible = this.layerPermissions.includes('view')
       const layerEditable = layerVisible && (this.layerPermissions.includes('update') || this.layerPermissions.includes('insert'))
       const layerExportable = layerVisible && this.layerPermissions.includes('export')
@@ -45,7 +47,7 @@ export default {
         }, {
           name: 'export',
           icon: 'download',
-          disabled: !this.layerCapabilities.export || !layerExportable || !attrVisible,
+          disabled: !this.layerCapabilities.export || !layerExportable || !attrExportable,
           value: this.value.includes('export')
         }
       ]
