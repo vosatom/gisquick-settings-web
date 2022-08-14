@@ -21,6 +21,7 @@ export default {
       type: String,
       default: 'items'
     },
+    itemsData: Object,
     baseIndent: [String, Number],
     indent: {
       type: [String, Number],
@@ -85,7 +86,12 @@ export default {
     },
     renderLeaf (h, item, group, depth) {
       const style = this.indendStyle(depth)
-      const cmp = this.$scopedSlots.leaf({ item, group, depth, style })
+      const props = { item, group, depth, style }
+      if (this.itemsData) {
+        props.data = this.itemsData[item[this.itemKey]]
+        // Object.assign(props, this.itemsData[item[this.itemKey]])
+      }
+      const cmp = this.$scopedSlots.leaf(props)
       if (style) {
         // addStyle(cmp[0], style)
       }

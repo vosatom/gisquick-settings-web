@@ -199,20 +199,6 @@
           @input="settings.initial_extent = roundExtent($event)"
         />
 
-        <!-- <div class="layers-control">
-          <v-scroll-area>
-            <layers-tree :layers="layers">s
-              <template v-slot:leaf-append="{ layer }">
-                <div class="symbol f-row-ac">
-                  <img
-                    v-if="legends[layer.id]"
-                    :src="`data:image/png;base64, ${legends[layer.id]}`"
-                  />
-                </div>
-              </template>
-            </layers-tree>
-          </v-scroll-area>
-        </div> -->
         <div v-if="activeExtentEdit" class="f-row f-justify-center m-1">
           <small>Hold <strong>Shift</strong> key to modify extent area</small>
         </div>
@@ -225,16 +211,7 @@
               Layers
             </div>
             <v-scroll-area>
-              <layers-tree :layers="layers">
-                <template v-slot:leaf-append="{ layer }">
-                  <div class="symbol f-row-ac">
-                    <img
-                      v-if="legends[layer.id]"
-                      :src="`data:image/png;base64, ${legends[layer.id]}`"
-                    />
-                  </div>
-                </template>
-              </layers-tree>
+              <layers-tree :layers="layers" :legend-fetcher="legendFetcher"/>
             </v-scroll-area>
           </div>
         </transition>
@@ -245,8 +222,7 @@
 
 <script>
 import round from 'lodash/round'
-import mapValues from 'lodash/mapValues'
-import { extend } from 'ol/extent'
+import { extend, getCenter } from 'ol/extent'
 
 import Page from '@/mixins/Page'
 import LayersTree from '@/components/LayersTree.vue'
@@ -264,6 +240,41 @@ import { layersList, layersGroups, transformLayersTree, filterLayers } from '@/u
 import { scalesToResolutions } from '@/utils/scales'
 import { extentPrecision } from '@/utils/units'
 
+function formatLegendData (data) {
+  let { symbols, ...attrs } = data.nodes[0] || {}
+  symbols = symbols?.filter(s => s.icon)
+  return {
+    ...attrs,
+    symbols: symbols?.length ? symbols : null
+  }
+}
+
+function LegendFetcher (http, url) {
+  const cache = {}
+  const baseParams = {
+    SERVICE: 'WMS',
+    VERSION: '1.1.1',
+    REQUEST: 'GetLegendGraphic',
+    EXCEPTIONS: 'application/vnd.ogc.se_xml',
+    FORMAT: 'application/json',
+    // SYMBOLHEIGHT: '20',
+    // SYMBOLWIDTH: '20',
+    // SCALE:
+    // WIDTH: '50'
+  }
+  return {
+    async fetch (layer, forceFetch = false) {
+      if (!forceFetch && cache[layer.name]) {
+        return { data: cache[layer.name] }
+      }
+      const params = { ...baseParams, LAYER: layer.name}
+      let { data } = await http.get(url, { params })
+      data = formatLegendData(data)
+      cache[layer.name] = data
+      return { data } // format for watchTask
+    }
+  }
+}
 export default {
   name: 'ProjectMap',
   components: { LayersTree, MapView, MapImg, DrawExtent, ExtentField, ScalesList, ThumbnailEditor, VTabsHeader, TextTabsHeader },
@@ -275,7 +286,6 @@ export default {
   data () {
     return {
       tab: 'scales',
-      legends: {},
       layers: [],
       activeExtentEdit: null,
       showLayers: false,
@@ -335,21 +345,16 @@ export default {
       ]
     }
   },
-  watch: {
-    flatLayers: {
-      immediate: true,
-      handler: 'fetchLegend'
-    }
-  },
   created () {
     this.initLayersModel(this.qgisMeta)
+    this.legendFetcher = LegendFetcher(this.$http, `/api/project/map/${this.project.name}`)
   },
   methods: {
     initLayersModel (meta) {
       const layers = transformLayersTree(
         meta.layers_tree,
         l => ({ ...meta.layers[l.id] }),
-        (g, layers) => ({ ...g, layers, visible: true, expanded: true })
+        (g, layers) => ({ ...g, id: g.name, layers, visible: true, expanded: true })
       )
       // this.layers = filterLayers(layers, l => l.type !== 'VectorLayer' || l.options.wkb_type !== 'NoGeometry')
       this.layers = filterLayers(layers, l => meta.layers_order.includes(l.id))
@@ -392,35 +397,6 @@ export default {
       // this.settings.scales = scales
       this.$set(this.settings, 'scales', scales)
       this.settings.tile_resolutions = scalesToResolutions(scales, this.qgisMeta.units)
-    },
-    async fetchLegend () {
-      // const layers = this.flatLayers.map(l => l.name)
-      const baseParams = {
-        // MAP: this.project.name,
-        // LAYER: layers.join(','),
-        SERVICE: 'WMS',
-        VERSION: '1.1.1',
-        REQUEST: 'GetLegendGraphic',
-        EXCEPTIONS: 'application/vnd.ogc.se_xml',
-        FORMAT: 'application/json',
-        // SYMBOLHEIGHT: '20',
-        // SYMBOLWIDTH: '20',
-        // SCALE:
-        // WIDTH: '50'
-      }
-      const tasks = this.flatLayers.map(l => {
-        const params = { ...baseParams, LAYER: l.name}
-        return this.$http
-          .get(`/api/project/map/${this.project.name}`, { params })
-          .then(resp => ({
-            [l.id]: resp.data
-          }))
-      })
-      const legends = await Promise.all(tasks)
-      // const { data } = await this.$http.get('/api/project/map', { params })
-      // const legends = {}
-      // this.legends = mapValues(Object.assign({}, ...legends), l => l.nodes[0]?.symbols?.[0]?.icon)
-      this.legends = mapValues(Object.assign({}, ...legends), l => l.nodes[0]?.icon)
     },
     loadThumbnailFromMap () {
       const img = this.$refs.map.getImage()
@@ -567,14 +543,6 @@ export default {
 }
 .layers-tree {
   overflow: auto;
-  .symbol {
-    width: 20px;
-    margin-left: 6px;
-    img {
-      max-width: 20px;
-      max-height: 20px;
-    }
-  }
 }
 // .layers-control {
 //   position: absolute;

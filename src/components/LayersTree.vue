@@ -1,9 +1,10 @@
 <template>
   <v-tree-view
     class="layers-tree"
-    item-key="name"
+    item-key="id"
     item-children="layers"
     :items="layers"
+    :items-data="legends"
     expanded-key="expanded"
     :group-content-attrs="groupContentAttributes"
   >
@@ -28,14 +29,29 @@
         />
       </div>
     </template>
-    <template v-slot:leaf="{ item, group, style }">
+    <template v-slot:leaf="{ item, group, style, data: legend }">
       <!-- <div class="f-col"> -->
         <div
           class="item layer f-row-ac"
           :class="{expanded: expandedLayer === item}"
           :style="style"
         >
-          <slot name="leaf-append" :layer="item"/>
+          <v-spinner v-if="legend.pending" size="16" width="2" class="mx-2"/>
+          <v-icon v-else-if="legend.error" name="circle-error" color="red" class="mx-2"/>
+          <template v-else-if="legend.data">
+            <div class="symbol" v-if="legend.data.icon">
+              <img :src="`data:image/png;base64, ${legend.data.icon}`"/>
+            </div>
+            <v-btn v-else-if="legend.data.symbols" class="icon flat small" @click="toggleLayerInfo(item)">
+              <v-icon
+                class="toggle"
+                name="arrow-down"
+                size="12"
+              />
+            </v-btn>
+            <div v-else class="symbol"/>
+          </template>
+
           <v-checkbox
             class="f-grow"
             :label="item.title"
@@ -50,17 +66,30 @@
             />
           </v-btn> -->
         </div>
-        <!-- <v-collapsible>
+        <v-collapsible>
           <div v-if="expandedLayer === item" class="metadata" :style="style">
-            <div class="px-2 py-1">
+            <v-spinner v-if="legend.pending" size="16" width="2" class="mx-2"/>
+            <div v-else-if="legend.data && legend.data.symbols" class="f-col my-2">
+              <div
+                v-for="(symbol, i) in legend.data.symbols"
+                :key="i"
+                class="legend f-row-ac"
+              >
+                <div class="symbol">
+                  <img :src="`data:image/png;base64, ${symbol.icon}`"/>
+                </div>
+                <span class="title" v-text="symbol.title"/>
+              </div>
+            </div>
+            <!-- <div class="px-2 py-1">
               <span class="label">Abstract</span>
               <span>{{ item.metadata.abstract }}</span>
               <br/>
               <span class="label">Keywords list</span>
               <span>{{ item.metadata.keyword_list }}</span>
-            </div>
+            </div> -->
           </div>
-        </v-collapsible> -->
+        </v-collapsible>
       <!-- </div> -->
     </template>
   </v-tree-view>
@@ -68,19 +97,40 @@
 
 <script>
 import VCollapsible from '@/ui/Collapsible.vue'
+import { layersList } from '@/utils/layers'
+import { TaskState, watchTask } from '@/tasks'
 
 export default {
   components: { VCollapsible },
   props: {
     expanded: Object,
-    layers: Array
+    layers: Array,
+    legendFetcher: Object
   },
   data () {
     return {
-      expandedLayer: null
+      expandedLayer: null,
+      legends: {}
     }
   },
   computed: {
+    layersList () {
+      return layersList(this.layers)
+    }
+  },
+  watch: {
+    layersList: {
+      immediate: true,
+      handler (layers) {
+        const legends = {}
+        layers.forEach(l => {
+          legends[l.id] = TaskState()
+          const t = this.legendFetcher.fetch(l)
+          watchTask(t, legends[l.id])
+        })
+        this.legends = legends
+      }
+    }
   },
   methods: {
     toggleGroup (group) {
@@ -93,7 +143,6 @@ export default {
       group.visible = visible
     },
     setLayerVisibility (layer, group, visible) {
-      console.log(group)
       if (group?.mutually_exclusive) {
         const offLayers = group.layers.filter(l => l.visible && l !== layer)
         offLayers.forEach(l => {
@@ -154,9 +203,14 @@ export default {
           transform: rotate(180deg);
         }
       }
+      .checkbox {
+        margin-left: 2px;
+      }
       .btn {
         // color: #999;
-        margin: 1px;
+        margin: 0px;
+        width: 32px;
+
       }
     }
   }
@@ -171,20 +225,33 @@ export default {
     // }
   }
 }
-
+.symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 3px 6px;
+  flex-shrink: 0;
+  width: 20px;
+  img {
+    max-width: 20px;
+    max-height: 20px;
+  }
+}
 .metadata {
-  font-size: 13px;
   background-color: rgba(25, 118, 210, 0.05);
+  .legend {
+    user-select: none;
+    .title {
+      margin-inline: 1px 6px;
+      user-select: text;
+    }
+  }
   .label {
     font-weight: bold;
     margin-right: 6px;
     &::after {
       content: ":";
     }
-  }
-  .icon {
-    width: 15px;
-    height: 15px;
   }
 }
 </style>
