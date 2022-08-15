@@ -173,19 +173,26 @@ export default {
 .map {
   position: relative;
   background-color: #fff;
-  display: flex;
-  flex-direction: column;
-
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
   .progressbar {
     font-size: 14px;
   }
+  .error, .map-canvas {
+    grid-area: 2 / 1 / 3 / 2;
+  }
   .error {
-    position: absolute;
-    top: 45%;
+    align-self: center;
+    justify-self: center;
+    padding: 6px 12px;
+    pointer-events: none;
     text-align: center;
-    width: 100%;
     z-index: 100;
     color: var(--color-red);
+    background-color: rgba(#fff, 0.93);
+    border: 1px solid currentColor;
+    border-radius: 3px;
     font-size: 15px;
     font-weight: 500;
   }
