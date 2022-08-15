@@ -1,15 +1,30 @@
 <template>
   <div class="page-content light f-col-ac">
-    <span class="title m-4">Gisquick QGIS plugin repository</span>
-
+    <span class="title m-4">Gisquick QGIS plugin</span>
     <p class="info">
-      <v-badge color="#999" class="dark m-1">
+      <!-- <v-badge color="#999" class="dark m-1">
         <v-icon name="circle-i-outline" size="16"/>
         <span>Note</span>
-      </v-badge>
-      <span>
+      </v-badge> -->
+      <!-- <v-icon name="circle-i-outline" size="16"/> -->
+      <!-- <span class="note">
+        <v-icon name="warning" size="16"/>
+        <span>Important</span>
+      </span> -->
+      <span class="important">
         Gisquick plugin contains binary code compiled for particular platform,
         therefore you need to use repository for your platform.
+      </span>
+      <br/>
+      <br/>
+      <span class="note dark">
+        <v-icon name="circle-i-outline" size="16"/>
+        <span>Tip</span>
+      </span>
+      <span>
+        If you plan to use data in Geopackage format, it is recommended to install
+        version of plugin with SQLite's <a href="https://www.sqlite.org/dbhash.html">dbhash</a>
+        program for better detection of changes for later updates.
       </span>
     </p>
     <div class="repositories m-2">
@@ -73,6 +88,9 @@ export default {
   font-weight: 500;
   font-size: 24px;
 }
+a {
+  color: var(--color-primary);
+}
 .repo-link {
   background-color: #f3f3f3;
   border: 1px solid #ddd;
@@ -88,7 +106,24 @@ export default {
   .badge {
     display: inline-flex;
     vertical-align: middle;
-
+  }
+  .important {
+    font-weight: 500;
+  }
+}
+.note {
+  display: inline-flex;
+  // vertical-align: middle;
+  align-items: center;
+  background-color: var(--color-green);
+  padding: 5px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  height: 20px;
+  .icon {
+    margin-right: 2px;
   }
 }
 .repositories {
