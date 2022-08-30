@@ -35,9 +35,9 @@
 
     <router-view v-if="!showLoginDialog" class="page-content"/>
     <login-dialog
-      :value="showLoginDialog"
       login-required
-      password-reset-url=""
+      :value="showLoginDialog"
+      :password-reset-url="app.reset_password_url"
       @login="onLogin"
     />
     <change-password-dialog ref="changePasswordDialog"/>
@@ -77,6 +77,9 @@ export default {
     }
   },
   computed: {
+    app () {
+      return this.$root.app
+    },
     user () {
       return this.$root.user
     },
