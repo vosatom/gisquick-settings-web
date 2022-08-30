@@ -174,7 +174,6 @@ import isEqual from 'lodash/isEqual'
 import isEmpty from 'lodash/isEmpty'
 import difference from 'lodash/difference'
 import keyBy from 'lodash/keyBy'
-import pickBy from 'lodash/pickBy'
 import cloneDeep from 'lodash/cloneDeep'
 
 // import JsonViewer from '@/components/JsonViewer2.vue'
@@ -445,7 +444,6 @@ export default {
         try {
           await this.$http.delete(`/api/project/files/${this.project.name}`, { data })
         } catch (err) {
-          // this.$notify.error('Failed to remove files')
           throw new Error('Failed to remove files')
         }
       }
@@ -455,8 +453,7 @@ export default {
         await this.upload.start()
       } catch (e) {
         if (e !== 'aborted') {
-          throw new Error('Failed to upload files')
-          // this.$notification.error(e)
+          throw e
         }
       } finally {
         // this.fetchServerFiles()
@@ -543,7 +540,7 @@ export default {
           await this.updateFiles(filesToUpload, filesToRemove)
         } catch (err) {
           console.error(err)
-          this.$notify.error(err.mesage || 'Failed to update files')
+          this.$notify.error(err.message || 'Failed to update files')
           return
         }
         this.fetchServerFiles()
