@@ -4,7 +4,7 @@
       v-for="flag in flags"
       :key="flag.name"
       class="icon flat"
-      :color="flag.value ? 'primary' : '#aaa'"
+      :color="flag.value ? 'primary' : '#777'"
       :disabled="flag.disabled"
       @click="toggle(flag)"
     >

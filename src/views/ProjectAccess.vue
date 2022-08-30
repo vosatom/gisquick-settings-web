@@ -160,7 +160,7 @@
           <template v-slot:leaf.perms="{ item }">
             <v-btn
               class="icon flat"
-              :color="selectedRole.permissions.layers[item.id].includes('view') ? 'primary' : '#aaa'"
+              :color="selectedRole.permissions.layers[item.id].includes('view') ? 'primary' : '#777'"
               @click="toggleBaseLayerPermission(item)"
             >
               <v-icon name="visibility" size="18"/>
@@ -187,7 +187,7 @@
               <div class="v-separator"/>
               <v-btn
                 class="icon flat"
-                :color="attributesDetail === item.id ? '' : '#aaa'"
+                :color="attributesDetail === item.id ? 'orange' : '#777'"
                 @click="toggleAttributes(item)"
               >
                 <v-icon name="attribute-table" size="18"/>
@@ -264,7 +264,6 @@ import UsersList from '@/components/UsersList.vue'
 import LayersTable from '@/components/LayersTable.vue'
 import RadioGroup from '@/ui/RadioGroup.vue'
 import TextTabsHeader from '@/ui/TextTabsHeader.vue'
-import VTabsHeader from '@/ui/TabsHeader.vue'
 import AttributePermissionsFlags from '@/components/AttributePermissionsFlags.vue'
 import LayerPermissionsFlags from '@/components/LayerPermissionsFlags.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -296,7 +295,7 @@ export function initLayersPermissions (layers) {
 
 export default {
   name: 'ProjectAccess',
-  components: { ConfirmDialog, UsersList, LayersTable, VTabsHeader, TextTabsHeader, RadioGroup, AttributePermissionsFlags, LayerPermissionsFlags },
+  components: { ConfirmDialog, UsersList, LayersTable, TextTabsHeader, RadioGroup, AttributePermissionsFlags, LayerPermissionsFlags },
   props: {
     project: Object,
     settings: Object

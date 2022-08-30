@@ -5,7 +5,7 @@
       :key="flag.name"
       :disabled="flag.disabled"
       class="icon flat"
-      :color="flag.value ? 'primary' : '#ccc'"
+      :color="flag.value ? 'primary' : '#777'"
       @click="toggle(flag)"
     >
       <v-icon :name="flag.icon"/>
