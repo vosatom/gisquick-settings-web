@@ -654,7 +654,9 @@ export default {
     infoPanelComponent () {
       const componentName = this.layerSettings.infopanel_component
       if (componentName) {
-        return this.loadedScript?.components[componentName] || externalComponent(this.project, componentName)
+        try {
+          return this.loadedScript?.components[componentName] || externalComponent(this.project, componentName)
+        } catch (err) {}
       }
       return GenericInfoPanel
     },
