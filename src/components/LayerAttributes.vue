@@ -352,7 +352,7 @@ import GeoJSON from 'ol/format/GeoJSON'
 
 import FormattersEditor, { createFormatter } from '@/components/FormattersEditor.vue'
 import VImage from '@/components/image/Image.vue'
-import GenericInfoPanel, { DateWidget, ValueMapWidget, BoolWidget, UrlWidget, createTableImageWidget, mediaUrlFormat  } from '@/components/GenericInfopanel.vue'
+import GenericInfoPanel, { DateWidget, ValueMapWidget, BoolWidget, UrlWidget, ImageWidget, createTableImageWidget, mediaUrlFormat  } from '@/components/GenericInfopanel.vue'
 import { layerFeaturesQuery } from '@/map/featureinfo'
 import { excludedFieldsSet } from '@/adapters/attributes'
 import { externalComponent } from '@/components-loader'
@@ -704,7 +704,7 @@ export default {
         } else if (attr.widget === 'Hyperlink') {
           widget = UrlWidget
         } else if (attr.widget === 'Image') {
-          widget = createImageWidget()
+          widget = ImageWidget
         } else if (attr.widget === 'MediaImage') {
           widget = createTableImageWidget(mediaUrlFormat(this.project.name))
         } else if (attr.type === 'date') { // and also attr.widget === 'DateTime' ?
