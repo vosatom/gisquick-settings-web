@@ -1,0 +1,71 @@
+// Slightly updated version of vite-plugin-vue2-svg plugin.
+// For Vue 3, consider using vite-svg-loader
+import { readFileSync } from 'fs'
+import { basename } from 'path'
+import { optimize } from 'svgo'
+import { compileTemplate, parse } from '@vue/component-compiler-utils'
+import * as compiler from 'vue-template-compiler'
+
+function compileSvg(svg, id) {
+  const template = parse({
+    source: `
+      <template>
+        ${svg}
+      </template>
+    `,
+    compiler: compiler,
+    filename: `${basename(id)}.vue`
+  }).template
+
+  if (!template) return ''
+
+  const result = compileTemplate({
+    compiler: compiler,
+    source: template.content,
+    filename: `${basename(id)}.vue`
+  })
+
+  return `
+    ${result.code}
+    export default {
+      render: render
+    }
+  `
+}
+
+function optimizeSvg(content, svgoConfig) {
+  const result = optimize(content, svgoConfig)
+  if ('data' in result) {
+    return result.data
+  }
+  throw new Error(`[vite-plugin-vue2-svg] cannot optimize SVG ${svgoConfig.path}`)
+}
+
+export default function (options = {}) {
+  const { svgoConfig } = options
+  const svgRegex = /\.svg(\?(component))?$/
+
+  return {
+    name: 'vite-svg-loader',
+    async transform(_source, id) {
+      if (!/\?component/.test(id)) {
+        return null
+      }
+
+      const fname = id.replace(/\?.*$/, '')
+      const isMatch = svgRegex.test(fname)
+      if (isMatch) {
+        const code = readFileSync(fname, { encoding: 'utf-8' })
+        let svg = await optimizeSvg(code, { path: fname, ...svgoConfig })
+        if (!svg) {
+          throw new Error(`[vite-svg-loader] fail to compile ${id}`)
+        }
+        svg = svg.replace('<svg', '<svg v-on="$listeners"')
+        const result = compileSvg(svg, fname)
+
+        return result
+      }
+      return null
+    }
+  }
+}

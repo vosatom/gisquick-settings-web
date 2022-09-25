@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import DisconnectedImg from '@/assets/qgis_disconnected.svg?inline'
+import DisconnectedImg from '@/assets/qgis_disconnected.svg?component'
 
 export default {
   components: { DisconnectedImg }

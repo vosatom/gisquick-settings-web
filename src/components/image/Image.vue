@@ -37,7 +37,7 @@
 
 <script>
 import ImageViewer from './ImageViewer.vue'
-import BrokenPhotoSvg from '@/assets/photo-broken.svg?inline'
+import BrokenPhotoSvg from '@/assets/photo-broken.svg?component'
 
 export default {
   components: { ImageViewer, BrokenPhotoSvg },

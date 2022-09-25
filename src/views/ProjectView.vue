@@ -212,7 +212,7 @@ import JsonViewer2 from '@/components/JsonDiffViewer.vue'
 import { scalesToResolutions, ProjectionsScales } from '@/utils/scales'
 import { TaskState, watchTask } from '@/tasks'
 import { objectDiff } from '@/utils/diff'
-import MapImg from '@/assets/map.svg?inline'
+import MapImg from '@/assets/map.svg?component'
 
 
 function validatedSettings (settings) {

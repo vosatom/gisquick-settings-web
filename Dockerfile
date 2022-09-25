@@ -1,13 +1,13 @@
-FROM node:14-alpine AS webapp
+FROM node:16-alpine AS webapp
 
 WORKDIR /webapp/
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN npm run build -- --modern
+RUN npm run build
 
 
-FROM gisquick/webapp-container
+FROM gisquick/mpa-base
 
 COPY --from=webapp /webapp/dist/ /var/www
-CMD /bin/true
+CMD ["copy-assets", "--cleanup", "static/settings/:admin/:user/", "/var/www" "/assets/"]

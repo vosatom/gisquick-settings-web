@@ -77,7 +77,7 @@
 
 <script>
 import orderBy from 'lodash/orderBy'
-import MapImg from '@/assets/map.svg?inline'
+import MapImg from '@/assets/map.svg?component'
 import { TaskState, watchTask } from '@/tasks'
 import { sanitize, escapeRegExp, removeDiacritics } from '@/ui/utils/text'
 

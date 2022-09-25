@@ -1,4 +1,4 @@
-<script>
+<script lang="jsx">
 import _xor from 'lodash/xor'
 import mapValues from 'lodash/mapValues'
 

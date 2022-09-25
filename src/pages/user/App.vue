@@ -5,7 +5,7 @@
       <img src="./assets/text_logo_dark.svg"/>
     </div> -->
     <router-link class="logo f-row-ac px-2" to="/">
-      <img src="./assets/text_logo_dark.svg"/>
+      <img src="@/assets/text_logo_dark.svg"/>
     </router-link>
     <portal-target name="menu" class="menu">
       <!-- <div class="dark f-row-ac">Placeholder</div> -->
@@ -60,6 +60,8 @@ import PopupLayer from '@/ui/PopupLayer.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import VNotification from '@/components/Notification.vue'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
+import QgisActiveIcon from '@/assets/qgis-icon32.svg'
+import QgisInactiveIcon from '@/assets/qgis-icon-black32.svg'
 
 export default {
   name: 'app',
@@ -87,7 +89,7 @@ export default {
       return !this.$route.meta.public && !this.user
     },
     pluginStatusImg () {
-      return this.ws?.pluginConnected ? require('./assets/qgis-icon32.svg') : require('./assets/qgis-icon-black32.svg')
+      return this.ws?.pluginConnected ? QgisActiveIcon : QgisInactiveIcon
     },
     clientInfo () {
       return this.ws?.clientInfo
@@ -127,14 +129,6 @@ export default {
       success: notification.showSuccess,
       error: notification.showError
     }
-    // console.log('Setup Focus Listener')
-    // document.addEventListener('focus', function() {
-    //   console.log('focused: ', document.activeElement)
-    // }, true)
-
-    // document.addEventListener('blur', function() {
-    //   console.log('blur, focused: ', document.activeElement)
-    // }, true)
   },
   methods: {
     logout () {
