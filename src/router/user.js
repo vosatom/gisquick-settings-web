@@ -19,11 +19,11 @@ import PluginView from '@/views/PluginView.vue'
 Vue.use(VueRouter)
 
 const routes = [
-  {
-    path: '/test',
-    name: 'test',
-    component: TestView
-  },
+  // {
+  //   path: '/test',
+  //   name: 'test',
+  //   component: TestView
+  // },
   {
     path: '/',
     name: 'projects',
@@ -105,7 +105,8 @@ const routes = [
 
 const router = new VueRouter({
   mode: 'history',
-  base: process.env.BASE_URL,
+  base: '/' + location.pathname.slice(1).split('/')[0], // works with any pathname with depth = 1 
+  // base: import.meta.env.BASE_URL,
   routes
 })
 
