@@ -28,7 +28,16 @@
         @input="onUpdateEvent"
         @change="onUpdateEvent"
       />
-      <v-icon name="x" @click.stop="clear"/>
+      <!-- <v-btn
+        v-if="value"
+        class="icon flat m-0"
+        tabindex="-1"
+        @click.stop="clear"
+      >
+        <v-icon  name="x"/>
+      </v-btn> -->
+      <v-icon v-if="value" role="button" name="x" @click.stop="clear"/>
+      <v-icon v-else name="attachment"/>
       <slot name="append"/>
     </div>
   </input-field>
@@ -123,6 +132,9 @@ export default {
     // opacity: 0;
     visibility: hidden;
     flex: 1;
+  }
+  .icon[role="button"] {
+    cursor: pointer;
   }
 }
 </style>
