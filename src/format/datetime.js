@@ -1,7 +1,6 @@
 const df = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
 // const date = new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short' })
-const dtf = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeStyle: 'medium' })
-
+const dtf = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'medium' })
 const tf = new Intl.DateTimeFormat('en-US', { timeStyle: 'medium' })
 
 
@@ -28,7 +27,7 @@ export function formatDatetime (v) {
 }
 
 export default {
-  datetime: v => dtf.format(toDate(v)),
-  date: v => df.format(toDate(v)),
-  time: v => tf.format(toDate(v))
+  datetime: v => v && dtf.format(toDate(v)),
+  date: v => v && df.format(toDate(v)),
+  time: v => v && tf.format(toDate(v))
 }

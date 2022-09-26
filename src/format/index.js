@@ -10,9 +10,6 @@ const numeric = mapValues({
   perc2: numberFormat('percent2'),
   num: numberFormat('num'),
   shortNum: numberFormat('shortNum'),
-  currency: numberFormat('currency', ['currency']).currency('EUR').pre(Math.trunc),
-  shortCurrency: numberFormat('shortCurrency', ['currency']).currency('EUR'),
-  price: numberFormat('price', ['currency']).currency('EUR'),
 }, fn => fn.locale('en-US'))
 
 
@@ -33,7 +30,4 @@ export default Vue.observable({
     }
     return v
   }
-  // sortString,
-  // localToUtcDate,
-  // utcToLocalDate,
 })
