@@ -203,6 +203,7 @@
 import mapValues from 'lodash/mapValues'
 import cloneDeep from 'lodash/cloneDeep'
 import isEqual from 'lodash/isEqual'
+import combineURLs from 'axios/lib/helpers/combineURLs'
 
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
@@ -275,9 +276,10 @@ export default {
     },
     projectMenu () {
       return [
-        { text: 'Download Project', link: `/api/project/download/${this.project.name}` },
+        { text: 'Download Project', icon: 'download', link: `/api/project/download/${this.project.name}` },
+        { text: 'Delete Project', icon: 'delete_forever', action: () => this.$refs.confirmDeleteDialog.show() },
+        { text: 'WMS Service', icon: 'copy', action: this.copyWmsServiceUrl },
         { text: 'Reset Settings', action: this.resetSettings },
-        { text: 'Delete Project', action: () => this.$refs.confirmDeleteDialog.show() },
         { text: 'Debug', separator: true },
         { text: 'QGIS Meta', action: () => this.jsonDialog = 'meta' },
         { text: 'Settings', action: () => this.jsonDialog = 'settings' },
@@ -442,6 +444,10 @@ export default {
         datetime: this.$format.datetime(d),
         time: this.$format.time(d)
       }
+    },
+    copyWmsServiceUrl () {
+      const url = combineURLs(location.origin, `/api/map/ows/${this.projectName}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities`)
+      navigator.clipboard.writeText(url)
     }
   }
 }
