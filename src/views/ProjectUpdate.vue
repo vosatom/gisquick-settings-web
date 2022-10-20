@@ -532,6 +532,57 @@ export default {
             t.visible_overlays = t.visible_overlays.filter(id => !this.diffs.removedLayers.includes(id))
           })
         }
+        if (this.diffs.changedAttrsLayers.length) {
+          this.diffs.changedAttrsLayers.forEach(id => {
+            const layerMeta = this.projectInfo.layers[id]
+            const lset = settings.layers[id]
+            const currentAttrs = layerMeta.attributes?.map(a => a.name)
+            // v1 - applies changes from metadata diff
+            /*
+            const origAttrs = this.project.meta.layers[id].attributes?.map(a => a.name)
+            const newAttrs = difference(currentAttrs, origAttrs)
+            const removedAttrs = difference(origAttrs, currentAttrs)
+            console.log('newAttrs', newAttrs, 'removedAttrs', removedAttrs)
+            removedAttrs.forEach(n => delete lset.attributes?.[n])
+            if (lset.fields_order) {
+              for (const [k, v] of Object.entries(lset.fields_order)) {
+                const newList = v.filter(n => !removedAttrs.includes(n))
+                lset.fields_order[k] = [...newList, ...newAttrs.filter(n => !newList.includes(n))]
+              }
+            }
+            if (lset.excluded_fields) {
+              // remove non existing attributes
+              for (const [k, v] of Object.entries(lset.excluded_fields)) {
+                lset.excluded_fields[k] = v.filter(n => !removedAttrs.includes(n))
+              }
+            }
+            */
+            // v2 - applies changes to match latest metadata
+            // delete settings of not existing attributes
+            if (lset.attributes) {
+              Object.keys(lset.attributes).forEach(n => {
+                if (!currentAttrs.includes(n)) {
+                  delete lset.attributes[n]
+                }
+              })
+            }
+            if (lset.fields_order) {
+              for (const [k, v] of Object.entries(lset.fields_order)) {
+                // remove non existing attributes
+                const fields = v.filter(n => currentAttrs.includes(n))
+                // add missing attributes
+                fields.push(...currentAttrs.filter(n => !fields.includes(n)))
+                lset.fields_order[k] = fields
+              }
+            }
+            if (lset.excluded_fields) {
+              // remove non existing attributes
+              for (const [k, v] of Object.entries(lset.excluded_fields)) {
+                lset.excluded_fields[k] = v.filter(n => currentAttrs.includes(n))
+              }
+            }
+          })
+        }
         await this.$http.post(`/api/project/meta/${this.project.name}`, omit(this.projectInfo, ['dirty', 'filesize']))
         await this.$http.post(`/api/project/settings/${this.project.name}`, settings)
       }
