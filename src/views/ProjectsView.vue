@@ -1,6 +1,5 @@
 <template>
   <div v-if="formattedProjects.length" class="projects light">
-    <!-- <div class="expander" v-text="Array(120).fill('_').join(' ')"/> -->
     <div class="toolbar f-row-ac">
       <span class="title mx-2">Projects</span>
       <v-text-field class="filled" placeholder="Search" v-model="filter">
@@ -65,13 +64,16 @@
     </div>
   </div>
   <div v-else-if="!fetchTask.pending" class="projects empty light f-col-ac">
-    <h1 class="my-4">Welcome to the</h1>
-    <img class="logo mb-4" src="@/assets/text_logo.svg"/>
-    <div class="spacer f-grow"/>
-    <h2 class="my-4">You do not have any published projects yet.</h2>
-    <v-btn color="primary" to="/publish">
-      New Project
-    </v-btn>
+    <template v-if="isUserProfile">
+      <h1 class="my-4">Welcome to the</h1>
+      <img class="logo mb-4" src="@/assets/text_logo.svg"/>
+      <div class="spacer f-grow"/>
+      <h2 class="my-4">You do not have any published projects yet.</h2>
+      <v-btn color="primary" to="/publish">
+        New Project
+      </v-btn>
+    </template>
+    <div v-else class="msg-no-projects">User doesn't have any projects</div>
   </div>
 </template>
 
@@ -143,6 +145,9 @@ export default {
         return orderBy(projects, this.sortBy || 'title', this.sortDir)
       }
       return orderBy(projects, 'title', 'asc')
+    },
+    isUserProfile () {
+      return this.$root.user.username === this.user
     }
   },
   watch: {
@@ -254,11 +259,9 @@ export default {
     min-width: 130px;
   }
 }
-// .expander {
-//   line-height: 0;
-//   height: 0;
-//   max-height: 0;
-//   visibility: hidden;
-//   overflow: hidden;
-// }
+.msg-no-projects {
+  font-size: 20px;
+  font-weight: 500;
+}
+
 </style>
