@@ -13,6 +13,20 @@
           <v-icon name="mail"/>
           <span>Emails</span>
         </router-link>
+        <a class="item" href="/admin/grafana/">
+          <!-- <v-icon name="chart"/> -->
+          <v-icon name="grafana"/>
+          <span>Grafana</span>
+        </a>
+
+        <router-link
+          v-if="app.qgis_server_man"
+          class="item"
+          :to="{name: 'qgis-servers'}"
+        >
+          <v-icon name="qgis"/>
+          <span>QGIS Servers</span>
+        </router-link>
       </nav>
       <hr/>
       <div class="list f-col">
@@ -116,7 +130,7 @@ export default {
     },
     async fetchConfig () {
       const { data } = await this.$http.get('/api/admin/config/')
-      this.$root.config = data
+      this.$root.app = { ...this.$root.app, ...data }
     }
   }
 }
@@ -159,7 +173,7 @@ html, body, .app {
   h1 {
     font-size: 22px;
     margin-inline: 6px;
-    margin-block: 0 12px;
+    margin-block: 0 6px;
   }
   .app-panel {
     width: 260px;

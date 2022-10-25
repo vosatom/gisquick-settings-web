@@ -129,7 +129,7 @@ export default {
       return this.sort ? orderBy(users, this.sort.sortBy, this.sort.sort) : users
     },
     accountExtraFields () {
-      return this.$root.config?.account?.extra_fields
+      return this.$root.app.account?.extra_fields
     }
   },
   created () {
