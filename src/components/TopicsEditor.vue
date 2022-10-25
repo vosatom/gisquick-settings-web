@@ -64,7 +64,8 @@
 
 <script>
 import LayersTable from '@/components/LayersTable.vue'
-import { filterLayers, lookupTable } from '@/utils'
+import { lookupTable } from '@/utils'
+// import { filterLayers } from '@/utils/layers'
 
 export default {
   name: 'TopicsEditor',
