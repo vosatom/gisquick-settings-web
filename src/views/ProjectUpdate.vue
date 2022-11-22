@@ -65,6 +65,7 @@
           <span class="title">Layers</span>
         </div>
         <qgis-layers-info :meta="projectInfo2" :classes="diffLayersClasses"/>
+        <layers-errors class="my-2" :errors="layersErrors" :project-info="projectInfo"/>
       </div>
 
       <div class="card f-col">
@@ -85,6 +86,7 @@
           v-if="!clientFiles || !serverFiles"
           class="load my-4"
           color="primary"
+          :loading="tasks.clientFiles.pending"
           @click="fetchFiles"
         >
           Load Files
@@ -109,14 +111,18 @@
 
       <div class="update-card f-col-ac py-4 xshadow-2">
         <div v-if="projectChangesDetected" class="content f-col">
-          <v-checkbox label="Update QGIS project" v-model="updateOpts.qgisProject"/>
+          <v-checkbox
+            label="Update QGIS project"
+            :disabled="!!layersErrors"
+            v-model="updateOpts.qgisProject"
+          />
           <div class="f-row-ac">
             <v-checkbox
               label="Update files"
               :disabled="!filesDiff"
               v-model="updateOpts.files"/>
             <div class="f-grow"/>
-            <div xv-if="updateOpts.files" class="files-options f-row-ac">
+            <div class="files-options f-row-ac">
               <v-radio-btn
                 label="All"
                 :disabled="!updateOpts.files"
@@ -182,11 +188,13 @@ import FilesTree from '@/components/FilesTree.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import PluginDisconnected from '@/components/PluginDisconnected.vue'
 import ErrorMessage from '@/components/ErrorMessage.vue'
+import LayersErrors, { layersErrors } from '@/components/LayersErrors.vue'
 
 // import { initLayersPermissions } from '@/views/ProjectAccess.vue'
 import { objDiff, objectDiff } from '@/utils/diff'
 import { TaskState, watchTask } from '@/tasks'
 import { createUpload } from '@/upload'
+
 
 function findLayer (items, id) {
   for (const item of items) {
@@ -218,7 +226,7 @@ function insertLayer (tree, path) {
 
 export default {
   name: 'ProjectUpdate',
-  components: { JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected, ErrorMessage },
+  components: { JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected, ErrorMessage, LayersErrors },
   props: {
     project: Object,
     settings: Object
@@ -377,6 +385,9 @@ export default {
     },
     currentProjectFile () {
       return this.projectInfo && path.join(this.projectInfo.client_info.directory, this.projectInfo.file)
+    },
+    layersErrors () {
+      return layersErrors(this.projectInfo)
     }
   },
   activated () {

@@ -50,56 +50,7 @@
           <span class="title">Layers</span>
         </div>
         <qgis-layers-info :meta="projectInfo"/>
-
-        <div v-if="errors" class="errors f-col mt-2">
-          <div class="header errors f-row-ac dark px-4">
-            <v-icon name="warning" class="mr-2"/>
-            <span class="title">Errors</span>
-          </div>
-
-          <template v-if="errors.duplicateLayersNames">
-            <span class="p-2"><strong>Layers does not have unique names.</strong> Duplicit names (or short names):</span>
-            <ul>
-              <li v-for="(layers, n) in errors.duplicateLayersNames" :key="n">
-                <strong v-text="n"/> <span>({{ layers.join('; ') }})</span>
-              </li>
-            </ul>
-          </template>
-
-          <template v-if="errors.invalidLayersNames">
-            <strong class="p-2">Invalid QGIS Server layers names:</strong>
-            <ul>
-              <li v-for="n in errors.invalidLayersNames" :key="n" v-text="n"/>
-            </ul>
-          </template>
-
-          <template v-if="errors.invalidLayersNames || errors.duplicateLayersNames">
-            <div class="hint p-2">
-              <span>It is recommended to assign a unique <strong>Short name</strong> for every layer, which should start with an unaccented alphabetical letter, followed by any alphanumeric letters, dot, dash or underscore.</span>
-              <!-- <span>It must start with an unaccented alphabetical letter, followed by any alphanumeric letters, dot, dash or underscore.</span> -->
-              <p>
-                <span>You can configure them in the QGIS: </span>
-                <span class="breadcrumb">
-                  <strong>Layer Properties</strong>
-                  <v-icon name="arrow-right" size="12"/>
-                  <strong>QGIS Server</strong>
-                  <!-- <v-icon name="arrow-right" size="12"/>
-                  <strong>Short name</strong> -->
-                </span>
-                <span>, or directly from web interface:</span>
-              </p>
-            </div>
-            <v-btn class="outlined" @click="$refs.layerNamesDialog.show(projectInfo)">Update layers names in QGIS project</v-btn>
-          </template>
-
-          <template v-if="errors.filesOutsideDirectory">
-            <strong class="p-2">Data files outside of project's directory:</strong>
-            <ul>
-              <li v-for="n in errors.filesOutsideDirectory" :key="n" v-text="n"/>
-            </ul>
-          </template>
-        </div>
-
+        <layers-errors class="my-2" :errors="layersErrors"/>
         <div v-if="wfsNotEnabled" class="note">
           <v-icon name="circle-i-outline"/>
           <span class="m-2">Vector layers without WFS service enabled cannot be queryable.</span>
@@ -107,7 +58,7 @@
         </div>
       </div>
 
-      <div v-if="!errors" class="card files f-col">
+      <div v-if="!layersErrors" class="card files f-col">
         <div class="header f-row-ac dark px-4">
           <span class="title">Files</span>
           <span class="f-grow"/>
@@ -204,13 +155,8 @@
 </template>
 
 <script>
-import isEmpty from 'lodash/isEmpty'
-import countBy from 'lodash/countBy'
-import pickBy from 'lodash/pickBy'
-import mapValues from 'lodash/mapValues'
-
 import ErrorMessage from '@/components/ErrorMessage.vue'
-import ShortNamesEditor from '@/components/ShortNamesEditor.vue'
+import LayersErrors, { layersErrors } from '@/components/LayersErrors.vue'
 import QgisInfo from '@/components/QgisInfo.vue'
 import FilesTree from '@/components/FilesTree.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
@@ -242,7 +188,7 @@ const SourceIcons = {
 
 export default {
   name: 'PublishView',
-  components: { ErrorMessage, FilesTree, QgisInfo, QgisLayersInfo, PluginDisconnected, JsonViewer, ShortNamesEditor },
+  components: { ErrorMessage, LayersErrors, FilesTree, QgisInfo, QgisLayersInfo, PluginDisconnected, JsonViewer },
   data () {
     return {
       name: '',
@@ -296,35 +242,8 @@ export default {
       }
       return []
     },
-    filesOutsideDirectory () {
-      const layers = Object.values(this.projectInfo.layers)
-      const dataFiles = layers.reduce((files, l) => {
-        const file = l.source_params?.file
-        if (file && file.startsWith('..')) {
-          files.add(file)
-        }
-        return files
-      }, new Set())
-      return Array.from(dataFiles)
-    },
-    errors () {
-      const errors = {}
-      const layers = Object.values(this.projectInfo.layers)
-      const names = layers.map(l => l.name)
-      const duplicates = pickBy(countBy(names), count => count > 1)
-      if (!isEmpty(duplicates)) {
-        // errors.duplicateLayersNames = Object.keys(duplicates)
-        errors.duplicateLayersNames = mapValues(duplicates, (_, name) => layers.filter(l => l.name === name).map(l => l.title))
-      }
-
-      const invalidNames = names.filter(n => !isValidLayerName(n))
-      if (invalidNames.length) {
-        errors.invalidLayersNames = invalidNames
-      }
-      if (this.filesOutsideDirectory?.length) {
-        errors.filesOutsideDirectory = this.filesOutsideDirectory
-      }
-      return isEmpty(errors) ? null : errors
+    layersErrors () {
+      return layersErrors(this.projectInfo)
     },
     sourceIcons () {
       return SourceIcons
@@ -341,11 +260,8 @@ export default {
       // or allow emty proj4 def for well known projections (EPSG:4326, ...)?
       return Boolean(projCode && this.projectInfo.projections[projCode]?.proj4)
     },
-    layersValid () {
-      return true
-    },
     projectValid () {
-      return this.projectionValid && this.layersValid
+      return this.projectionValid && !this.layersErrors
     }
   },
   created () {
@@ -483,16 +399,6 @@ export default {
     font-size: 13px;
   }
 }
-.errors {
-  .header {
-    background-color: var(--color-red);
-    height: 32px;
-  }
-  .hint {
-    font-size: 13px;
-    color: #707070;
-  }
-}
 // .error {
 //   color: var(--color-red);
 //   --icon-color: currentColor;
@@ -510,13 +416,6 @@ export default {
   background-color: #f4f4f4;
   color: #777;
   --icon-color: #777;
-}
-.breadcrumb {
-  display: inline-flex;
-  align-items: center;
-  > * {
-    margin: 0 3px;
-  }
 }
 .vjs-tree, .json-viewer, .json-diff-viewer {
   width: clamp(50vw, 960px, 80vw);
