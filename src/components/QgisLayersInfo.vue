@@ -119,7 +119,7 @@ export default {
         let info
         const { provider_type: provider, source_params: source } = l
         // 'wms', 'WFS', 'vectortile' providers
-        if (source.url) {
+        if (source?.url) {
           info = {
             type: 'url',
             text: source.url
@@ -131,7 +131,7 @@ export default {
             text: `${hostname}, dbname=${source.dbname}, table=${source.table}`
           }
         // } else if (provider === 'gdal' || provider === 'ogr' || provider === 'spatialite') {
-        } else if (source.file) {
+        } else if (source?.file) {
           info = {
             type: 'file',
             text: source.file
