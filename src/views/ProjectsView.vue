@@ -147,7 +147,8 @@ export default {
       return orderBy(projects, 'title', 'asc')
     },
     isUserProfile () {
-      return this.$root.user.username === this.user
+      // this.user is url path param (username)
+      return !this.user || this.$root.user.username === this.user
     }
   },
   watch: {
