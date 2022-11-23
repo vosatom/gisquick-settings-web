@@ -104,12 +104,17 @@ export default {
           label: 'Superuser',
           align:' right'
         }, {
-          key: 'date_joined',
-          label: 'Date Joined',
+          key: 'created_at',
+          label: 'Created',
           format: 'date',
           sortable: true
         }, {
-          key: 'last_login',
+          key: 'confirmed_at',
+          label: 'Confirmed',
+          format: 'date',
+          sortable: true
+        }, {
+          key: 'last_login_at',
           label: 'Last Login',
           format: 'datetime',
           sortable: true
