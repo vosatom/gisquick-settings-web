@@ -37,8 +37,11 @@
     <template v-slot:leaf.source="{ item }">
       <template v-if="sourceInfo[item.id]">
         <v-icon size="24" :name="sourceIcons[sourceInfo[item.id].type]"/>
-        <span class="single-line">{{ sourceInfo[item.id].text }}</span>
-
+        <span
+          class="single-line source"
+          :title="sourceInfo[item.id].text"
+          v-text="sourceInfo[item.id].text"
+        />
         <div v-if="sourceInfo[item.id].error" class="f-row-ac mx-2">
           <v-icon name="warning" color="red"/>
           <v-tooltip align="c;bb">
@@ -161,5 +164,8 @@ export default {
 <style lang="scss" scoped>
 td .icon {
   margin: 0 2px;
+}
+.single-line.source {
+  max-width: 400px;
 }
 </style>
