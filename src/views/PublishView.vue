@@ -50,7 +50,7 @@
           <span class="title">Layers</span>
         </div>
         <qgis-layers-info :meta="projectInfo"/>
-        <layers-errors class="my-2" :errors="layersErrors"/>
+        <layers-errors class="my-2" :errors="layersErrors" :project-info="projectInfo"/>
         <div v-if="wfsNotEnabled" class="note">
           <v-icon name="circle-i-outline"/>
           <span class="m-2">Vector layers without WFS service enabled cannot be queryable.</span>
