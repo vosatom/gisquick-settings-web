@@ -68,7 +68,11 @@
       <h1 class="my-4">Welcome to the</h1>
       <img class="logo mb-4" src="@/assets/text_logo.svg"/>
       <div class="spacer f-grow"/>
-      <h2 class="my-4">You do not have any published projects yet.</h2>
+      <h2 class="my-4">So far, you haven't published any projects</h2>
+      <span class="hint">
+        If you don't know how publishing in Gisquick works,
+        you can see the whole process in the <a target="_blank" href="https://gisquick.org/#get-started">Get Started</a> video
+      </span>
       <v-btn color="primary" to="/publish">
         New Project
       </v-btn>
@@ -191,6 +195,16 @@ export default {
     }
     .spacer {
       max-height: 160px;
+    }
+    .hint {
+      font-size: 16px;
+      max-width: 500px;
+      margin: 20px 10px;
+      a {
+        color: var(--color-primary);
+        text-decoration: none;
+        font-weight: 500;
+      }
     }
   }
   h1 {

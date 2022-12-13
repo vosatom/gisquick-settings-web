@@ -86,7 +86,8 @@ export default {
       return this.$root.user
     },
     showLoginDialog () {
-      return !this.$route.meta.public && !this.user
+      // return !this.$route.meta.public && !this.user
+      return !this.user
     },
     pluginStatusImg () {
       return this.ws?.pluginConnected ? QgisActiveIcon : QgisInactiveIcon

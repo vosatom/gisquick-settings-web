@@ -14,7 +14,6 @@ import PublishView from '@/views/PublishView.vue'
 import ProjectTopics from '@/views/ProjectTopics.vue'
 import ProjectAccess from '@/views/ProjectAccess.vue'
 import ProjectUpdate from '@/views/ProjectUpdate.vue'
-import PluginView from '@/views/PluginView.vue'
 
 Vue.use(VueRouter)
 
@@ -34,12 +33,6 @@ const routes = [
     name: 'publish',
     component: PublishView,
     props: true
-  },
-  {
-    path: '/plugin',
-    name: 'plugin',
-    component: PluginView,
-    meta: { public: true }
   },
   {
     path: '/:user',
