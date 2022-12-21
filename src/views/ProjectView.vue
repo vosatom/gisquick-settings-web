@@ -277,9 +277,9 @@ export default {
     projectMenu () {
       return [
         { text: 'Download Project', icon: 'download', link: `/api/project/download/${this.project.name}` },
-        { text: 'Delete Project', icon: 'delete_forever', action: () => this.$refs.confirmDeleteDialog.show() },
         { text: 'WMS Service', icon: 'copy', action: this.copyWmsServiceUrl },
-        { text: 'Reset Settings', action: this.resetSettings },
+        { text: 'Reset Settings', icon: 'reload', action: this.resetSettings },
+        { text: 'Delete Project', icon: 'delete_forever', action: () => this.$refs.confirmDeleteDialog.show() },
         { text: 'Debug', separator: true },
         { text: 'QGIS Meta', action: () => this.jsonDialog = 'meta' },
         { text: 'Settings', action: () => this.jsonDialog = 'settings' },
