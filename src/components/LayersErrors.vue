@@ -61,11 +61,13 @@ import mapValues from 'lodash/mapValues'
 import ShortNamesEditor from '@/components/ShortNamesEditor.vue'
 import { isValidLayerName } from '@/utils/layers'
 
+const absPathRegex = /^(\w:)?\//
+
 function filesOutsideDirectory (projectInfo) {
   const layers = Object.values(projectInfo.layers)
   const dataFiles = layers.reduce((files, l) => {
     const file = l.source_params?.file
-    if (file && file.startsWith('..')) {
+    if (file && (file.startsWith('..') || absPathRegex.test(file))) {
       files.add(file)
     }
     return files

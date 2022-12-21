@@ -54,10 +54,11 @@
 </template>
 
 <script>
-import path from 'path'
 import mapValues from 'lodash/mapValues'
 import LayersTable from '@/components/LayersTable.vue'
 import { transformLayersTree, transformLayersTree2 } from '@/utils/layers'
+
+const absPathRegex = /^(\w:)?\//
 
 const SourceIcons = {
   file: 'hdd',
@@ -141,6 +142,9 @@ export default {
           }
           if (source.file.startsWith('..')) {
             info.error = "Data file is located outside of project's directory"
+          }
+          if (absPathRegex.test(source.file)) {
+            info.error = "Data file has absolute path"
           }
         } else {
           info = {
