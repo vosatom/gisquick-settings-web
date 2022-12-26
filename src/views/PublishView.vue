@@ -249,7 +249,7 @@ export default {
       return SourceIcons
     },
     files () {
-      return this.tasks.clientFiles.data?.files
+      return this.tasks.clientFiles.data?.files?.filter(f => !f.path.startsWith('.gisquick/'))
     },
     wfsNotEnabled () {
       const vectorLayers = Object.values(this.projectInfo.layers).filter(l => l.type === 'VectorLayer')

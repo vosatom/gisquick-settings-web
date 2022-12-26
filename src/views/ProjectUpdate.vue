@@ -255,7 +255,7 @@ export default {
       return this.$ws.pluginConnected
     },
     clientFiles () {
-      return this.tasks.clientFiles.data?.files
+      return this.tasks.clientFiles.data?.files?.filter(f => !f.path.startsWith('.gisquick/'))
     },
     serverFiles () {
       return this.project.files.data
