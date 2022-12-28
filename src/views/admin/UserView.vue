@@ -34,10 +34,12 @@
         <v-checkbox label="Superuser" v-model="user.superuser"/>
       </div>
       <div class="info my-4 p-2">
-        <span class="label">Date Joined</span>
-        <span class="value">{{ $format.datetime(user.date_joined) || '—' }}</span>
+        <span class="label">Created</span>
+        <span class="value">{{ $format.datetime(user.created_at) || '—' }}</span>
+        <span class="label">Confirmed</span>
+        <span class="value">{{ $format.datetime(user.confirmed_at) || '—' }}</span>
         <span class="label">Last Login</span>
-        <span class="value">{{ $format.datetime(user.last_login) || '—' }}</span>
+        <span class="value">{{ $format.datetime(user.last_login_at) || '—' }}</span>
         <hr/>
         <v-btn class="outlined round" color="primary" disabled>
           <span>Reset Password</span>
