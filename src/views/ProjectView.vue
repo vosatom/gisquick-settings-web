@@ -63,6 +63,9 @@
       icon="warning"
       text="Are you sure to delete this project?"
     />
+    <v-dialog ref="projectionDialog" title="Projection">
+      <projections-settings :meta="project.meta" :settings="settings"/>
+    </v-dialog>
     <div v-if="project && settings" class="project-page f-col light">
       <portal to="menu">
         <nav class="menubar2 dark f-grow f-row-ac my-2">
@@ -150,7 +153,16 @@
             <span v-text="project.name" class="name"/>
           </div>
           <div class="details f-row f-align-end">
-            <v-badge color="dark" glow>{{ project.meta.projection }}</v-badge>
+            <v-badge color="dark" glow>
+              <span v-text="project.meta.projection"/>
+              <v-icon
+                role="button"
+                name="arrow-down"
+                size="12"
+                class="ml-1"
+                @click="$refs.projectionDialog.show()"
+              />
+            </v-badge>
             <div class="f-row-ac m-2">
               <v-icon name="storage" size="16" class="m-1"/>
               <span v-text="$format.filesize(project.size)"/>
@@ -210,6 +222,7 @@ import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import JsonViewer from '@/components/JsonViewer.vue'
 // import JsonViewer2 from '@/components/JsonViewer2.vue'
 import JsonViewer2 from '@/components/JsonDiffViewer.vue'
+import ProjectionsSettings from '@/components/ProjectionsSettings.vue'
 import { scalesToResolutions, ProjectionsScales } from '@/utils/scales'
 import { TaskState, watchTask } from '@/tasks'
 import { objectDiff } from '@/utils/diff'
@@ -226,7 +239,7 @@ function validatedSettings (settings) {
 
 export default {
   name: 'ProjectView',
-  components: { ConfirmDialog, QgisLayersInfo, MapImg, JsonViewer, JsonViewer2 },
+  components: { ConfirmDialog, QgisLayersInfo, MapImg, JsonViewer, JsonViewer2, ProjectionsSettings },
   // components: { QgisLayersInfo, MapImg, JsonPretty, JsonViewer, JsonViewer2 },
   props: {
     user: String,
@@ -646,5 +659,12 @@ export default {
       padding-block: 3px;
     }
   }
+}
+.projections-settings {
+  width: clamp(50vw, 960px, 80vw);
+  overflow: auto;
+}
+.icon[role="button"] {
+  cursor: pointer;
 }
 </style>
