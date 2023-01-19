@@ -65,6 +65,7 @@
           <span class="title">Layers</span>
         </div>
         <qgis-layers-info :meta="projectInfo2" :classes="diffLayersClasses"/>
+        <layers-errors class="my-2" :errors="layersErrors" :project-info="projectInfo"/>
       </div>
 
       <div class="card f-col">
@@ -85,6 +86,7 @@
           v-if="!clientFiles || !serverFiles"
           class="load my-4"
           color="primary"
+          :loading="tasks.clientFiles.pending"
           @click="fetchFiles"
         >
           Load Files
@@ -109,14 +111,18 @@
 
       <div class="update-card f-col-ac py-4 xshadow-2">
         <div v-if="projectChangesDetected" class="content f-col">
-          <v-checkbox label="Update QGIS project" v-model="updateOpts.qgisProject"/>
+          <v-checkbox
+            label="Update QGIS project"
+            :disabled="!!layersErrors"
+            v-model="updateOpts.qgisProject"
+          />
           <div class="f-row-ac">
             <v-checkbox
               label="Update files"
               :disabled="!filesDiff"
               v-model="updateOpts.files"/>
             <div class="f-grow"/>
-            <div xv-if="updateOpts.files" class="files-options f-row-ac">
+            <div class="files-options f-row-ac">
               <v-radio-btn
                 label="All"
                 :disabled="!updateOpts.files"
@@ -182,11 +188,13 @@ import FilesTree from '@/components/FilesTree.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import PluginDisconnected from '@/components/PluginDisconnected.vue'
 import ErrorMessage from '@/components/ErrorMessage.vue'
+import LayersErrors, { layersErrors } from '@/components/LayersErrors.vue'
 
 // import { initLayersPermissions } from '@/views/ProjectAccess.vue'
 import { objDiff, objectDiff } from '@/utils/diff'
 import { TaskState, watchTask } from '@/tasks'
 import { createUpload } from '@/upload'
+
 
 function findLayer (items, id) {
   for (const item of items) {
@@ -218,7 +226,7 @@ function insertLayer (tree, path) {
 
 export default {
   name: 'ProjectUpdate',
-  components: { JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected, ErrorMessage },
+  components: { JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected, ErrorMessage, LayersErrors },
   props: {
     project: Object,
     settings: Object
@@ -247,7 +255,7 @@ export default {
       return this.$ws.pluginConnected
     },
     clientFiles () {
-      return this.tasks.clientFiles.data?.files
+      return this.tasks.clientFiles.data?.files?.filter(f => !f.path.startsWith('.gisquick/'))
     },
     serverFiles () {
       return this.project.files.data
@@ -377,6 +385,9 @@ export default {
     },
     currentProjectFile () {
       return this.projectInfo && path.join(this.projectInfo.client_info.directory, this.projectInfo.file)
+    },
+    layersErrors () {
+      return layersErrors(this.projectInfo)
     }
   },
   activated () {
@@ -530,6 +541,57 @@ export default {
           })
           settings.topics?.forEach(t => {
             t.visible_overlays = t.visible_overlays.filter(id => !this.diffs.removedLayers.includes(id))
+          })
+        }
+        if (this.diffs.changedAttrsLayers.length) {
+          this.diffs.changedAttrsLayers.forEach(id => {
+            const layerMeta = this.projectInfo.layers[id]
+            const lset = settings.layers[id]
+            const currentAttrs = layerMeta.attributes?.map(a => a.name)
+            // v1 - applies changes from metadata diff
+            /*
+            const origAttrs = this.project.meta.layers[id].attributes?.map(a => a.name)
+            const newAttrs = difference(currentAttrs, origAttrs)
+            const removedAttrs = difference(origAttrs, currentAttrs)
+            console.log('newAttrs', newAttrs, 'removedAttrs', removedAttrs)
+            removedAttrs.forEach(n => delete lset.attributes?.[n])
+            if (lset.fields_order) {
+              for (const [k, v] of Object.entries(lset.fields_order)) {
+                const newList = v.filter(n => !removedAttrs.includes(n))
+                lset.fields_order[k] = [...newList, ...newAttrs.filter(n => !newList.includes(n))]
+              }
+            }
+            if (lset.excluded_fields) {
+              // remove non existing attributes
+              for (const [k, v] of Object.entries(lset.excluded_fields)) {
+                lset.excluded_fields[k] = v.filter(n => !removedAttrs.includes(n))
+              }
+            }
+            */
+            // v2 - applies changes to match latest metadata
+            // delete settings of not existing attributes
+            if (lset.attributes) {
+              Object.keys(lset.attributes).forEach(n => {
+                if (!currentAttrs.includes(n)) {
+                  delete lset.attributes[n]
+                }
+              })
+            }
+            if (lset.fields_order) {
+              for (const [k, v] of Object.entries(lset.fields_order)) {
+                // remove non existing attributes
+                const fields = v.filter(n => currentAttrs.includes(n))
+                // add missing attributes
+                fields.push(...currentAttrs.filter(n => !fields.includes(n)))
+                lset.fields_order[k] = fields
+              }
+            }
+            if (lset.excluded_fields) {
+              // remove non existing attributes
+              for (const [k, v] of Object.entries(lset.excluded_fields)) {
+                lset.excluded_fields[k] = v.filter(n => currentAttrs.includes(n))
+              }
+            }
           })
         }
         await this.$http.post(`/api/project/meta/${this.project.name}`, omit(this.projectInfo, ['dirty', 'filesize']))

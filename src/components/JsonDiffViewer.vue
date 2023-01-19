@@ -1,4 +1,4 @@
-<script>
+<script lang="jsx">
 import isObject from 'lodash/isObject'
 
 function flagsObject (diffs) {

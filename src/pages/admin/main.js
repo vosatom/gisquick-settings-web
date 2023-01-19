@@ -2,12 +2,12 @@ import Vue from 'vue'
 import PortalVue from 'portal-vue'
 
 import App from './App.vue'
-import ServerError from './ServerError.vue'
-import router from './router'
-import http from './http'
-import format from './format'
-import UI from './ui'
-import './theme.scss'
+import ServerError from '@/ServerError.vue'
+import router from '@/router/admin'
+import http from '@/http'
+import format from '@/format'
+import UI from '@/ui'
+import '@/theme.scss'
 import '@/assets/fonts/fonts.css'
 import '@/ui/base.scss'
 import '@/ui/layout.scss'
@@ -32,7 +32,8 @@ function createApp (data) {
     data () {
       return {
         ...data,
-        projects: []
+        projects: [],
+        config: null
       }
     },
     created () {
@@ -45,17 +46,6 @@ function createApp (data) {
           return Promise.reject(error)
         }
       )
-      // this.focusListener = () => {
-      //   console.log('focused: ', document.activeElement)
-      //   this.activeElement = document.activeElement
-      // }
-      // document.addEventListener('focus', this.focusListener, true)
-      // document.addEventListener('blur', function() {
-      //   console.log('blur, focused: ', document.activeElement)
-      // }, true)
-    },
-    beforeDestroy () {
-      document.removeEventListener('focus', this.focusListener, true)
     },
     render: h => h(App)
   }).$mount('#app')

@@ -97,7 +97,7 @@ import difference from 'lodash/difference'
 import SortControl from './SortControl.vue'
 import VCollapsible from './Collapsible.vue'
 
-const formats = {}
+import formats from '@/format'
 
 function toPx (val) {
   return isNaN(val) ? val : `${val}px`
@@ -326,7 +326,12 @@ export default {
     }
     &.outlined {
       table {
-        border: 1px solid #E0E0E0;
+        thead {
+          border: 1px solid #bbb;
+        }
+        tbody {
+          border: 1px solid #ddd;
+        }
       }
     }
   }
@@ -337,8 +342,9 @@ export default {
   overflow: auto;
   table {
     font-size: 13px;
-    border-collapse: separate;
-    border-spacing: 0;
+    // border-collapse: separate;
+    // border-spacing: 0;
+    border-collapse: collapse;
     min-width: 100%;
     display: relative;
   }
@@ -416,9 +422,6 @@ export default {
     td {
       padding: 2px 12px;
       height: 32px;
-      &.datetime {
-        word-spacing: 16px;
-      }
       &.right {
         text-align: right;
         > .f-row-ac {

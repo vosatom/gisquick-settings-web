@@ -232,7 +232,7 @@ import ExtentField from '@/components/ExtentField2.vue'
 import ThumbnailEditor from '@/components/ThumbnailEditor.vue'
 import TextTabsHeader from '@/ui/TextTabsHeader.vue'
 import VTabsHeader from '@/ui/TabsHeader.vue'
-import MapImg from '@/assets/map.svg?inline'
+import MapImg from '@/assets/map.svg?component'
 const MapView = () => import(/* webpackChunkName: "olmap" */ '@/components/Map.vue')
 const DrawExtent = () => import(/* webpackChunkName: "olmap" */ '@/components/DrawExtent.vue')
 

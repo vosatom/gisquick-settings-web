@@ -63,6 +63,9 @@
       icon="warning"
       text="Are you sure to delete this project?"
     />
+    <v-dialog ref="projectionDialog" title="Projection">
+      <projections-settings :meta="project.meta" :settings="settings"/>
+    </v-dialog>
     <div v-if="project && settings" class="project-page f-col light">
       <portal to="menu">
         <nav class="menubar2 dark f-grow f-row-ac my-2">
@@ -150,7 +153,16 @@
             <span v-text="project.name" class="name"/>
           </div>
           <div class="details f-row f-align-end">
-            <v-badge color="dark" glow>{{ project.meta.projection }}</v-badge>
+            <v-badge color="dark" glow>
+              <span v-text="project.meta.projection"/>
+              <v-icon
+                role="button"
+                name="arrow-down"
+                size="12"
+                class="ml-1"
+                @click="$refs.projectionDialog.show()"
+              />
+            </v-badge>
             <div class="f-row-ac m-2">
               <v-icon name="storage" size="16" class="m-1"/>
               <span v-text="$format.filesize(project.size)"/>
@@ -203,16 +215,18 @@
 import mapValues from 'lodash/mapValues'
 import cloneDeep from 'lodash/cloneDeep'
 import isEqual from 'lodash/isEqual'
+import combineURLs from 'axios/lib/helpers/combineURLs'
 
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import JsonViewer from '@/components/JsonViewer.vue'
 // import JsonViewer2 from '@/components/JsonViewer2.vue'
 import JsonViewer2 from '@/components/JsonDiffViewer.vue'
+import ProjectionsSettings from '@/components/ProjectionsSettings.vue'
 import { scalesToResolutions, ProjectionsScales } from '@/utils/scales'
 import { TaskState, watchTask } from '@/tasks'
 import { objectDiff } from '@/utils/diff'
-import MapImg from '@/assets/map.svg?inline'
+import MapImg from '@/assets/map.svg?component'
 
 
 function validatedSettings (settings) {
@@ -225,7 +239,7 @@ function validatedSettings (settings) {
 
 export default {
   name: 'ProjectView',
-  components: { ConfirmDialog, QgisLayersInfo, MapImg, JsonViewer, JsonViewer2 },
+  components: { ConfirmDialog, QgisLayersInfo, MapImg, JsonViewer, JsonViewer2, ProjectionsSettings },
   // components: { QgisLayersInfo, MapImg, JsonPretty, JsonViewer, JsonViewer2 },
   props: {
     user: String,
@@ -275,9 +289,10 @@ export default {
     },
     projectMenu () {
       return [
-        { text: 'Download Project', link: `/api/project/download/${this.project.name}` },
-        { text: 'Reset Settings', action: this.resetSettings },
-        { text: 'Delete Project', action: () => this.$refs.confirmDeleteDialog.show() },
+        { text: 'Download Project', icon: 'download', link: `/api/project/download/${this.project.name}` },
+        { text: 'WMS Service', icon: 'copy', action: this.copyWmsServiceUrl },
+        { text: 'Reset Settings', icon: 'reload', action: this.resetSettings },
+        { text: 'Delete Project', icon: 'delete_forever', action: () => this.$refs.confirmDeleteDialog.show() },
         { text: 'Debug', separator: true },
         { text: 'QGIS Meta', action: () => this.jsonDialog = 'meta' },
         { text: 'Settings', action: () => this.jsonDialog = 'settings' },
@@ -442,6 +457,10 @@ export default {
         datetime: this.$format.datetime(d),
         time: this.$format.time(d)
       }
+    },
+    copyWmsServiceUrl () {
+      const url = combineURLs(location.origin, `/api/map/ows/${this.projectName}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities`)
+      navigator.clipboard.writeText(url)
     }
   }
 }
@@ -640,5 +659,12 @@ export default {
       padding-block: 3px;
     }
   }
+}
+.projections-settings {
+  width: clamp(50vw, 960px, 80vw);
+  overflow: auto;
+}
+.icon[role="button"] {
+  cursor: pointer;
 }
 </style>

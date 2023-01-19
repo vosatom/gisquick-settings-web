@@ -7,16 +7,15 @@
     <router-link class="logo f-row-ac px-2" to="/">
       <img src="./assets/text_logo_dark.svg"/>
     </router-link>
-    <portal-target name="menu" class="menu">
-      <!-- <div class="dark f-row-ac">Placeholder</div> -->
-    </portal-target>
+    <!-- <portal-target name="menu" class="menu">
+    </portal-target> -->
+      <nav class="nav-menu dark f-grow f-row-ac my-2">
+        <router-link class="general m-2" :to="{name: 'users'}">Users</router-link>
+        <router-link class="m-2" :to="{name: 'emails'}">Emails</router-link>
+        <div class="f-grow"/>
+      </nav>
+
     <div class="app-menu f-row-ac f-justify-end dark">
-      <div class="f-row-ac mr-2">
-        <img :src="pluginStatusImg" height="22"/>
-        <v-tooltip>
-          <span v-text="clientInfo || 'QGIS Plugin is not connected'"/>
-        </v-tooltip>
-      </div>
       <v-menu
         aria-label="Menu"
         transition="slide-y"
@@ -53,7 +52,6 @@
 
 <script>
 import Vue from 'vue'
-import WebsocketMessenger from '@/ws.js'
 import PopupLayer from '@/ui/PopupLayer.vue'
 
 // import Settings from '@/Settings.vue'
@@ -70,12 +68,6 @@ export default {
     VNotification,
     ChangePasswordDialog
   },
-  data () {
-    return {
-      initialized: false,
-      ws: null
-    }
-  },
   computed: {
     app () {
       return this.$root.app
@@ -84,7 +76,7 @@ export default {
       return this.$root.user
     },
     showLoginDialog () {
-      return !this.$route.meta.public && !this.user
+      return !this.user?.is_superuser
     },
     pluginStatusImg () {
       return this.ws?.pluginConnected ? require('./assets/qgis-icon32.svg') : require('./assets/qgis-icon-black32.svg')
@@ -103,21 +95,6 @@ export default {
           action: this.logout
         }
       ]
-    }
-  },
-  watch: {
-    user: {
-      immediate: true,
-      handler (user) {
-        if (user) {
-          this.createWebsocketConnection()
-        } else {
-          if (this.$ws) {
-            this.$ws.close()
-            this.$ws = null
-          }
-        }
-      }
     }
   },
   mounted () {
@@ -142,17 +119,6 @@ export default {
     },
     onLogin (user) {
       this.$root.user = user
-    },
-    createWebsocketConnection () {
-      const protocol = location.protocol.endsWith('s:') ? 'wss' : 'ws'
-      const ws = WebsocketMessenger(`${protocol}://${location.host}/ws/app`)
-      Vue.util.defineReactive(ws, 'connected')
-      Vue.util.defineReactive(ws, 'pluginConnected')
-      ws.onopen().then(() => {
-        this.initialized = true
-      })
-      this.ws = ws
-      Vue.prototype.$ws = ws
     }
   }
 }
@@ -200,6 +166,9 @@ html, body, .app {
   @media (max-width: 1450px) {
     grid-template-columns: auto 1fr auto;
   }
+  // @media (max-width: 600px) {
+  //   grid-template-columns: 1fr;
+  // }
   .header-bg {
     background-color: #3d3d3d;
     grid-column: 1 / 4;
@@ -221,7 +190,7 @@ html, body, .app {
       height: 28px;
     }
   }
-  .menu {
+  .nav-menu {
     grid-row: 1 / 2;
     grid-column: 2 / 3;
     display: flex;
@@ -235,6 +204,22 @@ html, body, .app {
     .plugin-status {
       height: 22px;
     }
+  }
+}
+
+.nav-menu {
+  a {
+    // font-weight: 500;
+    color: inherit;
+    text-decoration: none;
+    &.router-link-exact-active, &.router-link-active:not(.general) {
+      color: var(--color-yellow);
+      --icon-color: currentColor;
+      font-weight: 500;
+    }
+  }
+  .btn.small {
+    padding-inline: 2px;
   }
 }
 

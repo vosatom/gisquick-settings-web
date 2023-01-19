@@ -1,6 +1,6 @@
 <template>
   <input-field
-    label="Users"
+    :label="label"
     color="primary"
     class="users-list"
     :class="{focused}"
@@ -85,9 +85,11 @@
         </template>
         <template v-slot:item="{ item }">
           <v-icon v-if="item.invalid" name="warning" color="orange" class="mr-2"/>
-          <span class="f-grow mr-2">
-            {{ item.username }} <span v-if="item.full_name"> ({{ item.full_name }})</span>
-          </span>
+          <slot name="list-item" :user="item">
+            <span class="f-grow mr-2">
+              {{ item.username }} <span v-if="item.full_name"> ({{ item.full_name }})</span>
+            </span>
+          </slot>
           <v-btn
             v-show="selected === item.username"
             class="remove icon small m-0"
@@ -118,6 +120,10 @@ export default {
   components: { InputField, VAutocomplete, VAutocomplete2 },
   mixins: [ Focusable ],
   props: {
+    label: {
+      type: String,
+      default: 'Users'
+    },
     value: Array,
     task: Object
   },
@@ -179,9 +185,11 @@ export default {
   margin-right: 3px;
 }
 .users-list {
+  gap: 2px;
   .input {
     border: 1px solid var(--border-color, #ddd);
     height: auto;
+    background-color: var(--fill-color);
     &::after {
       display: none;
     }

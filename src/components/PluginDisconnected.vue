@@ -6,7 +6,7 @@
     <v-btn
       color="green"
       class="round"
-      to="/plugin"
+      href="https://gisquick.org/plugin/"
     >
       Get Plugin
     </v-btn>
@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import DisconnectedImg from '@/assets/qgis_disconnected.svg?inline'
+import DisconnectedImg from '@/assets/qgis_disconnected.svg?component'
 
 export default {
   components: { DisconnectedImg }

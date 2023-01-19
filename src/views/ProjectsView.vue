@@ -1,6 +1,5 @@
 <template>
   <div v-if="formattedProjects.length" class="projects light">
-    <!-- <div class="expander" v-text="Array(120).fill('_').join(' ')"/> -->
     <div class="toolbar f-row-ac">
       <span class="title mx-2">Projects</span>
       <v-text-field class="filled" placeholder="Search" v-model="filter">
@@ -65,19 +64,26 @@
     </div>
   </div>
   <div v-else-if="!fetchTask.pending" class="projects empty light f-col-ac">
-    <h1 class="my-4">Welcome to the</h1>
-    <img class="logo mb-4" src="@/assets/text_logo.svg"/>
-    <div class="spacer f-grow"/>
-    <h2 class="my-4">You do not have any published projects yet.</h2>
-    <v-btn color="primary" to="/publish">
-      New Project
-    </v-btn>
+    <template v-if="isUserProfile">
+      <h1 class="my-4">Welcome to the</h1>
+      <img class="logo mb-4" src="@/assets/text_logo.svg"/>
+      <div class="spacer f-grow"/>
+      <h2 class="my-4">So far, you haven't published any projects</h2>
+      <span class="hint">
+        If you don't know how publishing in Gisquick works,
+        you can see the whole process in the <a target="_blank" href="https://gisquick.org/#get-started">Get Started</a> video
+      </span>
+      <v-btn color="primary" to="/publish">
+        New Project
+      </v-btn>
+    </template>
+    <div v-else class="msg-no-projects">User doesn't have any projects</div>
   </div>
 </template>
 
 <script>
 import orderBy from 'lodash/orderBy'
-import MapImg from '@/assets/map.svg?inline'
+import MapImg from '@/assets/map.svg?component'
 import { TaskState, watchTask } from '@/tasks'
 import { sanitize, escapeRegExp, removeDiacritics } from '@/ui/utils/text'
 
@@ -143,6 +149,10 @@ export default {
         return orderBy(projects, this.sortBy || 'title', this.sortDir)
       }
       return orderBy(projects, 'title', 'asc')
+    },
+    isUserProfile () {
+      // this.user is url path param (username)
+      return !this.user || this.$root.user.username === this.user
     }
   },
   watch: {
@@ -185,6 +195,16 @@ export default {
     }
     .spacer {
       max-height: 160px;
+    }
+    .hint {
+      font-size: 16px;
+      max-width: 500px;
+      margin: 20px 10px;
+      a {
+        color: var(--color-primary);
+        text-decoration: none;
+        font-weight: 500;
+      }
     }
   }
   h1 {
@@ -254,11 +274,9 @@ export default {
     min-width: 130px;
   }
 }
-// .expander {
-//   line-height: 0;
-//   height: 0;
-//   max-height: 0;
-//   visibility: hidden;
-//   overflow: hidden;
-// }
+.msg-no-projects {
+  font-size: 20px;
+  font-weight: 500;
+}
+
 </style>

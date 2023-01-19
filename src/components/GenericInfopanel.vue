@@ -20,7 +20,7 @@
   </div>
 </template>
 
-<script>
+<script lang="jsx">
 import keyBy from 'lodash/keyBy'
 import round from 'lodash/round'
 import format from 'date-fns/format'

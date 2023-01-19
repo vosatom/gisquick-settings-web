@@ -37,8 +37,11 @@
     <template v-slot:leaf.source="{ item }">
       <template v-if="sourceInfo[item.id]">
         <v-icon size="24" :name="sourceIcons[sourceInfo[item.id].type]"/>
-        <span class="single-line">{{ sourceInfo[item.id].text }}</span>
-
+        <span
+          class="single-line source"
+          :title="sourceInfo[item.id].text"
+          v-text="sourceInfo[item.id].text"
+        />
         <div v-if="sourceInfo[item.id].error" class="f-row-ac mx-2">
           <v-icon name="warning" color="red"/>
           <v-tooltip align="c;bb">
@@ -51,10 +54,11 @@
 </template>
 
 <script>
-import path from 'path'
 import mapValues from 'lodash/mapValues'
 import LayersTable from '@/components/LayersTable.vue'
 import { transformLayersTree, transformLayersTree2 } from '@/utils/layers'
+
+const absPathRegex = /^(\w:)?\//
 
 const SourceIcons = {
   file: 'hdd',
@@ -119,7 +123,7 @@ export default {
         let info
         const { provider_type: provider, source_params: source } = l
         // 'wms', 'WFS', 'vectortile' providers
-        if (source.url) {
+        if (source?.url) {
           info = {
             type: 'url',
             text: source.url
@@ -131,13 +135,16 @@ export default {
             text: `${hostname}, dbname=${source.dbname}, table=${source.table}`
           }
         // } else if (provider === 'gdal' || provider === 'ogr' || provider === 'spatialite') {
-        } else if (source.file) {
+        } else if (source?.file) {
           info = {
             type: 'file',
             text: source.file
           }
           if (source.file.startsWith('..')) {
             info.error = "Data file is located outside of project's directory"
+          }
+          if (absPathRegex.test(source.file)) {
+            info.error = "Data file has absolute path"
           }
         } else {
           info = {
@@ -161,5 +168,8 @@ export default {
 <style lang="scss" scoped>
 td .icon {
   margin: 0 2px;
+}
+.single-line.source {
+  max-width: 400px;
 }
 </style>

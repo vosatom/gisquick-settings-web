@@ -1,18 +1,5 @@
 <template>
   <div class="short-names-editor f-col">
-    <div class="f-col">
-    <!-- <div class="grid">
-      <template v-for="(name, id) of names">
-        <span :key="`label-${id}`" v-text="layers[id].title"/>
-        <v-text-field
-          :key="id"
-          class="inline filled"
-          :xlabel="layers[id].title"
-          v-model="names[id]"
-          lazy
-        />
-      </template>
-    </div> -->
     <layers-table
       :collapsed.sync="collapsed"
       :columns="columns"
@@ -57,8 +44,6 @@
       </template>
 
     </layers-table>
-    </div>
-
     <hr class="mt-2"/>
     <div class="toolbar f-row-ac f-justify-end m-2">
       <v-btn class="outlined" @click="generateNames">Generate names</v-btn>
