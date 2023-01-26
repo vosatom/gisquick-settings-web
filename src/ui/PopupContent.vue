@@ -14,7 +14,8 @@
           stacked
           :key="_uid"
           :src="origin"
-          @click="onDocumentClick"
+          @mousedown="clickDetector.start"
+          @mouseup="e => clickDetector.isClick(e) ? onDocumentClick(e) : null"
           @keydown="$emit('keydown', $event)"
         />
         <back-button-listener
@@ -93,6 +94,23 @@ function anchorRightAlignmentStyle (offset) {
   }
 }
 
+function SimpleClick(threshold = 10) {
+  let x = 0
+  let y = 0
+  return {
+    start(e) {
+     x = e.clientX
+     y = e.clientY
+    },
+
+    isClick(e) {
+      const deltaX = Math.abs(e.clientX - x)
+      const deltaY = Math.abs(e.clientY - y)
+      return deltaX < threshold && deltaY < threshold
+    }
+  }
+}
+
 export default {
   components: {
     BackButtonListener,
@@ -150,6 +168,9 @@ export default {
     }
   },
   computed: {
+    clickDetector () {
+      return SimpleClick()
+    },
     backHandlerEnabled () {
       return this.backhandler && !!history.backhandler
     },
