@@ -168,7 +168,7 @@ export default {
   },
   watch: {
     templates (templates) {
-      if (templates.length) {
+      if (templates?.length) {
         this.getEmailPreview()
       } else {
         this.previewData = null

@@ -58,7 +58,7 @@
         </div>
       </div>
 
-      <div v-if="!layersErrors" class="card files f-col">
+      <div v-if="projectValid" class="card files f-col">
         <div class="header f-row-ac dark px-4">
           <span class="title">Files</span>
           <span class="f-grow"/>
@@ -94,10 +94,11 @@
           </div>
         </template>
       </div>
-      <!-- <div v-if="error" class="error f-row-ac f-justify-center m-2">
+      <div v-else class="error f-row-ac f-justify-center m-2">
         <v-icon name="warning" size="19" class="mr-2"/>
-        <span v-text="error"/>
-      </div> -->
+        <span>Project contains errors</span>
+      </div>
+
       <div v-if="tasks.clientFiles.success" class="submit-form f-row-ac f-justify-center py-2">
         <!-- <span>{{ user.username }} /</span> -->
         <!-- <v-text-field class="filled" readonly disabled :value="user.username + '/'"/>
@@ -399,10 +400,10 @@ export default {
     font-size: 13px;
   }
 }
-// .error {
-//   color: var(--color-red);
-//   --icon-color: currentColor;
-// }
+.error {
+  color: var(--color-red);
+  --icon-color: currentColor;
+}
 .note {
   display: flex;
   font-size: 13px;

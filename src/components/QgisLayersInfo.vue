@@ -1,6 +1,6 @@
 <template>
   <layers-table
-    label="Name"
+    label="Layer"
     :items="layers"
     :collapsed.sync="collapsed"
     :columns="columns"

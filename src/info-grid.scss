@@ -20,8 +20,8 @@
       content: ":";
     }
   }
-  > :not(.label):not(.separator) {
-    opacity: 0.85;
+  > :not(.label):not(.separator):not(.error) {
+    opacity: 0.9;
   }
   .separator {
     text-align: right;

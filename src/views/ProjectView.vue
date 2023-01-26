@@ -84,6 +84,9 @@
             <span>Update</span>
           </v-btn>
           <div class="f-grow"/>
+          <v-btn to="/" class="icon general">
+            <v-icon name="upward_arrow"/>
+          </v-btn>
           <v-btn
             v-if="project.state === 'published'"
             :href="`/?PROJECT=${project.name}`"

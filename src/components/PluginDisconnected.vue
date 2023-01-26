@@ -6,6 +6,7 @@
     <v-btn
       color="green"
       class="round"
+      target="_blank"
       href="https://gisquick.org/plugin/"
     >
       Get Plugin

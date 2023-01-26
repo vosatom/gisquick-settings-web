@@ -96,12 +96,10 @@
 </template>
 
 <script>
-import VCollapsible from '@/ui/Collapsible.vue'
 import { layersList } from '@/utils/layers'
 import { TaskState, watchTask } from '@/tasks'
 
 export default {
-  components: { VCollapsible },
   props: {
     expanded: Object,
     layers: Array,
