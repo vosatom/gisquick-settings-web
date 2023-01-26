@@ -2,6 +2,7 @@ import VIcon from './ui/Icon.vue'
 import VBtn from './ui/Button.vue'
 import VBadge from './ui/Badge.vue'
 import VCheckbox from './ui/Checkbox.vue'
+import VCollapsible from './ui/Collapsible.vue'
 import VDateField from './ui/DateField.vue'
 import VDialog from './ui/Dialog.vue'
 import VFileField from './ui/FileField.vue'
@@ -33,6 +34,7 @@ export default {
   install (Vue) {
     Vue.component('v-btn', VBtn)
     Vue.component('v-badge', VBadge)
+    Vue.component('v-collapsible', VCollapsible)
     Vue.component('v-icon', VIcon)
     Vue.component('v-checkbox', VCheckbox)
     Vue.component('v-date-field', VDateField)

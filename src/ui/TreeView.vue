@@ -65,7 +65,7 @@ export default {
       // const children = item[this.itemChildren].map(item => this.isGroup(item) ? this.renderGroup(h, item, depth + 1) : this.renderLeaf(h, item, group, depth + 1))
       // groupContent = <div vShow={expanded} class="group-items f-col" key={`gi-${groupKey}`} {...contentData}>{children}</div>
 
-      const groupItem = this.$scopedSlots.group({ group, depth, style })
+      const groupItem = this.$scopedSlots.group({ group, depth, style, expanded })
       if (style) {
         // addStyle(groupItem[0], style)
       }

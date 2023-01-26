@@ -77,6 +77,18 @@ $gutter-4: 12px;
 .m-1 {
   margin: $gutter-1!important;
 }
+.ml-1 {
+  margin-left: $gutter-1!important;
+}
+.mr-1 {
+  margin-right: $gutter-1!important;
+}
+.mt-1 {
+  margin-top: $gutter-1!important;
+}
+.mb-1 {
+  margin-bottom: $gutter-1!important;
+}
 .mx-1 {
   margin-inline: $gutter-1!important;
 }

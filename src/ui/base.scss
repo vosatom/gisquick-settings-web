@@ -32,7 +32,7 @@
     font-size: 14px;
   }
   &.dialog {
-    overflow: auto;
+    overflow: auto; // questionable
     --gutter-x: 36px;
     --gutter-y: 20px;
     &:not(.fullscreen) {
@@ -206,6 +206,9 @@ button {
 
 small {
   font-size: 13px;
+}
+strong {
+  font-weight: 500;
 }
 .card {
   margin: 6px;

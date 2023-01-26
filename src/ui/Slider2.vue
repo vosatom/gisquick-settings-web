@@ -71,7 +71,10 @@ export default {
     max: [String, Number],
     value: Number,
     hideRangeLabels: Boolean,
-    color: String,
+    color: {
+      type: String,
+      default: 'primary'
+    },
     colors: {
       type: Array,
       default: () => ['primary']
@@ -174,6 +177,9 @@ export default {
       // console.log('onBlur')
     },
     dragStart (e) {
+      if (this.disabled) {
+        return
+      }
       if (!this.focused) {
         this.focus()
       }
@@ -245,6 +251,12 @@ export default {
 <style lang="scss" scoped>
 .slider-field {
   margin: 6px;
+  &[disabled] {
+    cursor: not-allowed;
+    > * {
+      pointer-events: none;
+    }
+  }
 }
 .slider {
   display: grid;
@@ -294,7 +306,8 @@ export default {
     .cover {
       position: absolute;
       height: 5px;
-      border-radius: 3px;
+      border-top-right-radius: 3px;
+      border-bottom-right-radius: 3px;
       background-color: #bbb;
       right: 0;
     }
@@ -322,10 +335,6 @@ export default {
         // transform: scale(1.2, 1.2);
       }
     }
-  }
-  &[disabled] {
-    pointer-events: none;
-    opacity: 0.5;
   }
 }
 </style>
