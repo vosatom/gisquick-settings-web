@@ -30,7 +30,8 @@
     <!-- eslint-disable-next-line -->
     <template v-slot:leaf.projection="{ item, value }">
       <span v-if="item.projection" v-text="item.projection"/>
-      <v-icon v-else name="warning" color="orange"/>
+      <v-icon v-else-if="item.type === 'VectorLayer' && item.options.wkb_type !== 'NoGeometry'" name="warning" color="orange"/>
+      <span v-else>—</span>
     </template>
 
     <!-- eslint-disable-next-line -->
