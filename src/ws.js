@@ -34,18 +34,19 @@ export default function WebsocketMessenger (url) {
     unbind (type, callback) {
       listeners = listeners.filter(l => l.type !== type || l.callback !== callback)
     },
-    send (name, data) {
+    send (name, data, opts = {}) {
       if (socket.readyState === socket.OPEN) {
-        const msg = { type: name, data }
+        const msg = { type: name, ...opts, data }
         socket.send(JSON.stringify(msg))
       } else {
         console.warn('ws:send readyState', socket.readyState)
       }
     },
     request (name, data) {
+      const id = Math.random().toString(36).substring(2, 7)
       return new Promise((resolve, reject) => {
-        activeRequests[name] = { resolve, reject }
-        this.send(name, data)
+        activeRequests[`${name}:${id}`] = { resolve, reject }
+        this.send(name, data, { id })
       })
     },
     close () {
@@ -115,14 +116,16 @@ export default function WebsocketMessenger (url) {
           }
         }
       }
-
-      if (activeRequests[msg.type]) {
+      // temporary compatibility with older version (without id)
+      const key = msg.id ? `${msg.type}:${msg.id}` : Object.keys(activeRequests).find(k => k.split(':')[0] === msg.type)
+      const req = activeRequests[key]
+      if (req) {
         if (msg.status && msg.status >= 400) {
-          activeRequests[msg.type].reject(msg)
+          req.reject(msg)
         } else {
-          activeRequests[msg.type].resolve(msg)
+          req.resolve(msg)
         }
-        delete activeRequests[msg.type]
+        delete activeRequests[key]
       }
       listeners.filter(l => l.type === msg.type).forEach(l => l.callback(msg))
     }
