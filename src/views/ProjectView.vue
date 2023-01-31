@@ -231,8 +231,20 @@ import { TaskState, watchTask } from '@/tasks'
 import { objectDiff } from '@/utils/diff'
 import MapImg from '@/assets/map.svg?component'
 
+function validatedSettings (settings, meta) {
+  // detection of media folders
+  // const s = new Set()
+  // Object.entries(settings.layers).filter(([lid, lset]) => lset.attributes).forEach(([lid, lset]) => {
+  //   Object.values(lset.attributes).filter(a => a.widget === 'MediaImage').forEach(a => {
+  //     const mediaFolder = a.config?.directory || `web/${meta.layers[lid].name}`
+  //     s.add(mediaFolder)
+  //   })
+  // })
 
-function validatedSettings (settings) {
+  // initialize missing layers settings
+  Object.keys(meta.layers).filter(lid => !settings.layers[lid]).forEach(lid => {
+    settings.layers[lid] = { flags: [...meta.layers[lid].flags] }
+  })
   // temporary
   settings.topics?.filter(t => !t.id).forEach(t => {
     t.id = t.title.toLowerCase().replace(/ /, '_')
@@ -365,11 +377,11 @@ export default {
       this.fetchProjectInfo()
     }
   },
-  provide () {
-    return {
-      reloadProject: this.fetchProjectInfo
-    }
-  },
+  // provide () {
+  //   return {
+  //     fetchProjectInfo: this.fetchProjectInfo
+  //   }
+  // },
   methods: {
     createFilesTask () {
       const state = TaskState()
@@ -427,7 +439,7 @@ export default {
       const { data } = await watchTask(task, this.fetchTask)
       if (this.fetchTask.success) {
         const { meta, settings } = data
-        this.settings = settings ? cloneDeep(validatedSettings(settings)) : this.newSettings(meta)
+        this.settings = settings ? cloneDeep(validatedSettings(settings, meta)) : this.newSettings(meta)
         this.refSettings = cloneDeep(this.settings)
       }
     },

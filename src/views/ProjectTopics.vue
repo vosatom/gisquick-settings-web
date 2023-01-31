@@ -19,7 +19,7 @@ export default {
     overlays () {
       const meta = this.project.meta
       let tree = meta.layers_tree.filter(i => !this.settings.base_layers.includes(i.id || i.name))
-      tree = filterLayers(tree, l => !this.settings.layers[l.id].flags?.includes('excluded')) // TODO: flags
+      tree = filterLayers(tree, l => !this.settings.layers[l.id]?.flags?.includes('excluded'))
       return transformLayersTree(
         tree,
         l => ({ ...meta.layers[l.id] }),
