@@ -9,11 +9,11 @@
       @click-item="(_, index) => selectedIndex = index"
     >
       <template v-slot:append>
-        <div class="toolbar f-row-ac">
-          <v-btn class="icon" @click="addFormatter">
+        <div class="toolbar f-row-ac mt-1">
+          <v-btn class="icon m-0 p-1" @click="addFormatter">
             <v-icon name="plus"/>
           </v-btn>
-          <v-btn class="icon" :disabled="!selected" @click="removeFormatter">
+          <v-btn class="icon m-0 p-1" :disabled="!selected" @click="removeFormatter">
             <v-icon name="delete_forever"/>
           </v-btn>
         </div>
