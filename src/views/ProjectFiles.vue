@@ -1,6 +1,6 @@
 <template>
   <div class="page-content light">
-    <files-tree :files="task.data" @contextmenu="showContextMenu"/>
+    <files-tree v-if="files" :files="files" @contextmenu="showContextMenu"/>
     <v-menu ref="menu" transition="fade" :items="menuItems"/>
     <router-view/>
   </div>
@@ -12,7 +12,6 @@ import _keyBy from 'lodash/keyBy'
 import _mapValues from 'lodash/mapValues'
 
 import FilesTree from '@/components/FilesTree.vue'
-import { TaskState, watchTask } from '@/tasks'
 import { pointBounds } from '@/ui/utils/popup'
 
 export default {
@@ -23,8 +22,7 @@ export default {
   },
   data () {
     return {
-      expanded: {},
-      // task: TaskState()
+      expanded: {}
     }
   },
   computed: {
@@ -32,7 +30,7 @@ export default {
       return this.project.files
     },
     files () {
-      return this.task.data
+      return this.task.data?.files
     },
     menuItems () {
       return [
@@ -44,17 +42,12 @@ export default {
   },
   mounted () {
     this.fetchFiles()
-    // console.log(this.project)
-  },
-  activated () {
-    
   },
   methods: {
     fetchFiles () {
       this.task.fetch()
     },
     showContextMenu (e) {
-      console.log('showContextMenu', e)
       e.evt.preventDefault()
       const { clientX, clientY } = e.evt
       this.$refs.menu.openMenu({ bounds: pointBounds(clientX, clientY, 1, 1) })
@@ -78,7 +71,7 @@ export default {
     copyLink () {
       // const link = `/api/project/${this.project.name}/file/${this.contextMenuItem.path}`
       const link = `${location.origin}/api/project/file/${this.project.name}/${this.contextMenuItem.path}`
-      console.log('copyLink', link)
+      // console.log('copyLink', link)
       navigator.clipboard.writeText(link)
     }
   }
@@ -86,6 +79,4 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.tree-view {
-}
 </style>

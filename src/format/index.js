@@ -12,7 +12,7 @@ const numeric = mapValues({
   shortNum: numberFormat('shortNum'),
 }, fn => fn.locale('en-US'))
 
-
+const filesizeNumber = numberFormat('num1').locale('en-US')
 
 export default Vue.observable({
   // date: v => v && format(utcToLocalDate(toDate(v)), 'dd.MM.yyyy'), // string ISO or Date in UTC
@@ -26,7 +26,7 @@ export default Vue.observable({
   filesize: v => {
     if (Number.isFinite(v)) {
       const { value, unit } = preformatFilesize(v)
-      return `${numeric.num(value)} ${unit}`
+      return `${filesizeNumber(value)} ${unit}`
     }
     return v
   }

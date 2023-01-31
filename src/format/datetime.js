@@ -29,5 +29,6 @@ export function formatDatetime (v) {
 export default {
   datetime: v => v && dtf.format(toDate(v)),
   date: v => v && df.format(toDate(v)),
-  time: v => v && tf.format(toDate(v))
+  time: v => v && tf.format(toDate(v)),
+  udate: v => v && df.format(new Date(v * 1000))
 }

@@ -10,7 +10,7 @@
     <template v-slot:group="{ group: folder, expanded, style }">
       <div
         class="item folder f-row-ac"
-        :class="folder.info.flag"
+        :class="[folder.info.flag, {expanded}]"
         :style="style"
         @contextmenu="$emit('contextmenu', { evt: $event, item: folder })"
       >
@@ -27,6 +27,7 @@
           :name="expanded ? 'folder-open' : 'folder'"
           @click="toggleFolder(folder)"
         />
+        <slot v-if="!folder.info.flag" name="folder-prepend" v-bind="folder"/>
         <span v-text="folder.name" class="f-grow"/>
         <span class="info">{{ folder.info.filesCount }} files, {{ $format.filesize(folder.info.size) }}</span>
       </div>
@@ -44,8 +45,12 @@
           :value="isSelected(item.path)"
           @input="setSelected(item, $event)"
         />
-        <v-icon :name="iconsSet[item.ext] || 'file-outline'" size="24"/>
+        <slot name="file-icon" :file="item">
+          <v-icon :name="iconsSet[item.ext] || 'file-outline'" size="24"/>
+        </slot>
+        <slot name="file-prepend" :file="item"/>
         <span v-text="item.name" class="f-grow"/>
+        <span class="mtime" v-text="$format.udate(item.mtime)"/>
         <div
           class="size f-col f-align-end"
           :class="{progressbar: !!filesProgress[item.path]}"
@@ -62,7 +67,6 @@
 </template>
 
 <script>
-import findKey from 'lodash/findKey'
 import Path from 'path'
 // import { win32 as dirname } from 'path-dirname'
 
@@ -111,12 +115,10 @@ export function collectFoldersInfo (tree, flags) {
   const info = {
     size: 0,
     filesCount: 0,
-    flag: null
-  }
-  const state = {
-    new: true, // will be updated
-    deleted: true,
-    changed: false
+    flag: null,
+    new: 0,
+    changed: 0,
+    deleted: 0
   }
   tree.forEach(n => {
     let flag
@@ -126,24 +128,23 @@ export function collectFoldersInfo (tree, flags) {
       info.filesCount += nInfo.filesCount
       n.info = nInfo
       flag = nInfo.flag
+      info.new += nInfo.new
+      info.changed += nInfo.changed
+      info.deleted += nInfo.deleted
     } else {
       info.size += n.size
       info.filesCount += 1
       flag = flags?.[n.path]
-    }
-    if (flags) {
-      if (flag !== 'new') {
-        state.new = false
-      }
-      if (flag !== 'deleted') {
-        state.deleted = false
-      }
       if (flag) {
-        state.changed = true
+        info[flag] += 1
       }
     }
   })
-  info.flag = flags && findKey(state, s => s)
+  if (info.new === info.filesCount) {
+    info.flag = 'new'
+  } else if (info.deleted === info.filesCount) {
+    info.flag = 'deleted'
+  }
   return info
 }
 
@@ -177,7 +178,8 @@ const FileIconSet = {
   tif: 'file-image-outline',
   tiff: 'file-image-outline',
   svg: 'file-image-outline',
-  sqlite: 'storage'
+  sqlite: 'storage',
+  gpkg: 'storage'
 }
 
 export default {
@@ -367,13 +369,14 @@ export default {
 .folder {
   --gutter: 0;
   .info {
-    font-size: 13.5px;
-    opacity: 0.6;
+    font-size: 13px;
+    opacity: 0.65;
   }
 }
 .item {
   height: 36px;
   padding-right: 6px;
+  line-height: 1.2;
   .icon {
     margin: 1px 2px;
     user-select: none;
@@ -405,5 +408,15 @@ export default {
     width: 70px;
     margin: 3px 0;
   }
+}
+.size {
+  width: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+.mtime {
+  font-size: 13px;
+  opacity: 0.8;
 }
 </style>

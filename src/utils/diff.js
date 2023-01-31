@@ -68,7 +68,7 @@ function arrayDiff1 (target, base, key) {
 function arrayDiff (target, base, key) {
   const t = keyBy(target, key)
   const b = keyBy(base, key)
-  const { $diff, ...items } = objectDiff(t, b, [], true)
+  const { $diff, ...items } = objectDiff(t, b, [])
   // console.log('objectDiff', objectDiff(t, b))
   const keyToIndex = Object.keys(items).reduce((map, k, i) => (map[k] = i, map), {})
   // console.log('keyToIndex', keyToIndex, items)
@@ -118,8 +118,6 @@ export function objectDiff (object, base, path = [], debug = false) {
         // console.log('compare arrays', path, k)
         if (k === 'attributes') {
           diffObj[k] = arrayDiff(v1, v2, 'name')
-          console.log(k, diffObj[k])
-          console.log(v1[0], v2[0])
         } else {
           diffObj[k] = simpleArrayDiff(v1, v2)
           $diff.orig[k] = `[ ${v2.join(', ')} ]`

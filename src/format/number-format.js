@@ -28,10 +28,9 @@ const Configs = {
     notation: 'compact',
     style: 'currency'
   },
-  price: {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    style: 'currency'
+  num1: {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1
   }
 }
 
