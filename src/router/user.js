@@ -5,6 +5,8 @@ import pick from 'lodash/pick'
 // import TestView from '@/views/TestView.vue'
 import TestView from '@/views/TestJsonDiff.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
+import UserProfile from '@/views/UserProfile.vue'
+
 import ProjectView from '@/views/ProjectView.vue'
 import ProjectFiles from '@/views/ProjectFiles.vue'
 import ProjectMap from '@/views/ProjectMap.vue'
@@ -25,9 +27,14 @@ const routes = [
   // },
   {
     path: '/',
-    name: 'projects',
-    component: ProjectsView
+    name: 'profile',
+    component: UserProfile
   },
+  // {
+  //   path: '/',
+  //   name: 'projects',
+  //   component: ProjectsView
+  // },
   {
     path: '/publish',
     name: 'publish',

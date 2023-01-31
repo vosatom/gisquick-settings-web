@@ -169,10 +169,13 @@ export default {
         datetime: this.$format.datetime(d)
       }
     },
-    fetchProjects () {
+    async fetchProjects () {
       const url = this.user ? `/api/projects/${this.user}/` : '/api/projects/'
       const t = this.$http.get(url)
-      watchTask(t, this.fetchTask)
+      await watchTask(t, this.fetchTask)
+      if (this.fetchTask.success) {
+        this.$emit('projectsFetched', this.fetchTask.data)
+      }
     },
     toggleSortDir () {
       this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc'
