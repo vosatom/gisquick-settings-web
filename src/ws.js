@@ -14,6 +14,7 @@ function compareVersions (v1, v2) {
 }
 
 export default function WebsocketMessenger (url) {
+  let closed = false
   let listeners = []
   let openListeners = []
   const activeRequests = {}
@@ -48,6 +49,11 @@ export default function WebsocketMessenger (url) {
       })
     },
     close () {
+      closed = true
+      if (timer !== null) {
+        clearInterval(timer)
+        timer = null
+      }
       socket.close()
     },
     onopen () {
@@ -66,24 +72,30 @@ export default function WebsocketMessenger (url) {
       ws.connected = true
       openListeners.forEach(cb => cb())
       openListeners = []
+      // console.log('sending PluginStatus (init)', new Date().toLocaleTimeString())
       ws.send('PluginStatus')
+      if (timer != null) {
+        console.error('previous timer still running!')
+      }
       timer = setInterval(() => {
+        // console.log('sending PluginStatus', new Date().toLocaleTimeString())
         ws.send('PluginStatus')
       }, 30 * 1000)
     }
     socket.onclose = () => {
-      // console.log('ws.onclose')
       ws.connected = false
       if (timer !== null) {
         clearInterval(timer)
         timer = null
       }
       // reconnect
-      setTimeout(() => {
-        // console.log('ws:reconnecting...')
-        socket = new WebSocket(url)
-        init()
-      }, 5000)
+      if (!closed) {
+        setTimeout(() => {
+          // console.log('ws:reconnecting...')
+          socket = new WebSocket(url)
+          init()
+        }, 5000)
+      }
     }
     socket.onmessage = (e) => {
       const msg = JSON.parse(e.data)

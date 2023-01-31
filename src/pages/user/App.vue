@@ -114,11 +114,9 @@ export default {
       handler (user) {
         if (user) {
           this.createWebsocketConnection()
-        } else {
-          if (this.$ws) {
-            this.$ws.close()
-            this.$ws = null
-          }
+        } else if (this.$ws) {
+          this.$ws.close()
+          this.$ws = null
         }
       }
     }
@@ -139,6 +137,9 @@ export default {
       this.$root.user = user
     },
     createWebsocketConnection () {
+      if (Vue.prototype.$ws) {
+        Vue.prototype.$ws.close()
+      }
       const protocol = location.protocol.endsWith('s:') ? 'wss' : 'ws'
       const ws = WebsocketMessenger(`${protocol}://${location.host}/ws/app`)
       Vue.util.defineReactive(ws, 'connected')
