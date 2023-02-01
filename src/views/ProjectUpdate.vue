@@ -7,80 +7,148 @@
       title="Warning"
       color="orange"
     >
-      Your QGIS plugin is not supported anymore.<br/>
-      Please update your plugin in order to continue.
+      Your version of the QGIS plugin is no longer supported.<br/>
+      Please update the Gisquick plugin in order to continue.
     </error-message>
     <template v-else-if="projectInfo">
       <v-dialog v-model="showMetadata">
-        <div v-if="diffs.raw2" class="metadata-view f-col">
+        <div xv-if="diffs.raw2" class="metadata-view f-col">
           <div class="toolbar dark f-row-ac px-2">
             <span class="title">Gisquick Metadata</span>
             <div class="f-grow"/>
-            <v-checkbox class="filter p-2 m-0 shadow-1" label="Only changes" v-model="showMetadataDiff"/>
+            <v-checkbox
+              v-if="diffs.raw2"
+              class="filter p-2 m-0 shadow-1"
+              label="Only changes"
+              v-model="showMetadataDiff"
+            />
             <v-btn class="icon" @click="showMetadata = false">
               <v-icon name="x"/>
             </v-btn>
           </div>
-          <json-viewer :data="showMetadataDiff ? diffs.raw2 : projectInfo"/>
+          <json-viewer :data="showMetadataDiff && diffs.raw2 ? diffs.raw2 : projectInfo"/>
         </div>
       </v-dialog>
 
-      <div class="card f-col">
-        <div class="header f-row-ac dark px-4">
-          <span class="title">Overview</span>
+      <div class="mode f-row-ac" :class="updateMode">
+        <div class="f-col">
+          <span class="title f-grow uppercase">Update Mode</span>
+          <span class="description">Choose between push and pull operation</span>
         </div>
-        <div class="info-grid">
-          <span class="label">QGIS Project File</span>
-          <span v-if="currentProjectFile === lastProjectFile" v-text="currentProjectFile"/>
-          <div v-else class="f-col-as">
-            <strong class="warning f-row-ac">
-              <v-icon color="orange" name="warning" class="mr-2"/>
-              <span>Project file doesn't match</span>
-            </strong>
-            <div class="info-grid nested my-2">
-              <span class="label">Current</span>
-              <span v-text="currentProjectFile"/>
-              <span class="label">Previous</span>
-              <span v-text="lastProjectFile"/>
-            </div>
-          </div>
-          <!-- <span class="label">Projection</span>
-          <span v-text="projectInfo.projection"/> -->
-          <span class="label">Gisquick Metadata</span>
-          <span v-if="diffs.raw2">
-            <a class="link-btn" @click="showMetadata = true">
-              <span>Show</span>
-            </a>
-          </span>
-          <span v-else>Without change</span>
+        <span class="f-grow"/>
+        <div class="f-col px-2">
+          <span class="label text-right">QGIS Project</span>
+          <span v-text="currentProjectFile"/>
         </div>
-      </div>
-
-      <!-- <div v-if="diffs.raw2" class="m-2">
-        <div><strong>Layers with changed attributes:</strong> {{ diffs.changedAttrsLayers }}</div>
-      </div> -->
-
-      <div class="card f-col">
-        <div class="header f-row-ac dark px-4">
-          <span class="title">Layers</span>
-        </div>
-        <qgis-layers-info :meta="projectInfo2" :classes="diffLayersClasses"/>
-        <layers-errors class="my-2" :errors="layersErrors" :project-info="projectInfo"/>
-      </div>
-
-      <div class="card f-col">
-        <div class="header f-row-ac dark px-4">
-          <span class="title">Files</span>
-          <span class="f-grow"/>
+        <client-svg/>
+        <div class="f-col mx-4">
+          <arrow-svg width="80" class="arrow mt-2"/>
           <v-btn
-            v-if="tasks.clientFiles.data"
-            class="icon"
-            :loading="tasks.clientFiles.pending"
-            @click="fetchLocalFiles"
+            color="primary"
+            class="small outlined round"
+            @click="toggleMode"
           >
-            <v-icon name="reload"/>
+            {{ updateMode }}
           </v-btn>
         </div>
+        <server-svg/>
+        <div class="f-col px-2">
+          <span class="label">Gisquick Project</span>
+          <span v-text="project.name"/>
+        </div>
+        <!-- <span class="f-grow"/> -->
+      </div>
+
+      <template v-if="currentProjectFile !== lastProjectFile">
+        <div class="warning f-row-ac">
+          <v-icon name="warning" class="mr-2"/>
+          <span>Project file doesn't match. Make sure you are updating the correct project.</span>
+        </div>
+        <small class="warning-detail text-center">Last time the project was updated from <strong>{{ lastProjectFile }}</strong> file</small>
+        <hr class="mb-1"/>
+      </template>
+      <hr v-else/>
+
+      <template v-if="isPushMode">
+        <div xv-if="diffs.raw2" class="card f-col">
+          <div class="header f-row-ac dark">
+            <span class="title">Project changes</span>
+            <span class="f-grow"/>
+            <!-- <a class="link-btn" @click="showMetadata = true">
+              <span>Show Gisquick metadata</span>
+            </a> -->
+            <v-btn
+              class="toggle icon"
+              :class="{flip: showProjectChanges}"
+              @click="showProjectChanges = !showProjectChanges"
+            >
+              <v-icon name="arrow-down" size="18"/>
+            </v-btn>
+          </div>
+          <v-collapsible v-if="diffs.raw2">
+            <div v-show="showProjectChanges" class="f-col">
+              <qgis-layers-info :meta="projectInfo2" :classes="diffLayersClasses"/>
+              <layers-errors class="my-2" :errors="layersErrors" :project-info="projectInfo"/>
+            </div>
+          </v-collapsible>
+          <div v-else class="f-row p-4 mx-auto">
+            <v-icon name="circle-i-outline" class="mr-2"/>
+            <span v-if="project.meta.project_hash !== projectInfo.project_hash">No Gisquick-related changes were detected in the QGIS project</span>
+            <span v-else>QGIS project was not changed</span>
+          </div>
+        </div>
+
+        <div class="f-row-ac">
+          <v-checkbox
+            v-if="diffs.raw2 || project.meta.project_hash !== projectInfo.project_hash"
+            label="Update QGIS project"
+            :disabled="!!layersErrors"
+            v-model="updateOpts.qgisProject"
+            @input="updateFilesSelection"
+          />
+          <div class="f-grow"/>
+          <a class="link-btn px-2 mx-2" @click="showMetadata = true">
+            <small>Show Gisquick metadata</small>
+          </a>
+        </div>
+      </template>
+
+      <div class="card f-col">
+        <div class="header f-row-ac dark">
+          <span class="title">Files</span>
+          <span class="f-grow"/>
+          <v-checkbox label="Split view" v-model="splitFilesMode"/>
+          <v-menu
+            v-if="tasks.clientFiles.data"
+            transition="slide-y"
+            align="rr;bb,tt"
+            content-class="popup-menu"
+            :items="reloadMenu"
+          >
+            <template v-slot:activator="{ toggle }">
+              <v-btn class="icon" :loading="tasks.clientFiles.pending || project.files.pending" @click="toggle">
+                <v-icon name="reload"/>
+              </v-btn>
+            </template>
+          </v-menu>
+        </div>
+        <template v-if="clientDirtyFiles || serverDirtyFiles">
+          <div class="error-box f-row p-2">
+            <v-icon color="red" name="warning" class="mr-2"/>
+            <p>
+              <span>Project contains temporary files with unsaved changes.</span>
+              <span v-if="clientDirtyFiles">
+                On the client side, you will need to reopen your QGIS project.
+              </span>
+              <span v-if="serverDirtyFiles">
+                On the server side, you will need to
+                <v-btn color="primary" class="inline n-case round outlined small m-0" @click="reloadProject">Reload QGIS project</v-btn>
+                and wait a few seconds before refreshing project files.
+              </span>
+            </p>
+          </div>
+          <hr/>
+        </template>
 
         <v-btn
           v-if="!clientFiles || !serverFiles"
@@ -91,66 +159,140 @@
         >
           Load Files
         </v-btn>
-        <files-tree
-          v-if="filesDiff"
-          :files="filesDiff.files"
-          :flags="filesDiff.flags"
-          :progress="uploadProgress && uploadProgress.files"
-          :selected="updateOpts.files ? selectedFiles : null"
-          :disabled="isFileDisabled"
-        />
+
+        <div class="files-grid" :class="[{split: splitFilesMode}, updateMode]">
+          <div v-if="filesDiff" class="f-col target">
+            <div class="label" v-text="isPushMode ? 'Server' : 'Client'"/>
+            <files-tree
+              :files="filesDiff.files"
+              :flags="filesDiff.flags"
+              :progress="uploadProgress && uploadProgress.files"
+              :selected="filesUpdateOpt === 'selected' ? selectedFiles : null"
+              :disabled="isFileDisabled"
+            >
+              <template v-slot:folder-badge="{ folder }">
+                <folder-badge class="f-row" v-bind="folder.info"/>
+              </template>
+              <template v-if="targetDirtyFiles" v-slot:file-badge="{ file }">
+                <v-icon
+                  v-if="targetDirtyFiles.includes(file.path)"
+                  class="file-badge"
+                  name="warning"
+                  color="red"
+                  size="17"
+                />
+              </template>
+            </files-tree>
+          </div>
+          <div v-if="splitFilesMode && filesDiff" class="f-col source">
+            <div class="label" v-text="isPushMode ? 'Client' : 'Server'"/>
+            <files-tree :files="isPushMode ? clientFiles : serverFiles">
+              <template v-if="sourceDirtyFiles" v-slot:file-badge="{ file }">
+                <v-icon
+                  v-if="sourceDirtyFiles.includes(file.path)"
+                  class="file-badge"
+                  name="warning"
+                  color="red"
+                  size="17"
+                />
+              </template>
+            </files-tree>
+          </div>
+        </div>
         <template v-if="filesDiff">
           <hr/>
-          <div class="statusbar p-2">
-            <small>New files: {{ filesDiff.new.length }}, </small>
-            <small>Modified files: {{ filesDiff.updated.length }}, </small>
-            <small>Missing files: {{ filesDiff.removed.length }}</small>
+          <div class="statusbar px-2 py-1">
+            <span class="new">New files: {{ filesDiff.new.length }}</span>
+            <span class="changed">Modified files: {{ filesDiff.updated.length }}</span>
+            <span class="removed">Missing files: {{ filesDiff.removed.length }}</span>
           </div>
         </template>
       </div>
-
-      <div class="update-card f-col-ac py-4 xshadow-2">
+      <div class="update-card f-col xshadow-2">
         <div v-if="projectChangesDetected" class="content f-col">
-          <v-checkbox
+          <!-- <v-checkbox
+            v-if="isPushMode && (diffs.raw2 || project.meta.project_hash !== projectInfo.project_hash)"
             label="Update QGIS project"
             :disabled="!!layersErrors"
             v-model="updateOpts.qgisProject"
-          />
-          <div class="f-row-ac">
+            @input="updateFilesSelection"
+          /> -->
+          <div class="f-row f-align-start">
             <v-checkbox
               label="Update files"
               :disabled="!filesDiff"
-              v-model="updateOpts.files"/>
+              v-model="updateOpts.files"
+              @input="filesUpdateOpt = $event ? 'new_and_changed' : ''"
+            />
             <div class="f-grow"/>
-            <div class="files-options f-row-ac">
-              <v-radio-btn
-                label="All"
-                :disabled="!updateOpts.files"
-                :value="updateOpts.files && !selectedFiles"
-                @input="selectedFiles = null"
-              />
-              <v-radio-btn
-                label="Selected"
-                :disabled="!updateOpts.files"
-                :value="updateOpts.files && !!selectedFiles"
-                @input="enableFilesSelection"
-              />
+            <div class="files-options px-2 f-row f-align-start">
+              <div class="f-col mx-2">
+                <v-radio-btn
+                  label="New/Modified"
+                  :disabled="!updateOpts.files"
+                  val="new_and_changed"
+                  v-model="filesUpdateOpt"
+                />
+                <span
+                  class="description"
+                  v-text="isPushMode ? 'Upload all new and modified files to the server' : 'Download all new and modified files from the server'"
+                />
+              </div>
+              <div class="f-col mx-2">
+                <v-radio-btn
+                  label="All"
+                  :disabled="!updateOpts.files"
+                  val="all"
+                  v-model="filesUpdateOpt"
+                />
+                <span
+                  class="description"
+                  v-text="isPushMode ? 'Upload all new and modified files, removes all missing files' : 'Download all new and modified files, removes all missing files'"
+                />
+              </div>
+              <div class="f-col mx-2">
+                <v-radio-btn
+                  label="Selected"
+                  :disabled="!updateOpts.files"
+                  val="selected"
+                  v-model="filesUpdateOpt"
+                  @input="updateFilesSelection"
+                />
+                <span class="description"></span>
+                <span
+                  class="description"
+                  v-text="isPushMode ? 'Select files to upload or delete' : 'Select files to download or delete'"
+                />
+              </div>
             </div>
           </div>
-          <v-btn
-            class="round"
-            color="primary"
-            :disabled="!updateOpts.qgisProject && !updateOpts.files"
-            :loading="!!uploadProgress"
-            @click="updateProject"
-          >
-            <v-icon name="upload" class="mr-2"/>
-            <span>Update</span>
-          </v-btn>
         </div>
-        <p v-else class="p-2">No changes detected</p>
-      </div>
 
+      </div>
+      <!-- <hr/> -->
+      <div class="action f-col-ac my-2">
+        <v-btn
+          v-if="isPushMode"
+          class="round"
+          color="primary"
+          :disabled="!updateOpts.qgisProject && !updateOpts.files"
+          :loading="!!uploadProgress"
+          @click="pushChanges"
+        >
+          <v-icon name="upload" class="mr-2"/>
+          <span>Push Changes</span>
+        </v-btn>
+        <v-btn
+          v-else
+          class="round"
+          color="primary"
+          :disabled="!updateOpts.files"
+          @click="pullChanges"
+        >
+          <v-icon name="cloud-download" class="mr-2"/>
+          <span>Pull Changes</span>
+        </v-btn>
+      </div>
     </template>
     <template v-else-if="pluginError">
       <error-message
@@ -189,9 +331,14 @@ import QgisLayersInfo from '@/components/QgisLayersInfo.vue'
 import PluginDisconnected from '@/components/PluginDisconnected.vue'
 import ErrorMessage from '@/components/ErrorMessage.vue'
 import LayersErrors, { layersErrors } from '@/components/LayersErrors.vue'
+import FolderBadge from '@/components/FolderBadge.vue'
+import ClientSvg from '@/assets/client.svg?component'
+import ServerSvg from '@/assets/server.svg?component'
+import ArrowSvg from '@/assets/arrow.svg?component'
 
 // import { initLayersPermissions } from '@/views/ProjectAccess.vue'
 import { objDiff, objectDiff } from '@/utils/diff'
+import { filesDiff, findDirtyFiles } from '@/utils/files'
 import { TaskState, watchTask } from '@/tasks'
 import { createUpload } from '@/upload'
 
@@ -226,20 +373,22 @@ function insertLayer (tree, path) {
 
 export default {
   name: 'ProjectUpdate',
-  components: { JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected, ErrorMessage, LayersErrors },
+  components: {
+    JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected, ErrorMessage, LayersErrors, FolderBadge,
+    ClientSvg, ServerSvg, ArrowSvg
+  },
   props: {
     project: Object,
     settings: Object
   },
-  inject: ['reloadProject'],
   data () {
     return {
       pluginError: null,
       projectInfo: null,
       opened: [],
-      selectedFiles: null,
+      selectedFiles: [],
       updateOpts: {
-        qgisProject: false,
+        qgisProject: true,
         files: false
       },
       tasks: {
@@ -247,74 +396,51 @@ export default {
       },
       uploadProgress: null,
       showMetadata: false,
-      showMetadataDiff: true
+      showMetadataDiff: true,
+      splitFilesMode: false,
+      filesUpdateOpt: '', // 'new_and_changed', 'all', 'selected'
+      fetchStatus: null,
+      updateMode: 'push',
+      showProjectChanges: true
     }
   },
   computed: {
+    reloadMenu () {
+      return [
+        { text: 'Client Files', action: this.fetchLocalFiles },
+        { text: 'Server Files', action: this.fetchServerFiles },
+      ]
+    },
+    isPushMode () {
+      return this.updateMode === 'push'
+    },
     connected () {
       return this.$ws.pluginConnected
     },
     clientFiles () {
-      return this.tasks.clientFiles.data?.files?.filter(f => !f.path.startsWith('.gisquick/'))
+      const files = this.tasks.clientFiles.data?.files
+      return files?.filter(f => !f.path.startsWith('.gisquick/'))
     },
     serverFiles () {
-      return this.project.files.data
+      return this.project.files.data?.files
+    },
+    clientFilesMap () {
+      return keyBy(this.clientFiles, 'path')
+    },
+    serverFilesMap () {
+      return keyBy(this.serverFiles, 'path')
     },
     filesDiff () {
       if (this.clientFiles && this.serverFiles) {
-        const sfMap = keyBy(this.serverFiles, 'path')
-        const cfMap = keyBy(this.clientFiles, 'path')
-        // const clientFilesPaths = new Set(this.clientFiles.map(f => f.path))
-
-        const newFiles = this.clientFiles.filter(f => !sfMap[f.path])
-        const updatedFiles = this.clientFiles.filter(f => sfMap[f.path] && sfMap[f.path].hash !== f.hash)
-        const removedFiles = this.serverFiles.filter(f => !cfMap[f.path] && !f.path.startsWith('web/components'))
-
-        const newPaths = new Set(newFiles.map(f => f.path))
-        const updatedPaths = new Set(updatedFiles.map(f => f.path))
-        const removedPaths = new Set(removedFiles.map(f => f.path))
-
-        const files = [...this.serverFiles, ...newFiles]
-
-        const flags = files.reduce((flags, f) => {
-          if (newPaths.has(f.path)) {
-            flags[f.path] = 'new'
-          }
-          if (updatedPaths.has(f.path)) {
-            flags[f.path] = 'changed'
-          }
-          if (removedPaths.has(f.path)) {
-            flags[f.path] = 'deleted'
-          }
-          return flags
-        }, {})
-        return {
-          files,
-          flags,
-          new: newFiles,
-          updated: updatedFiles,
-          removed: Array.from(removedPaths)
-        }
+        const server = { list: this.serverFiles, map: this.serverFilesMap }
+        const client = { list: this.clientFiles, map: this.clientFilesMap }
+        return this.isPushMode ? filesDiff(server, client) : filesDiff(client, server)
       }
       return null
     },
     projectChangesDetected () {
       return !!this.diffs.raw2 || !isEmpty(this.filesDiff?.flags)
     },
-    // files () {
-    //   if (this.clientFiles && this.serverFiles) {
-    //     const clientFilesPaths = new Set(this.clientFiles.map(f => f.path))
-    //     const serverFilesPaths = new Set(this.serverFiles.map(f => f.path))
-    //     const files = [...this.serverFiles]
-    //     this.clientFiles.forEach(f => {
-    //       if (!serverFilesPaths.has(f.path)) {
-    //         files.push(f)
-    //       }
-    //     })
-    //     return files
-    //   }
-    //   return null
-    // },
     diffs () {
       if (this.projectInfo) {
         const ignoredFields = ['client_info', 'project_hash']
@@ -388,6 +514,29 @@ export default {
     },
     layersErrors () {
       return layersErrors(this.projectInfo)
+    },
+    clientDirtyFiles () {
+      if (this.tasks.clientFiles.data) {
+        const { files, temporary } = this.tasks.clientFiles.data
+        return findDirtyFiles(files, temporary)
+      }
+      return null
+    },
+    serverDirtyFiles () {
+      if (this.project.files.data) {
+        const { files, temporary } = this.project.files.data
+        return findDirtyFiles(files, temporary)
+      }
+      return null
+    },
+    sourceDirtyFiles () {
+      return this.isPushMode ? this.clientDirtyFiles : this.serverDirtyFiles
+    },
+    targetDirtyFiles () {
+      if (this.splitFilesMode) {
+        return this.isPushMode ? this.serverDirtyFiles : this.clientDirtyFiles
+      }
+      return (this.clientDirtyFiles || this.serverDirtyFiles) && [...this.clientDirtyFiles ?? [], ...this.serverDirtyFiles ?? []]
     }
   },
   activated () {
@@ -473,32 +622,31 @@ export default {
       }
     },
     getFilesToUpdate () {
-      const files = { upload: [], remove: [] }
-      if (this.updateOpts.files) {
-        files.upload = [...this.filesDiff.new, ...this.filesDiff.updated]
-        files.remove = this.filesDiff.removed
-      } else if (this.updateOpts.qgisProject) {
-        if (this.filesDiff) {
-          files.upload = this.filesDiff?.updated.filter(f => f.path === this.projectInfo.file)
-        } else {
-          files.upload = [{
-            path: this.projectInfo.file,
-            hash: this.projectInfo.project_hash
-          }]
-        }
+      const files = {
+        update: [...this.filesDiff.new, ...this.filesDiff.updated],
+        remove: []
       }
-      if (this.selectedFiles) {
+      if (this.filesUpdateOpt === 'selected') {
         const lookup = new Set(this.selectedFiles)
-        files.upload = files.upload.filter(f => lookup.has(f.path))
-        files.remove = files.remove.filter(p => lookup.has(p))
+        files.update = files.update.filter(f => lookup.has(f.path))
+        files.remove = this.filesDiff.removed.filter(p => lookup.has(p))
+      }
+      if (this.filesUpdateOpt === 'all') {
+        files.remove = this.filesDiff.removed
       }
       return files
     },
-    async updateProject () {
-      const { upload: filesToUpload, remove: filesToRemove } = this.getFilesToUpdate()
-      // console.log('upload files', filesToUpload)
-      // console.log('files to remove', filesToRemove)
-      // return
+    async pushChanges () {
+      const filesChanges = this.updateOpts.files
+        ? this.getFilesToUpdate()
+        : {
+            update: [{
+              path: this.projectInfo.file,
+              hash: this.projectInfo.project_hash
+            }]
+          }
+      console.log('upload files', filesChanges.update)
+      console.log('files to remove', filesChanges.remove)
 
       if (this.updateOpts.qgisProject) {
         const settings = cloneDeep(this.settings)
@@ -597,9 +745,9 @@ export default {
         await this.$http.post(`/api/project/meta/${this.project.name}`, omit(this.projectInfo, ['dirty', 'filesize']))
         await this.$http.post(`/api/project/settings/${this.project.name}`, settings)
       }
-      if (filesToUpload.length || filesToRemove.length) {
+      if (filesChanges.update?.length || filesChanges.remove?.length) {
         try {
-          await this.updateFiles(filesToUpload, filesToRemove)
+          await this.updateFiles(filesChanges.update, filesChanges.remove)
         } catch (err) {
           console.error(err)
           this.$notify.error(err.message || 'Failed to update files')
@@ -608,15 +756,90 @@ export default {
         this.fetchServerFiles()
       }
       this.$notify.success('Project was updated')
+      this.selectedFiles = []
+      this.updateOpts = {
+        qgisProject: false,
+        files: false
+      }
       this.reloadProject()
       const [ user, name ] = this.project.name.split('/')
       this.$router.push({ name: 'project', params: { user, name: name } })
     },
-    enableFilesSelection () {
-      this.selectedFiles = this.updateOpts.qgisProject ? [this.projectInfo.file] : []
+    updateFilesSelection () {
+      if (this.isPushMode && this.filesUpdateOpt === 'selected') {
+        const isProjectFileSelected = this.selectedFiles?.includes(this.projectInfo.file)
+        if (this.updateOpts.qgisProject !== isProjectFileSelected) {
+          if (this.updateOpts.qgisProject) {
+            this.selectedFiles.push(this.projectInfo.file)
+          } else {
+            this.selectedFiles.splice(this.selectedFiles.indexOf(this.projectInfo.file), 1)
+          }
+        }
+      }
+    },
+    toggleMode () {
+      this.updateMode = this.isPushMode ? 'pull' : 'push'
+      this.updateFilesSelection()
     },
     isFileDisabled (item) {
+      if (this.isPushMode && item.path === this.projectInfo.file && (!!this.diffs.raw2 || this.project.meta.project_hash !== this.projectInfo.project_hash)) {
+        return true
+      }
       return !(this.filesDiff.flags?.[item.path])
+    },
+    async pullChanges () {
+      const filesChanges = this.getFilesToUpdate()
+      if (filesChanges.remove?.length) {
+        const params = {
+          project: this.project.name,
+          files: filesChanges.remove
+        }
+        try {
+          await this.$ws.request('DeleteFiles', params)
+        } catch (err) {
+          console.error(err)
+          this.$notify.error('Delete Error')
+        }
+      }
+
+      const params = {
+        project: this.project.name,
+        files: filesChanges.update
+      }
+      this.fetchStatus = {
+        finished: [],
+        errors: []
+      }
+      const unbind = this.$ws.bind('FetchStatus', (msg) => {
+        const { status, file } = msg.data
+        if (status === 'finished') {
+          this.fetchStatus.finished.push(file)
+        } else if (status === 'error') {
+          this.fetchStatus.errors.push(file)
+        }
+      })
+      try {
+        await this.$ws.request('FetchFiles', params)
+        unbind()
+        if (this.fetchStatus.errors.length) {
+          this.$notify.error(`Failed to fetch files: ${this.fetchStatus.errors.length}`)
+        } else {
+          this.$notify.success('Local project was updated')
+        }
+        this.selectedFiles = []
+        this.fetchStatus = null
+        this.fetchLocalFiles()
+      } catch (err) {
+        console.error(err)
+      }
+    },
+    async reloadProject () {
+      try {
+        await this.$http.post(`/api/project/reload/${this.project.name}`)
+        this.$notify.success('Project reload request was successful')
+      } catch (err) {
+        this.$notify.error('Project reload request failed')
+      }
     }
   }
 }
@@ -624,13 +847,22 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/card.scss';
-@import '@/info-grid.scss';
 
 .card {
   border: 1px solid #ddd;
-  margin: 0 1px 12px 1px;
+  margin: 3px 1px 6px 3px;
+  box-shadow: none;
 }
-
+.toggle.btn {
+  .icon {
+    transition: all .4s cubic-bezier(.25,.8,.25,1);
+  }
+  &.flip {
+    .icon {
+      transform: rotate(180deg);
+    }
+  }
+}
 .files-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -640,17 +872,34 @@ export default {
   align-self: center;
 }
 .warning {
-  color: var(--color-orange);
+  background-color: var(--color-orange);
+  color: #fff;
   --icon-color: currentColor;
+  font-weight: 500;
+  padding: 4px 8px;
+  justify-content: center;
+}
+.warning-detail {
+  background-color: #eee;
+  background-color: rgba(var(--color-orange-rgb), 0.3);
+  padding: 2px 8px;
+}
+.error-box {
+  background-color: rgba(var(--color-orange-rgb), 0.3);
+  font-size: 14px;
+  .icon {
+    align-self: center;
+  }
+  p {
+    line-height: 1.2;
+    margin-block: auto;
+  }
 }
 .subtitle {
   font-size: 13px;
   text-transform: uppercase;
   font-weight: 500;
   text-decoration: underline;
-}
-ul {
-  padding-left: 18px;
 }
 .plugin-error {
   .title {
@@ -664,40 +913,48 @@ ul {
   }
 }
 .files-options {
-  padding-left: 12px;
+  .radio-btn {
+    margin-bottom: 0;
+  }
+  .description {
+    margin-left: 36px;
+    font-size: 13px;
+    opacity: 0.7;
+    max-width: 280px;
+    line-height: 1.25;
+  }
 }
 .statusbar {
   background-color: #f2f2f2;
-}
-.update-card {
-  // background-color: #e5e5e5;
-  // width: 500px;
-  // align-self: center;
-  // background-color: var(--color-primary);
-
-  .content {
-    width: 420px;
-    align-self: center;
-    background-color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  .new {
+    color: var(--color-green);
+  }
+  .removed {
+    color: var(--color-red);
+  }
+  .changed {
+    color: var(--color-orange);
   }
 }
-::v-deep .layers-table {
+
+:deep(.layers-table) {
   tr {
     --status-color: #2c3036;
     color: var(--status-color, currentColor);
     --icon-color: var(--color-status);
   }
   tr.new {
-    // background-color: rgba(var(--color-green-rgb), 0.3);
     --status-color: var(--color-green);
   }
   tr.removed {
-    // background-color: rgba(var(--color-red-rgb), 0.3);
     --status-color: var(--color-red);
-
   }
   tr.changed {
-    // background-color: rgba(var(--color-orange-rgb), 0.3);
     --status-color: var(--color-orange);
   }
 }
@@ -710,11 +967,9 @@ ul {
 .metadata-view {
   overflow: hidden;
 }
-.info-grid {
-  border: 1px solid #e7e7e7;
-  border-width: 1px 1px 0 1px;
-  &:not(.nested) {
-    margin: 4px;
+.action {
+  .btn {
+    min-width: 200px;
   }
 }
 .dialog {
@@ -729,5 +984,93 @@ ul {
       font-weight: 500;
     }
   }
+}
+hr {
+  opacity: 0.7;
+}
+.files-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  &.split {
+    background-color: #bbb;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    &.push {
+      .source {
+        grid-area: 1 / 1 / 2 / 2;
+      }
+      .target {
+        grid-area: 1 / 2 / 2 / 3;
+      }
+    }
+  }
+  .target, .source {
+    background-color: #fff;
+  }
+  .label {
+    padding: 0 8px;
+    font-weight: 500;
+    background-color: #ddd;
+  }
+}
+.mode {
+  background-color: #eee;
+  padding: 4px 6px;
+  .title {
+    font-weight: 500;
+    font-size: 18px;
+  }
+  .description {
+    opacity: 0.7;
+    font-size: 14px;
+  }
+  .arrow {
+    transition: all ease 0.3s;
+    will-change: transform;
+    // color: var(--color-primary);
+  }
+  &.pull {
+    .arrow {
+      transform: scale(-1, 1);
+    }
+  }
+  .client {
+    border-radius: 3px;
+  }
+  .label {
+    text-transform: uppercase;
+    font-weight: 500;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+  .btn.small {
+    font-size: 13px;
+    margin-block: 3px 0;
+    height: 22px;
+  }
+}
+.folder-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 5px;
+  height: 7px;
+  width: 16px;
+  pointer-events: none;
+}
+.expanded {
+  .folder-badge {
+    transform: skewX(-18deg);
+  }
+}
+.file-badge {
+  position: absolute;
+  right: 0;
+  top: -4px;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 0 1px 1px;
+}
+.btn.inline {
+  display: inline-flex;
 }
 </style>

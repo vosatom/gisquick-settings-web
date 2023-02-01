@@ -7,8 +7,8 @@
       title="Warning"
       color="orange"
     >
-      Your QGIS plugin is not supported anymore.<br/>
-      Please update your plugin in order to continue.
+      Your version of the QGIS plugin is no longer supported.<br/>
+      Please update the Gisquick plugin in order to continue.
     </error-message>
     <template v-else-if="projectInfo">
       <v-dialog ref="jsonViewer">
@@ -82,7 +82,26 @@
         </v-btn>
 
         <template v-else>
-          <files-tree :files="files" :progress="uploadProgress && uploadProgress.files"/>
+          <template v-if="dirtyFiles">
+            <div class="error-box f-row p-2">
+              <v-icon color="red" name="warning" class="mr-2"/>
+              <p>
+                Project contains temporary files with unsaved changes. Please reopen your QGIS project to save them.
+              </p>
+            </div>
+          </template>
+          <files-tree :files="files" :progress="uploadProgress && uploadProgress.files">
+            <template v-if="dirtyFiles" v-slot:file-badge="{ file }">
+              <v-icon
+                v-if="dirtyFiles.includes(file.path)"
+                class="file-badge"
+                name="warning"
+                color="red"
+                size="17"
+              />
+            </template>
+          </files-tree>
+
           <!-- <div class="f-row-ac f-justify-center">
             <span>{{ user.username }}/</span>
             <v-text-field class="filled" placeholder="name" v-model="name"/>
@@ -94,12 +113,12 @@
           </div>
         </template>
       </div>
-      <div v-else class="error f-row-ac f-justify-center m-2">
+      <div v-if="!projectValid || dirtyFiles" class="error f-row-ac f-justify-center m-2">
         <v-icon name="warning" size="19" class="mr-2"/>
         <span>Project contains errors</span>
       </div>
 
-      <div v-if="tasks.clientFiles.success" class="submit-form f-row-ac f-justify-center py-2">
+      <div v-if="tasks.clientFiles.success && !dirtyFiles" class="submit-form f-row-ac f-justify-center py-2">
         <!-- <span>{{ user.username }} /</span> -->
         <!-- <v-text-field class="filled" readonly disabled :value="user.username + '/'"/>
         <v-text-field class="filled" placeholder="name" v-model="name"/> -->
@@ -165,6 +184,7 @@ import PluginDisconnected from '@/components/PluginDisconnected.vue'
 import JsonViewer from '@/components/JsonDiffViewer.vue'
 // import JsonViewer from '@/components/JsonViewer2.vue'
 import { isValidLayerName } from '@/utils/layers'
+import { findDirtyFiles } from '@/utils/files'
 import { TaskState, watchTask } from '@/tasks'
 import { createUpload } from '@/upload'
 
@@ -251,6 +271,12 @@ export default {
     },
     files () {
       return this.tasks.clientFiles.data?.files?.filter(f => !f.path.startsWith('.gisquick/'))
+    },
+    dirtyFiles () {
+      if (this.tasks.clientFiles.data) {
+        return findDirtyFiles(this.files, this.tasks.clientFiles.data.temporary)
+      }
+      return null
     },
     wfsNotEnabled () {
       const vectorLayers = Object.values(this.projectInfo.layers).filter(l => l.type === 'VectorLayer')
@@ -403,6 +429,25 @@ export default {
 .error {
   color: var(--color-red);
   --icon-color: currentColor;
+}
+.error-box {
+  background-color: rgba(var(--color-orange-rgb), 0.3);
+  font-size: 14px;
+  .icon {
+    align-self: center;
+  }
+  p {
+    line-height: 1.2;
+    margin-block: auto;
+  }
+}
+.file-badge {
+  position: absolute;
+  right: 0;
+  top: -4px;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 0 1px 1px;
 }
 .note {
   display: flex;

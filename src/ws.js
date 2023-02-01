@@ -1,4 +1,4 @@
-const minSupportedVersion = '2.4.0'
+const minSupportedVersion = '2.5.0'
 
 function compareVersions (v1, v2) {
   const p1 = v1.split('.').map(v => parseInt(v))

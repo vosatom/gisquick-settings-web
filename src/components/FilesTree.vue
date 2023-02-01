@@ -21,13 +21,16 @@
           :indeterminate="selectedData[folder.path].indeterminate"
           @input="setSelectedDir(folder, $event)"
         />
-        <v-icon
-          size="24"
-          role="button"
-          :name="expanded ? 'folder-open' : 'folder'"
-          @click="toggleFolder(folder)"
-        />
-        <slot v-if="!folder.info.flag" name="folder-prepend" v-bind="folder"/>
+        <div class="icon-box">
+          <v-icon
+            size="24"
+            role="button"
+            :name="expanded ? 'folder-open' : 'folder'"
+            @click="toggleFolder(folder)"
+          />
+          <slot name="folder-badge" :folder="folder"/>
+        </div>
+        <slot v-if="!folder.info.flag" name="folder-prepend" />
         <span v-text="folder.name" class="f-grow"/>
         <span class="info">{{ folder.info.filesCount }} files, {{ $format.filesize(folder.info.size) }}</span>
       </div>
@@ -45,10 +48,12 @@
           :value="isSelected(item.path)"
           @input="setSelected(item, $event)"
         />
-        <slot name="file-icon" :file="item">
-          <v-icon :name="iconsSet[item.ext] || 'file-outline'" size="24"/>
-        </slot>
-        <slot name="file-prepend" :file="item"/>
+        <div class="icon-box">
+          <slot name="file-icon" :file="item">
+            <v-icon :name="iconsSet[item.ext] || 'file-outline'" size="24"/>
+          </slot>
+          <slot name="file-badge" :file="item"/>
+        </div>
         <span v-text="item.name" class="f-grow"/>
         <span class="mtime" v-text="$format.udate(item.mtime)"/>
         <div
@@ -399,6 +404,10 @@ export default {
   .checkbox {
     margin: 3px;
   }
+}
+.icon-box {
+  position: relative;
+  display: flex;
 }
 .size {
   &.progressbar {
