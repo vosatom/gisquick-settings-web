@@ -382,6 +382,7 @@ export default {
   height: 36px;
   padding-right: 6px;
   line-height: 1.2;
+  // font-size: 14px;
   .icon {
     margin: 1px 2px;
     user-select: none;
@@ -419,7 +420,8 @@ export default {
   }
 }
 .size {
-  width: 100px;
+  width: 94px;
+  flex-shrink: 0;
   font-size: 13px;
   font-weight: 500;
   opacity: 0.8;
@@ -427,5 +429,7 @@ export default {
 .mtime {
   font-size: 13px;
   opacity: 0.8;
+  margin: 0 6px;
+  white-space: nowrap;
 }
 </style>

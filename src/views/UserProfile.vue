@@ -55,9 +55,6 @@ export default {
     }
   },
   computed: {
-    // account () {
-    //   return this.$root.account
-    // },
     showAccountLimits () {
       return this.projectsSize !== null && this.account && (this.account.storage_limit !== -1 || this.account.projects_limit !== -1)
     },

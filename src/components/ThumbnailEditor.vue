@@ -90,10 +90,9 @@ export default {
     onMatrixChange (m) {
       this.matrix = m
       this.scale = this.roundScale(m[0])
-      console.log('onMatrixChange')
     },
     onViewerChange (m) {
-      console.log('onViewerChange', m)
+      // console.log('onViewerChange', m)
     },
     setZoom (z) {
       this.$refs.imgViewer.setZoom(z)
