@@ -8,10 +8,11 @@
       <img
         v-if="!error"
         :alt="alt"
-        :src="src"
+        :src="thumbnail || src"
+        v-bind="$attrs"
         @error="onError"
         @load="onLoad"
-        @click="open = true"
+        @click="openViewer"
       />
     </slot>
     <v-dialog content-class="fullscreen f-col" v-model="open">
@@ -41,9 +42,11 @@ import BrokenPhotoSvg from '@/assets/photo-broken.svg?component'
 
 export default {
   components: { ImageViewer, BrokenPhotoSvg },
+  inheritAttrs: false,
   props: {
     alt: String,
-    src: String
+    src: String,
+    thumbnail: String
   },
   data () {
     return {

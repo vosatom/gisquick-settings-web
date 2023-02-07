@@ -71,9 +71,24 @@ export const ImageWidget = Widget((h, ctx) => {
   ]
 })
 
-export function mediaUrlFormat (projectName) {
-  const root = `/api/project/media/${projectName}`
-  return value => path.join(root, value)
+export function mediaUrl (project, layer, attr) {
+  let location = attr.config?.directory || `web/${layer.name}`
+  let baseDir = ''
+  const relativeDepth = attr.config?.relative_depth ?? 0
+  if (relativeDepth) {
+    const parts = location.split('/')
+    baseDir = parts.slice(0, relativeDepth).join('/')
+    location = parts.slice(relativeDepth).join('/')
+  }
+  return {
+    base: path.join('/api/project/media/', project, baseDir),
+    location
+  }
+}
+
+export function mediaUrlFormat (project, layer, attr) {
+  const { base } = mediaUrl(project, layer, attr)
+  return value => path.join(base, value)
 }
 
 export function createTableImageWidget (createUrl) {
@@ -147,6 +162,23 @@ export const ValueMapWidget = {
   }
 }
 
+export function createMediaImageWidget (project, layer, attr) {
+  const { base } = mediaUrl(project, layer, attr)
+  return Widget((h, ctx) => {
+    const { value } = ctx.props
+    if (!value) {
+      return <span class="value"></span>
+    }
+    const url = path.join(base, value)
+    const thumbnailUrl = `${url}?thumbnail=true`
+    const srcset = window.devicePixelRatio > 1 ? `${thumbnailUrl} ${Math.min(2, window.devicePixelRatio)}x` : null
+    return [
+      <a class="value" href={url} target="_blank">{value}</a>,
+      <v-image class="image" src={url} srcset={srcset} thumbnail={thumbnailUrl}/>
+    ]
+  })
+}
+
 export default {
   components: { VImage },
   props: {
@@ -165,19 +197,6 @@ export default {
     values () {
       return this.attributes.map(attr => this.feature?.getFormatted(attr.name))
     },
-    mediaWidget () {
-      const root = `/api/project/media/${this.project.name}/`
-      return Widget((h, ctx) => {
-        if (!ctx.props.value) {
-          return <span class="value"></span>
-        }
-        const url = path.join(root, ctx.props.value)
-        return [
-          <a class="value" href={url} target="_blank">{ctx.props.value}</a>,
-          <v-image class="image" src={url}/>
-        ]
-      })
-    },
     widgets () {
       return this.attributes.map(attr => {
         const { type, widget } = attr
@@ -188,7 +207,7 @@ export default {
         } else if (widget === 'Image') {
           return ImageWidget
         } else if (widget === 'MediaImage') {
-          return this.mediaWidget
+          return createMediaImageWidget(this.project.name, this.layer, attr)
         }
 
         if (type === 'float' && !attr.format) {
@@ -316,9 +335,13 @@ export default {
     border-bottom: 1px solid #e7e7e7;
     grid-column: 1 / 3;
     width: 100%;
-
-    // align-self: center;
-    // justify-self: center;
+    background-color: #222;
+    ::v-deep img {
+      border: solid #ddd;
+      border-width: 0 0.5px;
+    }
+    border-radius: 3px;
+    justify-content: center;
     ::v-deep .image-error {
       height: 64px;
       padding: 6px 0;

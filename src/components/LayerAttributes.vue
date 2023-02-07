@@ -2,7 +2,7 @@
   <div class="f-col">
     <v-dialog ref="formattersDialog" title="Formatters">
       <template v-slot="{ data }">
-        <formatters-editor :settings="data"/>
+        <formatters-editor class="p-2" :settings="data"/>
       </template>
     </v-dialog>
     <section class="card">
@@ -65,26 +65,6 @@
         </template>
 
         <!-- eslint-disable-next-line -->
-        <!-- <template v-slot:cell(widget)="{ item }">
-          <div class="f-row-ac f-space-between">
-            <span v-text="(attrsSettings[item.name] && attrsSettings[item.name].widget) || item.widget"/>
-            <v-menu
-              aria-label="Settings"
-              transition="slide-y"
-              align="rr;bb,tt"
-              :items="widgets"
-              @confirm="setWidget(item, $event)"
-            >
-              <template v-slot:activator="{ toggle }">
-                <v-btn aria-label="Menu" class="icon" @click="toggle">
-                  <v-icon name="settings"/>
-                </v-btn>
-              </template>
-            </v-menu>
-          </div>
-        </template> -->
-
-        <!-- eslint-disable-next-line -->
         <template v-slot:cell(name)="{ item }">
           <div
             class="f-col py-2"
@@ -98,24 +78,12 @@
 
         <!-- eslint-disable-next-line -->
         <template v-slot:cell(widget)="{ item }">
-          <v-select
+          <widget-settings
             class="widget-select"
-            :items="widgets"
-            :value="attrsSettings[item.name] && attrsSettings[item.name].widget"
-            @input="selectWidget(item, $event)"
-          >
-            <template v-slot:selection="{ item: option, text }">
-              <template v-if="option && !option.value">
-                <v-icon name="qgis"/>
-                <span class="f-grow">{{ item.widget || 'Not configured' }}</span>
-              </template>
-              <span v-else class="f-grow" v-text="text || 'Invalid value'"/>
-            </template>
-            <template v-slot:item="{ item: option }">
-              <span class="f-grow m-2" v-text="option.value ? option.text : item.widget || 'Not configured'"/>
-              <v-icon v-if="option.icon" :name="option.icon" class="m-2"/>
-            </template>
-          </v-select>
+            :attr="item"
+            :attr-settings="attrsSettings[item.name]"
+            @input="updateWidget(item, $event)"
+          />
         </template>
 
         <!-- eslint-disable-next-line -->
@@ -350,6 +318,7 @@ import mapValues from 'lodash/mapValues'
 import pickBy from 'lodash/pickBy'
 import GeoJSON from 'ol/format/GeoJSON'
 
+import WidgetSettings from '@/components/WidgetSettings.vue'
 import FormattersEditor, { createFormatter } from '@/components/FormattersEditor.vue'
 import VImage from '@/components/image/Image.vue'
 import GenericInfoPanel, { DateWidget, ValueMapWidget, BoolWidget, UrlWidget, ImageWidget, createTableImageWidget, mediaUrlFormat  } from '@/components/GenericInfopanel.vue'
@@ -400,7 +369,7 @@ function formatFeatures (features, formatters) {
 
 export default {
   name: 'LayerAttributes',
-  components: { FormattersEditor, VImage },
+  components: { FormattersEditor, VImage, WidgetSettings },
   props: {
     project: Object,
     settings: Object,
@@ -539,18 +508,6 @@ export default {
         { text: 'Manage formatters', value: '__manage__', icon: 'settings' }
       ]
     },
-    widgets () {
-      return [
-        { text: 'QGIS', value: undefined, icon: 'qgis' },
-        { text: 'Gisquick', separator: true },
-        { text: 'Hyperlink', value: 'Hyperlink' },
-        { text: 'Image', value: 'Image' },
-        { text: 'Media Image', value: 'MediaImage' }
-      ]
-    },
-    widgetMap () {
-      return keyBy(this.widgets.filter(w => !w.separator), 'value')
-    },
     attributes () {
       return this.project.meta.layers[this.layerId].attributes
     },
@@ -672,7 +629,7 @@ export default {
         fields = this.defaultAttributesOrder
       }
       const excluded = this.excludedTableFields
-      const attributes = fields.filter(n => !excluded.has(n)).map(n => this.attrsMap[n])
+      const attributes = fields.filter(n => !excluded.has(n)).map(n => this.attrsMap[n])//.filter(a => a)
       return attributes.map(attr => ({
         label: attr.alias || attr.name,
         type: attr.type.toLowerCase(),
@@ -706,7 +663,7 @@ export default {
         } else if (attr.widget === 'Image') {
           widget = ImageWidget
         } else if (attr.widget === 'MediaImage') {
-          widget = createTableImageWidget(mediaUrlFormat(this.project.name))
+          widget = createTableImageWidget(mediaUrlFormat(this.project.name, this.layer, attr))
         } else if (attr.type === 'date') { // and also attr.widget === 'DateTime' ?
           widget = DateWidget
         } else if (attr.type === 'bool') {
@@ -938,20 +895,11 @@ export default {
         this.setAttributeSetting(attr, 'format', value)
       }
     },
-    selectWidget (attr, widget) {
-      this.setAttributeSetting(attr, 'widget', widget)
-    },
-    setWidget (attr, widget) {
-      // if (item.value) {
-      //   this.$set(this.attrsSettings[attr.name], 'widget', item.value)
-      // } else {
-      //   this.$delete(this.attrsSettings[attr.name], 'widget')
-      // }
-      this.setAttributeSetting(attr, 'widget', item.value)
+    updateWidget (attr, data) {
+      this.setAttributeSetting(attr, 'widget', data.widget)
     },
     setInfopanelComponent (item) {
       this.$set(this.layerSettings, 'infopanel_component', item)
-
       // this.$set(this.layerSettings, 'infopanel_component', item.value)
     },
     scriptSelected (file) {
