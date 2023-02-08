@@ -57,7 +57,7 @@ export default {
       const item = this.contextMenuItem
       const files = [item.path]
       const resp = await this.$http.delete(`/api/project/files/${this.project.name}`, { data: { files } })
-      this.task.data = resp.data
+      this.task.data.files = resp.data
     },
     download () {
       const filePath = this.contextMenuItem.path
