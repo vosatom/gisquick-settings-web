@@ -142,7 +142,7 @@
               </span>
               <span v-if="serverDirtyFiles">
                 On the server side, you will need to
-                <v-btn color="primary" class="inline n-case round outlined small m-0" @click="reloadProject">Reload QGIS project</v-btn>
+                <v-btn color="primary" class="inline n-case round outlined small m-0" @click="reloadQgisProject">Reload QGIS project</v-btn>
                 and wait a few seconds before refreshing project files.
               </span>
             </p>
@@ -377,6 +377,7 @@ export default {
     JsonViewer, FilesTree, QgisLayersInfo, PluginDisconnected, ErrorMessage, LayersErrors, FolderBadge,
     ClientSvg, ServerSvg, ArrowSvg
   },
+  inject: ['fetchProjectInfo'],
   props: {
     project: Object,
     settings: Object
@@ -543,7 +544,7 @@ export default {
     const unbind = this.$ws.bind('ProjectChanged', this.onProjectChange)
     this.$once('hook:deactivated', unbind)
     if (this.connected) {
-       this.fetchProjectInfo()
+       this.fetchClientProjectInfo()
     }
   },
   watch: {
@@ -555,13 +556,13 @@ export default {
   },
   methods: {
     async onProjectChange () {
-      await this.fetchProjectInfo()
+      await this.fetchClientProjectInfo()
       if (this.tasks.clientFiles.success) {
         this.tasks.clientFiles = TaskState()
         this.fetchLocalFiles()
       }
     },
-    async fetchProjectInfo (skipLayersWithError=false) {
+    async fetchClientProjectInfo (skipLayersWithError=false) {
       if (!this.connected) {
         return
       }
@@ -645,8 +646,6 @@ export default {
               hash: this.projectInfo.project_hash
             }]
           }
-      console.log('upload files', filesChanges.update)
-      console.log('files to remove', filesChanges.remove)
 
       if (this.updateOpts.qgisProject) {
         const settings = cloneDeep(this.settings)
@@ -761,7 +760,7 @@ export default {
         qgisProject: false,
         files: false
       }
-      this.reloadProject()
+      this.fetchProjectInfo()
       const [ user, name ] = this.project.name.split('/')
       this.$router.push({ name: 'project', params: { user, name: name } })
     },
@@ -833,7 +832,7 @@ export default {
         console.error(err)
       }
     },
-    async reloadProject () {
+    async reloadQgisProject () {
       try {
         await this.$http.post(`/api/project/reload/${this.project.name}`)
         this.$notify.success('Project reload request was successful')

@@ -377,11 +377,11 @@ export default {
       this.fetchProjectInfo()
     }
   },
-  // provide () {
-  //   return {
-  //     fetchProjectInfo: this.fetchProjectInfo
-  //   }
-  // },
+  provide () {
+    return {
+      fetchProjectInfo: this.fetchProjectInfo
+    }
+  },
   methods: {
     createFilesTask () {
       const state = TaskState()
