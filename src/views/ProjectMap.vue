@@ -94,6 +94,14 @@
                   <v-icon name="delete_forever"/>
                 </v-btn> -->
                 <div class="v-separator"/>
+                <input
+                  ref="input"
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  @input="setThumbnailFile"
+                  @change="setThumbnailFile"
+                />
                 <v-btn class="icon" @click="$refs.input.click()">
                   <v-icon name="folder-open"/>
                 </v-btn>
