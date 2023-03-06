@@ -241,6 +241,14 @@ function validatedSettings (settings, meta) {
   //   })
   // })
 
+  // convert old MediaImage widget to the bew MediaFile
+  Object.entries(settings.layers).filter(([lid, lset]) => lset.attributes).forEach(([lid, lset]) => {
+    Object.values(lset.attributes).filter(a => a.widget === 'MediaImage').forEach(a => {
+      a.widget = 'MediaFile'
+      a.config = {...a.config, accept: ['image/*'] }
+    })
+  })
+
   // initialize missing layers settings
   Object.keys(meta.layers).filter(lid => !settings.layers[lid]).forEach(lid => {
     settings.layers[lid] = { flags: [...meta.layers[lid].flags] }
@@ -439,8 +447,15 @@ export default {
       const { data } = await watchTask(task, this.fetchTask)
       if (this.fetchTask.success) {
         const { meta, settings } = data
-        this.settings = settings ? cloneDeep(validatedSettings(settings, meta)) : this.newSettings(meta)
-        this.refSettings = cloneDeep(this.settings)
+        // this.settings = settings ? cloneDeep(validatedSettings(settings, meta)) : this.newSettings(meta)
+        // this.refSettings = cloneDeep(this.settings)
+        if (settings) {
+          this.refSettings = settings
+          this.settings = validatedSettings(cloneDeep(settings), meta)
+        } else {
+          this.refSettings = this.newSettings(meta)
+          this.settings = cloneDeep(this.refSettings)
+        }
       }
     },
     async saveSettings () {

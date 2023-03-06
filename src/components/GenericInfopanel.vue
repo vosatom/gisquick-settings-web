@@ -162,7 +162,10 @@ export const ValueMapWidget = {
   }
 }
 
-export function createMediaImageWidget (project, layer, attr) {
+const RasterImageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.tif', '.tiff', '.webp']
+const ImageExtensions = [...RasterImageExtensions, '.svg']
+
+export function createMediaFileWidget (project, layer, attr) {
   const { base } = mediaUrl(project, layer, attr)
   return Widget((h, ctx) => {
     const { value } = ctx.props
@@ -170,12 +173,49 @@ export function createMediaImageWidget (project, layer, attr) {
       return <span class="value"></span>
     }
     const url = path.join(base, value)
-    const thumbnailUrl = `${url}?thumbnail=true`
-    const srcset = window.devicePixelRatio > 1 ? `${thumbnailUrl} ${Math.min(2, window.devicePixelRatio)}x` : null
-    return [
-      <a class="value" href={url} target="_blank">{value}</a>,
-      <v-image class="image" src={url} srcset={srcset} thumbnail={thumbnailUrl}/>
-    ]
+    const ext = path.extname(value).toLowerCase()
+    if (ImageExtensions.includes(ext)) {
+      const thumbnailUrl = RasterImageExtensions.includes(ext) ? `${url}?thumbnail=true` : url
+      const srcset = window.devicePixelRatio > 1 ? `${thumbnailUrl} ${Math.min(2, window.devicePixelRatio)}x` : null
+      return [
+        <a class="value" href={url} target="_blank">{value}</a>,
+        <v-image class="image" src={url} srcset={srcset} thumbnail={thumbnailUrl}/>
+      ]
+    }
+    return <a class="value" href={url} target="_blank">{value}</a>
+  })
+}
+
+export function createMediaFileTableWidget (createUrl) {
+  return Widget((h, ctx) => {
+    const src = ctx.props.value
+    if (!src) {
+      return <span class="value"></span>
+    }
+    const url = createUrl ? createUrl(src) : src
+    const ext = path.extname(src).toLowerCase()
+    if (ImageExtensions.includes(ext)) {
+      const thumbnailUrl = RasterImageExtensions.includes(ext) ? `${url}?thumbnail=true` : url
+      return <v-image class="image" src={url} scopedSlots={{
+        default: props => (
+          <div class="f-row-ac">
+            <v-btn class="icon flat m-0">
+              <v-icon name="photo" onClick={props.openViewer}/>
+              <v-tooltip slot="tooltip" align="ll,rr,c;tt,bb" content-class="tooltip dark image">
+                <img style="width:100%; max-width: 300px; max-height:300px" src={thumbnailUrl}/>
+              </v-tooltip>
+            </v-btn>
+            <a class="value ml-2" href={url} target="_blank">{src}</a>
+          </div>
+        )
+      }}/>
+    }
+    return (
+      <a class="value f-row-ac" href={url} target="_blank">
+        <v-icon name="file-outline" class="mr-2"/>
+        <span>{src}</span>
+      </a>
+    )
   })
 }
 
@@ -206,10 +246,9 @@ export default {
           return UrlWidget
         } else if (widget === 'Image') {
           return ImageWidget
-        } else if (widget === 'MediaImage') {
-          return createMediaImageWidget(this.project.name, this.layer, attr)
+        } else if (widget === 'MediaFile') {
+          return createMediaFileWidget(this.project.name, this.layer, attr)
         }
-
         if (type === 'float' && !attr.format) {
           return FloatWidget
         } else if (type === 'bool') {
@@ -335,12 +374,10 @@ export default {
     border-bottom: 1px solid #e7e7e7;
     grid-column: 1 / 3;
     width: 100%;
-    background-color: #222;
-    ::v-deep img {
-      border: solid #ddd;
-      border-width: 0 0.5px;
+    &:not(.error) {
+      background-color: #f5f5f5;
+      border-radius: 3px;
     }
-    border-radius: 3px;
     justify-content: center;
     ::v-deep .image-error {
       height: 64px;

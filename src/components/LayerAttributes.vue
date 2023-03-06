@@ -321,7 +321,7 @@ import GeoJSON from 'ol/format/GeoJSON'
 import WidgetSettings from '@/components/WidgetSettings.vue'
 import FormattersEditor, { createFormatter } from '@/components/FormattersEditor.vue'
 import VImage from '@/components/image/Image.vue'
-import GenericInfoPanel, { DateWidget, ValueMapWidget, BoolWidget, UrlWidget, ImageWidget, createTableImageWidget, mediaUrlFormat  } from '@/components/GenericInfopanel.vue'
+import GenericInfoPanel, { DateWidget, ValueMapWidget, BoolWidget, UrlWidget, createTableImageWidget, createMediaFileTableWidget, mediaUrlFormat  } from '@/components/GenericInfopanel.vue'
 import { layerFeaturesQuery } from '@/map/featureinfo'
 import { excludedFieldsSet } from '@/adapters/attributes'
 import { externalComponent } from '@/components-loader'
@@ -661,9 +661,9 @@ export default {
         } else if (attr.widget === 'Hyperlink') {
           widget = UrlWidget
         } else if (attr.widget === 'Image') {
-          widget = ImageWidget
-        } else if (attr.widget === 'MediaImage') {
-          widget = createTableImageWidget(mediaUrlFormat(this.project.name, this.layer, attr))
+          widget = createTableImageWidget()
+        } else if (attr.widget === 'MediaFile') {
+          widget = createMediaFileTableWidget(mediaUrlFormat(this.project.name, this.layer, attr))
         } else if (attr.type === 'date') { // and also attr.widget === 'DateTime' ?
           widget = DateWidget
         } else if (attr.type === 'bool') {

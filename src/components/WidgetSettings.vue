@@ -7,7 +7,10 @@
       @input="selectWidget"
     >
       <template v-slot:selection="{ text }">
-        <span :class="{default: !widget}" class="f-grow" v-text="text || defaultWidget"/>
+        <div class="f-col">
+          <span :class="{default: !widget}" class="f-grow" v-text="text || defaultWidget"/>
+          <span v-if="widgetDetail" class="detail" v-text="widgetDetail"/>
+        </div>
       </template>
       <template v-slot:item="{ item: option }">
         <span class="f-grow m-2" v-text="option.value ? option.text : attr.widget || 'Not configured'"/>
@@ -52,52 +55,11 @@
         <template v-if="widget === 'ValueMap'">
           <v-table :columns="valueMapColumns" :items="valueMapItems"/>
         </template>
-        <template v-if="widget === 'MediaImage'">
-          <v-text-field
-            class="filled"
-            label="Directory"
-            placeholder="web/<layername>"
-            :value="config.directory"
-            @input="updateConfig('directory', $event)"
-          />
-          <div class="desc">
-            Currently ony <strong>web/*</strong> paths are supported
-          </div>
-          <v-text-field
-            class="filled"
-            label="Filename"
-            placeholder="<random>"
-            :value="config.filename"
-            @input="updateConfig('filename', $event)"
-          />
-          <div class="desc">
-            Special values: <strong v-text="'<timestamp>, <filename>, <hash>, <random>'"/>
-          </div>
-          <v-select
-            label="Store path relative to"
-            class="filled"
-            :items="relativeDepths"
-            :value="config.relative_depth || 0"
-            @input="updateConfig('relative_depth', $event)"
-          >
-            <template v-slot:item="{ item }">
-              <div class="f-row-ac f-grow">
-                <span class="f-grow" v-text="item.text"/>
-                <span class="item-desc mx-2" v-text="item.desc"/>
-              </div>
-            </template>
-          </v-select>
-          <v-text-field
-            class="filled"
-            label="Max. resolution in megapixels"
-            type="number"
-            step="0.1"
-            min="0"
-            max="100"
-            :value="config.max_resolution"
-            @input="updateConfig('max_resolution', $event)"
-          />
-        </template>
+        <media-widget-settings
+          v-if="widget === 'MediaFile'"
+          :config="config"
+          @update="updateConfig"
+        />
       </div>
     </v-dialog>
   </div>
@@ -106,8 +68,10 @@
 <script>
 
 import { valueMapItems } from '@/adapters/attributes'
+import MediaWidgetSettings, { MediaTypesList } from './MediaWidgetSettings.vue'
 
 export default {
+  components: { MediaWidgetSettings },
   props: {
     attr: Object,
     attrSettings: Object
@@ -127,7 +91,7 @@ export default {
         { text: 'DateField', value: 'DateField' },
         { text: 'Hyperlink', value: 'Hyperlink' },
         { text: 'Image', value: 'Image' },
-        { text: 'Media Image', value: 'MediaImage', configurable: true },
+        { text: 'Media File', value: 'MediaFile', configurable: true },
         { text: 'ValueMap', value: 'ValueMap', icon: 'qgis', configurable: true }
       ]
     },
@@ -148,7 +112,7 @@ export default {
       } else if (type === 'datetime') {
         return pick(['TextField', 'Autofill'])
       } else if (type === 'text') {
-        return pick(['TextField', 'Hyperlink', 'Image', 'MediaImage', 'Autofill'])
+        return pick(['TextField', 'Hyperlink', 'Image', 'MediaFile', 'Autofill'])
       }
       return pick(['TextField'])
     },
@@ -160,6 +124,21 @@ export default {
     },
     defaultWidget () {
       return this.widgets[0]?.value || 'TextField'
+    },
+    widgetDetail () {
+      if (this.widget === 'MediaFile') {
+        const types = MediaTypesList.reduce((data, item) => (data[item.value] = item.text, data), {})
+        let typeInfo = ''
+        if (Array.isArray(this.config?.accept)) {
+          typeInfo = this.config.accept.map(v => types[v]).join(', ')
+        } else {
+          typeInfo = this.config.accept
+        }
+        if (typeInfo) {
+          return `(${typeInfo})`
+        }
+      }
+      return ''
     },
     valueMapItems () {
       return this.widget === 'ValueMap' && valueMapItems(this.attr)
@@ -197,32 +176,6 @@ export default {
         })
       }
       return opts
-    },
-    // relativeDepths () {
-    //   if (this.widget === 'MediaImage') {
-    //     const dir = this.config.directory || 'web/<layername>'
-    //     const parts = ['', ...dir.trim().split('/').filter(v => v)]
-    //     return parts.map((_, i) => ({
-    //       text: '/' + parts.slice(1, i + 1).join('/'),
-    //       value: i
-    //     }))
-    //   }
-    //   return []
-    // }
-    relativeDepths () {
-      if (this.widget === 'MediaImage') {
-        const dir = this.config.directory || 'web/<layername>'
-        // [web, layername] => /web, /web/layername
-        const parts = dir.trim().split('/').filter(v => v)
-        return [
-          { text: '/', desc: "(project's root directory)", value: 0 },
-          ...parts.map((_, i) => ({
-            text: '/' + parts.slice(0, i + 1).join('/'),
-            value: i + 1
-          }))
-        ]
-      }
-      return []
     }
   },
   methods: {
@@ -250,19 +203,16 @@ export default {
 .widget-config {
   min-width: 440px;
   padding: 8px 4px;
-  .desc {
-    font-size: 13px;
-    opacity: 0.7;
-    margin: 0 6px 6px;
-  }
 }
-.field-label {
+:deep(.field-label) {
   font-weight: 500;
   text-transform: uppercase;
   font-size: 11.5px;
   opacity: 0.75;
 }
-.item-desc {
-  color: #909090;
+.detail {
+  margin-top: 1px;
+  font-size: 11px;
+  opacity: 0.7;
 }
 </style>
