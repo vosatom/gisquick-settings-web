@@ -23,7 +23,6 @@
         />
         <div class="icon-box">
           <v-icon
-            size="24"
             role="button"
             :name="expanded ? 'folder-open' : 'folder'"
             @click="toggleFolder(folder)"
@@ -50,7 +49,7 @@
         />
         <div class="icon-box">
           <slot name="file-icon" :file="item">
-            <v-icon :name="iconsSet[item.ext] || 'file-outline'" size="24"/>
+            <v-icon :name="iconsSet[item.ext] || 'file-outline'"/>
           </slot>
           <slot name="file-badge" :file="item"/>
         </div>
@@ -379,7 +378,7 @@ export default {
   }
 }
 .item {
-  height: 36px;
+  height: 34px;
   padding-right: 6px;
   line-height: 1.2;
   // font-size: 14px;

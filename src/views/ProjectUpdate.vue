@@ -179,7 +179,7 @@
                   class="file-badge"
                   name="warning"
                   color="red"
-                  size="17"
+                  size="15"
                 />
               </template>
             </files-tree>
@@ -193,7 +193,7 @@
                   class="file-badge"
                   name="warning"
                   color="red"
-                  size="17"
+                  size="15"
                 />
               </template>
             </files-tree>
@@ -1050,14 +1050,15 @@ hr {
 }
 .folder-badge {
   position: absolute;
-  bottom: 6px;
-  right: 5px;
+  bottom: 4px;
+  right: 4px;
   height: 7px;
   width: 16px;
   pointer-events: none;
 }
 .expanded {
   .folder-badge {
+    width: 15px;
     transform: skewX(-18deg);
   }
 }
