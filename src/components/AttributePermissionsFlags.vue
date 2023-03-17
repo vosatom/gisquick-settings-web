@@ -14,6 +14,7 @@
 </template>
 
 <script>
+import { hasAny, pull } from '@/utils/collections'
 
 export default {
   props: {
@@ -30,14 +31,14 @@ export default {
     flags () {
       const attrVisible = this.value.includes('view')
       const attrExportable = this.layerSettings.export_fields?.includes(this.attributeMeta.name)
-      const layerVisible = this.layerPermissions.includes('view')
-      const layerEditable = layerVisible && (this.layerPermissions.includes('update') || this.layerPermissions.includes('insert'))
-      const layerExportable = layerVisible && this.layerPermissions.includes('export')
+      const layerQueryable = this.layerPermissions.includes('view') && this.layerPermissions.includes('query')
+      const layerEditable = layerQueryable && hasAny(this.layerPermissions, 'update', 'insert', 'delete')
+      const layerExportable = layerQueryable && this.layerPermissions.includes('export')
       return [
         {
           name: 'view',
           icon: 'visibility',
-          disabled: !this.layerCapabilities.view || !layerVisible,
+          disabled: !this.layerCapabilities.view || !layerQueryable,
           value: attrVisible
         }, {
           name: 'edit',
@@ -47,7 +48,7 @@ export default {
         }, {
           name: 'export',
           icon: 'download',
-          disabled: !this.layerCapabilities.export || !layerExportable || !attrExportable,
+          disabled: !this.layerCapabilities.export || !layerExportable || !attrExportable || !attrVisible,
           value: this.value.includes('export')
         }
       ]
@@ -56,15 +57,12 @@ export default {
   methods: {
     toggle (flag) {
       const { name, value } = flag
-      if (name === 'view' && value) {
-        // this.$emit('input', [])
-        this.value.splice(0, this.value.length)
+      if (!value) {
+        this.value.push(name)
+      } else if (name === 'view') {
+        pull(this.value, 'view', 'edit', 'export')
       } else {
-        if (value) {
-          this.value.splice(this.value.indexOf(name), 1)
-        } else {
-          this.value.push(name)
-        }
+        pull(this.value, name)
       }
     }
   }

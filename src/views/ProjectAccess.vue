@@ -178,10 +178,44 @@
           @click:row="toggleAttributes"
         >
           <!-- eslint-disable-next-line -->
+          <template v-slot:header.perms="{ text }">
+            <th class="header text-right" width="1">
+              <div class="f-row-ac f-justify-end">
+                <span v-text="text"/>
+                <v-btn
+                  class="icon flat"
+                  :color="linkedLayersGroup === projectOverlaysGroup ? 'primary' : ''"
+                  @click="toggleGroupLink(projectOverlaysGroup)"
+                >
+                  <v-tooltip slot="tooltip" align="c;bb">
+                    <span>Group editing of all layers</span>
+                  </v-tooltip>
+                  <v-icon name="link-chain"/>
+                </v-btn>
+              </div>
+            </th>
+          </template>
+
+          <!-- eslint-disable-next-line -->
+          <template v-slot:group-append="{ group }">
+            <v-btn
+              class="group-link icon flat"
+              :color="linkedLayersGroup === group ? 'primary' : ''"
+              @click="toggleGroupLink(group)"
+            >
+              <v-tooltip slot="tooltip" align="c;bb">
+                <span>Group layers editing</span>
+              </v-tooltip>
+              <v-icon name="link-chain"/>
+            </v-btn>
+          </template>
+
+          <!-- eslint-disable-next-line -->
           <template v-slot:leaf.perms="{ item }">
             <layer-permissions-flags
               :capabilities="layersPermissionsCapabilities[item.id]"
               :value="layersPerms[item.id]"
+              @change="updateLayerFlag(item, $event)"
             />
             <template v-if="item.attributes">
               <div class="v-separator"/>
@@ -199,6 +233,23 @@
           </template>
 
           <!-- eslint-disable-next-line -->
+          <template v-slot:detail-header="{ layer, indentStyle }">
+            <td class="attrs-flags-header" :style="indentStyle">
+              <span class="f-row-ac f-grow">Attributes</span>
+            </td>
+            <td class="attrs-flags-panel">
+              <attributes-permissions-flags
+                :layer="layer"
+                :layer-capabilities="layersPermissionsCapabilities[layer.id]"
+                :layer-permissions="layersPerms[layer.id]"
+                :layer-settings="settings.layers[layer.id]"
+                :values="attrsPerms[layer.id]"
+                class="f-justify-end"
+              />
+            </td>
+          </template>
+
+          <!-- eslint-disable-next-line -->
           <template v-slot:detail="{ layer, attr }">
             <td>
               <attribute-permissions-flags
@@ -212,13 +263,6 @@
             </td>
           </template>
 
-          <!-- eslint-disable-next-line -->
-          <!-- <template v-slot:leaf.view="{ item }">
-            <v-checkbox
-              class="f-justify-center"
-              v-model="perms.layers[item.id].view"
-            />
-          </template> -->
         </layers-table>
 
         <v-list
@@ -265,11 +309,12 @@ import LayersTable from '@/components/LayersTable.vue'
 import RadioGroup from '@/ui/RadioGroup.vue'
 import TextTabsHeader from '@/ui/TextTabsHeader.vue'
 import AttributePermissionsFlags from '@/components/AttributePermissionsFlags.vue'
+import AttributesPermissionsFlags from '@/components/AttributesPermissionsFlags.vue'
 import LayerPermissionsFlags from '@/components/LayerPermissionsFlags.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
-import { pull } from '@/utils/collections'
-import { transformLayersTree } from '@/utils/layers'
+import { extend, pull, hasAny } from '@/utils/collections'
+import { transformLayersTree, layersList } from '@/utils/layers'
 import { layerCapabilities, layerPermissionsCapabilities } from '@/flags'
 import { TaskState, watchTask } from '@/tasks'
 
@@ -295,7 +340,7 @@ export function initLayersPermissions (layers) {
 
 export default {
   name: 'ProjectAccess',
-  components: { ConfirmDialog, UsersList, LayersTable, TextTabsHeader, RadioGroup, AttributePermissionsFlags, LayerPermissionsFlags },
+  components: { ConfirmDialog, UsersList, LayersTable, TextTabsHeader, RadioGroup, AttributePermissionsFlags, AttributesPermissionsFlags, LayerPermissionsFlags },
   props: {
     project: Object,
     settings: Object
@@ -308,6 +353,7 @@ export default {
       selectedIndex: 0,
       attributesDetail: null,
       roleTab: 'settings',
+      linkedLayersGroup: null,
       tasks: {
         users: TaskState()
       }
@@ -335,7 +381,7 @@ export default {
     },
     rolesTypes () {
       return [
-        // { text: 'Project Access', value: 'all' },
+        { text: 'All', value: 'all' },
         {
           text: 'Selected Users',
           value: 'users',
@@ -429,6 +475,15 @@ export default {
         title: this.project.meta.layers[lid].title,
         visible: this.layersPerms[lid].includes('view')
       })))
+    },
+    projectOverlaysGroup () {
+      return { layers: this.overlays }
+    },
+    linkedLayersIds () {
+      if (this.linkedLayersGroup) {
+        return layersList(this.linkedLayersGroup.layers).map(l => l.id)
+      }
+      return null
     }
   },
   mounted () {
@@ -506,6 +561,39 @@ export default {
       } else {
         permissions.topics.push(id)
       }
+    },
+    clearAttributesFlags (layerId, ...flags) {
+      const attrsPerms = this.attrsPerms[layerId]
+      if (attrsPerms) {
+        Object.values(attrsPerms).forEach(perms => pull(perms, ...flags))
+      }
+    },
+    updateLayerFlag (layer, { flag, value }) {
+      const layersIdes = this.linkedLayersIds || [layer.id]
+      layersIdes.forEach(lid => {
+        const lperms = this.layersPerms[lid]
+        const capabilities = this.layersPermissionsCapabilities[lid]
+        if (value) {
+          if (capabilities[flag]) {
+            extend(lperms, flag)
+          }
+        } else {
+          pull(lperms, flag)
+          if (flag === 'query') {
+            pull(lperms, 'export', 'update', 'insert', 'delete')
+            this.clearAttributesFlags(lid, 'view', 'edit', 'export')
+          } else if (flag === 'update' || flag === 'insert' || flag === 'delete') {
+            if (!hasAny(lperms, 'update', 'insert', 'delete')) {
+              this.clearAttributesFlags(lid, 'edit')
+            }
+          } else {
+            this.clearAttributesFlags(lid, flag)
+          }
+        }
+      })
+    },
+    toggleGroupLink (group) {
+      this.linkedLayersGroup = this.linkedLayersGroup === group ? null : group
     }
   }
 }
@@ -632,6 +720,12 @@ export default {
   //     margin-right: 39px;
   //   }
   // }
+  :deep(tr.detail-header):hover {
+    background-color: rgba(var(--color-orange-rgb), 0.05);
+  }
+  .group-link {
+    margin-left: auto;
+  }
 }
 .topics-perms {
   // max-width: 500px;
@@ -667,5 +761,19 @@ export default {
 }
 .end-padding {
   width: 40px;
+}
+.attrs-flags-header {
+  padding-right: 0!important;
+  font-size: 13px;
+  font-weight: 500;
+  > span {
+    padding-inline: 6px;
+    margin-left: 6px;
+    height: inherit;
+  }
+}
+.attrs-flags-panel, .attrs-flags-header {
+  border-block: 1px solid #eee;
+  background-color: rgba(var(--color-orange-rgb), 0.1);
 }
 </style>

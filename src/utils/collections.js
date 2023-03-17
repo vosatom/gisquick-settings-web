@@ -7,3 +7,15 @@ export function pull (list, ...values) {
     }
   }
 }
+
+export function extend (list, ...values) {
+  for (const v of values) {
+    if (!list.includes(v)) {
+      list.push(v)
+    }
+  }
+}
+
+export function hasAny (list1, ...values) {
+  return list1.some(v => values.includes(v))
+}

@@ -215,7 +215,7 @@ export default {
         paddingLeft: `${30 * depth}px`
       }
       const slot = this.$scopedSlots['detail']
-      return layer.attributes.map(attr => {
+      const attrsContent = layer.attributes.map(attr => {
         const detail = slot({ layer, attr })
         return (
           <tr key={`${layer.id}:${attr.name}`} class="detail">
@@ -225,6 +225,15 @@ export default {
             {detail}
           </tr>
       )})
+      const headerSlot = this.$scopedSlots['detail-header']
+      if (headerSlot) {
+        const header = headerSlot({ layer, indentStyle })
+        return [
+          <tr key={`header:${layer.id}`} class="detail-header">{header}</tr>,
+          ...attrsContent
+        ]
+      }
+      return attrsContent
     },
     renderGroupContent (group, depth) {
       const children = group.layers.map(item => item.layers ? this.renderGroup(item, depth) : this.renderLayerRow(item, group, depth))
@@ -247,6 +256,7 @@ export default {
       const paddingStyle = {
         paddingLeft: `${30 * depth}px`,
       }
+      const appendSlot = this.$scopedSlots['group-append']
       const groupNode = (
         <tr key={group.name} class={['group', {[this.selectedClass]: this.groupKey(group) === this.selected}]}>
           <td
@@ -263,6 +273,7 @@ export default {
                 vOn:click_stop={() => this.toggleGroup(group)}
               />
               <span>{group.name}</span>
+              {appendSlot?.({ group })}
             </div>
           </td>
         </tr>
@@ -289,7 +300,7 @@ export default {
                 append: () => <v-icon name="search" class="mx-2"/>
               }}
             />
-            {slot ? slot() : null}
+            {slot?.()}
           </div>
         </th>
       )
@@ -378,10 +389,6 @@ export default {
   }
   ::v-deep td {
     height: 32px;
-    // --gutter: 0;
-    .checkbox {
-      margin: 0;
-    }
     strong {
       color: var(--color-primary);
       background-color: #faf6c4;

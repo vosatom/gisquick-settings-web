@@ -68,15 +68,15 @@ export function layerPermissionsCapabilities (pCapabilities, sflags, permFlags) 
 // ver. 2
 export function layerPermissionsCapabilities (pCapabilities, sflags, permFlags) {
   const queryable = permFlags.includes('query')
+  const editable = !!(pCapabilities.edit && queryable)
   return {
     view: pCapabilities.view,// && visible,
     // view: pCapabilities.view && sflags.includes('view'),
     query: pCapabilities.query && sflags.includes('query'),
     export: pCapabilities.export && queryable && sflags.includes('export'),
-    edit: pCapabilities.edit && queryable && {
-      update: pCapabilities.edit.update && sflags.includes('edit'),
-      insert: pCapabilities.edit.insert && sflags.includes('edit'),
-      delete: pCapabilities.edit.delete && sflags.includes('edit')
-    }
+    update: editable && pCapabilities.edit.update && sflags.includes('edit'),
+    insert: editable && pCapabilities.edit.insert && sflags.includes('edit'),
+    delete: editable && pCapabilities.edit.delete && sflags.includes('edit'),
+    edit: editable
   }
 }

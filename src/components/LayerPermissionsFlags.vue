@@ -42,17 +42,17 @@ export default {
         }, {
           name: 'update',
           icon: 'pencil',
-          disabled: !this.capabilities.edit?.update,
+          disabled: !this.capabilities.update,
           value: this.value.includes('update')
         }, {
           name: 'insert',
           icon: 'plus',
-          disabled: !this.capabilities.edit?.insert,
+          disabled: !this.capabilities.insert,
           value: this.value.includes('insert')
         }, {
           name: 'delete',
           icon: 'delete_forever',
-          disabled: !this.capabilities.edit?.delete,
+          disabled: !this.capabilities.delete,
           value: this.value.includes('delete')
         }
       ]
@@ -61,22 +61,7 @@ export default {
   methods: {
     toggle (flag) {
       const { name, value } = flag
-      if (value) {
-        this.value.splice(this.value.indexOf(name), 1)
-      } else {
-        this.value.push(name)
-      }
-      // ver. 2
-      // if (name === 'view' && value) {
-      //   // this.$emit('input', [])
-      //   this.value.splice(0, this.value.length)
-      // } else {
-      //   if (value) {
-      //     this.value.splice(this.value.indexOf(name), 1)
-      //   } else {
-      //     this.value.push(name)
-      //   }
-      // }
+      this.$emit('change', { flag: name, value: !value })
     }
   }
 }
