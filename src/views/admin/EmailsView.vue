@@ -183,7 +183,7 @@ export default {
       const setFullName = u => {
         u.full_name = fullName(u)
       }
-      const task = this.$http.get('/api/users').then(resp => {
+      const task = this.$http.get('/api/admin/users').then(resp => {
         resp.data = resp.data.filter(u => u.email)
         resp.data.forEach(setFullName)
         return resp
