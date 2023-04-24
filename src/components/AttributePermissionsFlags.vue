@@ -68,11 +68,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.flags {
-  > * {
-    margin: 0 4px;
-  }
-}
-</style>
