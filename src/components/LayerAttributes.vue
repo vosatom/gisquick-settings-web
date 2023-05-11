@@ -520,7 +520,7 @@ export default {
     layoutAttributes () {
       const fields = this.layerSettings.fields_order?.[this.orderLayout || 'global']
       if (fields) {
-        return fields.map(name => this.attrsMap[name])
+        return fields.map(name => this.attrsMap[name]).filter(a => a)
       }
       return this.attributes
     },
@@ -629,7 +629,7 @@ export default {
         fields = this.defaultAttributesOrder
       }
       const excluded = this.excludedTableFields
-      const attributes = fields.filter(n => !excluded.has(n)).map(n => this.attrsMap[n])//.filter(a => a)
+      const attributes = fields.filter(n => !excluded.has(n)).map(n => this.attrsMap[n]).filter(a => a)
       return attributes.map(attr => ({
         label: attr.alias || attr.name,
         type: attr.type.toLowerCase(),

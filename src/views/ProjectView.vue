@@ -229,6 +229,8 @@ import ProjectionsSettings from '@/components/ProjectionsSettings.vue'
 import { scalesToResolutions, ProjectionsScales } from '@/utils/scales'
 import { TaskState, watchTask } from '@/tasks'
 import { objectDiff } from '@/utils/diff'
+import { pull } from '@/utils/collections'
+
 import MapImg from '@/assets/map.svg?component'
 
 function validatedSettings (settings, meta) {
@@ -241,8 +243,24 @@ function validatedSettings (settings, meta) {
   //   })
   // })
 
+  Object.entries(settings.layers).filter(([_, lset]) => lset.export_fields).forEach(([lid, lset]) => {
+    const attrs = meta.layers[lid]?.attributes?.map(a => a.name)
+    pull(lset.export_fields, ...lset.export_fields.filter(name => !attrs.includes(name)))
+  })
+
+  // fix fields_order layer settings
+  Object.entries(settings.layers).filter(([_, lset]) => lset.fields_order).forEach(([lid, lset]) => {
+    const attrs = meta.layers[lid]?.attributes?.map(a => a.name)
+    for (const [k, v] of Object.entries(lset.fields_order)) {
+      // remove non existing fields
+      pull(v, ...v.filter(name => !attrs.includes(name)))
+      // add missing fields
+      attrs.filter(name => !v.includes(name)).forEach(name => v.push(name))
+    }
+  })
+
   // convert old MediaImage widget to the bew MediaFile
-  Object.entries(settings.layers).filter(([lid, lset]) => lset.attributes).forEach(([lid, lset]) => {
+  Object.entries(settings.layers).filter(([_, lset]) => lset.attributes).forEach(([_, lset]) => {
     Object.values(lset.attributes).filter(a => a.widget === 'MediaImage').forEach(a => {
       a.widget = 'MediaFile'
       a.config = {...a.config, accept: ['image/*'] }
