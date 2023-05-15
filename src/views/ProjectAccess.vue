@@ -233,36 +233,51 @@
           </template>
 
           <!-- eslint-disable-next-line -->
-          <template v-slot:detail-header="{ layer, indentStyle }">
-            <td class="attrs-flags-header" :style="indentStyle">
-              <span class="f-row-ac f-grow">Attributes</span>
-            </td>
-            <td class="attrs-flags-panel">
-              <attributes-permissions-flags
-                :layer="layer"
-                :layer-capabilities="layersPermissionsCapabilities[layer.id]"
-                :layer-permissions="layersPerms[layer.id]"
-                :layer-settings="settings.layers[layer.id]"
-                :values="attrsPerms[layer.id]"
-                class="f-justify-end"
-              />
-            </td>
+          <template v-slot:detail="{ layer, indentStyle }">
+            <tr :key="`header:${layer.id}`">
+              <td class="detail-header" :style="indentStyle">
+                <span class="f-row-ac f-grow">Attributes</span>
+              </td>
+              <td class="attrs-flags-panel">
+                <attributes-permissions-flags
+                  :layer="layer"
+                  :layer-capabilities="layersPermissionsCapabilities[layer.id]"
+                  :layer-permissions="layersPerms[layer.id]"
+                  :layer-settings="settings.layers[layer.id]"
+                  :values="attrsPerms[layer.id]"
+                  class="f-justify-end"
+                />
+              </td>
+            </tr>
+            <tr v-for="attr in layer.attributes" :key="attr.name" class="detail">
+              <td>
+                <div :style="indentStyle" class="f-row-ac">{{ attr.alias || attr.name }}</div>
+              </td>
+              <td>
+                <attribute-permissions-flags
+                  :attribute-meta="attr"
+                  :layer-capabilities="layersPermissionsCapabilities[layer.id]"
+                  :layer-permissions="layersPerms[layer.id]"
+                  :layer-settings="settings.layers[layer.id]"
+                  :value="attrsPerms[layer.id][attr.name]"
+                  class="f-justify-end"
+                />
+              </td>
+            </tr>
+            <tr :key="`geometry:${layer.id}`">
+              <td class="detail-header" :style="indentStyle">
+                <span class="f-row-ac f-grow mx-2">Geometry</span>
+              </td>
+              <td class="geometry-panel f-row f-justify-end">
+                <!-- <geometry-permissions-flags :value="layersPerms[layer.id]" @change="updateLayerFlag(layer, $event)"/> -->
+                <geometry-permissions-flags
+                  :layer-permissions="layersPerms[layer.id]"
+                  :layer-capabilities="layersPermissionsCapabilities[layer.id]"
+                  :value="attrsPerms[layer.id]['geometry']"
+                />
+              </td>
+            </tr>
           </template>
-
-          <!-- eslint-disable-next-line -->
-          <template v-slot:detail="{ layer, attr }">
-            <td>
-              <attribute-permissions-flags
-                :attribute-meta="attr"
-                :layer-capabilities="layersPermissionsCapabilities[layer.id]"
-                :layer-permissions="layersPerms[layer.id]"
-                :layer-settings="settings.layers[layer.id]"
-                :value="attrsPerms[layer.id][attr.name]"
-                class="f-justify-end"
-              />
-            </td>
-          </template>
-
         </layers-table>
 
         <v-list
@@ -311,6 +326,7 @@ import TextTabsHeader from '@/ui/TextTabsHeader.vue'
 import AttributePermissionsFlags from '@/components/AttributePermissionsFlags.vue'
 import AttributesPermissionsFlags from '@/components/AttributesPermissionsFlags.vue'
 import LayerPermissionsFlags from '@/components/LayerPermissionsFlags.vue'
+import GeometryPermissionsFlags from '@/components/GeometryPermissionsFlags.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 import { extend, pull, hasAny } from '@/utils/collections'
@@ -328,7 +344,10 @@ export function initLayersPermissions (layers) {
     layers: mapValues(layers, () => ['view']),
     attributes: mapValues(
       pickBy(layers, l => l.attributes),
-      l => Object.fromEntries(l.attributes.map(a => [a.name, ['view']]))
+      l => ({
+        ...Object.fromEntries(l.attributes.map(a => [a.name, ['view']])),
+        geometry: []
+      })
     ),
     // attributes: mapValues(this.project.meta.layers, l => l.attributes && Object.fromEntries(l.attributes.map(a => [a.name, ['view']]))),
     // layers: mapValues(this.project.meta.layers, l => ({
@@ -340,7 +359,10 @@ export function initLayersPermissions (layers) {
 
 export default {
   name: 'ProjectAccess',
-  components: { ConfirmDialog, UsersList, LayersTable, TextTabsHeader, RadioGroup, AttributePermissionsFlags, AttributesPermissionsFlags, LayerPermissionsFlags },
+  components: {
+    ConfirmDialog, UsersList, LayersTable, TextTabsHeader, RadioGroup,
+    AttributePermissionsFlags, AttributesPermissionsFlags, LayerPermissionsFlags, GeometryPermissionsFlags
+  },
   props: {
     project: Object,
     settings: Object
@@ -762,7 +784,7 @@ export default {
 .end-padding {
   width: 40px;
 }
-.attrs-flags-header {
+.detail-header {
   padding-right: 0!important;
   font-size: 13px;
   font-weight: 500;
@@ -772,8 +794,9 @@ export default {
     height: inherit;
   }
 }
-.attrs-flags-panel, .attrs-flags-header {
+.detail-header, .attrs-flags-panel, .geometry-panel {
   border-block: 1px solid #eee;
   background-color: rgba(var(--color-orange-rgb), 0.1);
+  box-sizing: content-box;
 }
 </style>

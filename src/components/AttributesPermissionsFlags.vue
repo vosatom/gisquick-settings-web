@@ -6,20 +6,21 @@
       @input="toggleFlag('view', $event)"
     />
     <v-checkbox
-      :disabled="!layerEditable"
-      v-bind="editStatus"
-      @input="toggleFlag('edit', $event)"
-    />
-    <v-checkbox
       :disabled="!layerExportable"
       v-bind="exportStatus"
       @input="toggleFlag('export', $event)"
+    />
+    <v-checkbox
+      :disabled="!layerEditable"
+      v-bind="editStatus"
+      @input="toggleFlag('edit', $event)"
     />
   </div>
 </template>
 
 <script>
 import pick from 'lodash/pick'
+import pickBy from 'lodash/pickBy'
 import { extend, pull, hasAny } from '@/utils/collections'
 
 export default {
@@ -65,11 +66,14 @@ export default {
         return Object.keys(this.values).filter(field => this.layerSettings.export_fields?.includes(field) && this.values[field].includes('view'))
       }
       return []
+    },
+    attrValues () {
+      return pickBy(this.values, (_, k) => k !== 'geometry')
     }
   },
   methods: {
     getFlagStatus (flag) {
-      const values = Object.values(this.values)
+      const values = Object.values(this.attrValues)
       const visible = values.filter(v => v.includes(flag)).length
       return {
         value: visible === 0 ? false : true,
@@ -77,8 +81,8 @@ export default {
       }
     },
     toggleFlag (flag, value) {
+      let values = this.attrValues
       if (value) {
-        let values = this.values
         if (flag === 'edit') {
           values = pick(values, this.editableFields)
         } else if (flag === 'export') {
@@ -87,9 +91,9 @@ export default {
         Object.values(values).forEach(v => extend(v, flag))
       } else {
         if (flag === 'view') {
-          Object.values(this.values).forEach(v => pull(v, 'view', 'edit', 'export'))
+          Object.values(values).forEach(v => pull(v, 'view', 'edit', 'export'))
         } else {
-          Object.values(this.values).forEach(v => pull(v, flag))
+          Object.values(values).forEach(v => pull(v, flag))
         }
       }
     }

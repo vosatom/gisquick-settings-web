@@ -210,30 +210,29 @@ export default {
         </tr>
       )
     },
+    // renderLayerAttributesDetail (layer, depth) {
+    //   const indentStyle = {
+    //     paddingLeft: `${30 * depth}px`
+    //   }
+    //   const slot = this.$scopedSlots['detail']
+    //   const attrsContent = layer.attributes.map(attr => {
+    //     const detail = slot({ layer, attr })
+    //     return (
+    //       <tr key={`${layer.id}:${attr.name}`} class="detail">
+    //         <td>
+    //           <div style={indentStyle} class="f-row-ac">{ attr.alias || attr.name }</div>
+    //         </td>
+    //         {detail}
+    //       </tr>
+    //   )})
+    //   return attrsContent
+    // },
     renderLayerDetail (layer, depth) {
       const indentStyle = {
         paddingLeft: `${30 * depth}px`
       }
       const slot = this.$scopedSlots['detail']
-      const attrsContent = layer.attributes.map(attr => {
-        const detail = slot({ layer, attr })
-        return (
-          <tr key={`${layer.id}:${attr.name}`} class="detail">
-            <td>
-              <div style={indentStyle} class="f-row-ac">{ attr.alias || attr.name }</div>
-            </td>
-            {detail}
-          </tr>
-      )})
-      const headerSlot = this.$scopedSlots['detail-header']
-      if (headerSlot) {
-        const header = headerSlot({ layer, indentStyle })
-        return [
-          <tr key={`header:${layer.id}`} class="detail-header">{header}</tr>,
-          ...attrsContent
-        ]
-      }
-      return attrsContent
+      return slot({ layer, indentStyle })
     },
     renderGroupContent (group, depth) {
       const children = group.layers.map(item => item.layers ? this.renderGroup(item, depth) : this.renderLayerRow(item, group, depth))
@@ -340,10 +339,10 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .list-enter-active, .list-leave-active {
   transition: all 0.35s;
-  ::v-deep td {
+  td {
     transition: all 0.35s;
     overflow: hidden;
     position: relative;
@@ -355,10 +354,12 @@ export default {
 .list-enter, .list-leave-to {
   opacity: 0;
   transform: translate3d(-6px, 0, 0);
-  ::v-deep td {
+  td {
     height: 0!important;
   }
 }
+</style>
+<style lang="scss" scoped>
 .layers-table {
   // display: flex;
   // overflow: auto;

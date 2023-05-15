@@ -229,7 +229,7 @@ import ProjectionsSettings from '@/components/ProjectionsSettings.vue'
 import { scalesToResolutions, ProjectionsScales } from '@/utils/scales'
 import { TaskState, watchTask } from '@/tasks'
 import { objectDiff } from '@/utils/diff'
-import { pull } from '@/utils/collections'
+import { hasAny, pull } from '@/utils/collections'
 
 import MapImg from '@/assets/map.svg?component'
 
@@ -242,6 +242,17 @@ function validatedSettings (settings, meta) {
   //     s.add(mediaFolder)
   //   })
   // })
+
+  settings.auth.roles?.forEach(role => {
+    const attrsPerms = role.permissions.attributes
+    Object.entries(attrsPerms).forEach(([layerId, perms]) => {
+      if (!perms.geometry) {
+        const layerPerms = role.permissions.layers[layerId]
+        const layerEditable = layerPerms.includes('query') && hasAny(layerPerms, 'update', 'insert', 'delete')
+        perms.geometry = layerEditable ? ['edit'] : []
+      }
+    })
+  })
 
   Object.entries(settings.layers).filter(([_, lset]) => lset.export_fields).forEach(([lid, lset]) => {
     const attrs = meta.layers[lid]?.attributes?.map(a => a.name)

@@ -41,15 +41,15 @@ export default {
           disabled: !this.layerCapabilities.view || !layerQueryable,
           value: attrVisible
         }, {
-          name: 'edit',
-          icon: 'pencil',
-          disabled: this.readonlyConstrain || !this.layerCapabilities.edit || !layerEditable || !attrVisible,
-          value: this.value.includes('edit')
-        }, {
           name: 'export',
           icon: 'download',
           disabled: !this.layerCapabilities.export || !layerExportable || !attrExportable || !attrVisible,
           value: this.value.includes('export')
+        }, {
+          name: 'edit',
+          icon: 'pencil',
+          disabled: this.readonlyConstrain || !this.layerCapabilities.edit || !layerEditable || !attrVisible,
+          value: this.value.includes('edit')
         }
       ]
     }
