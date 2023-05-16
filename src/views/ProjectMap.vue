@@ -355,7 +355,7 @@ export default {
   },
   created () {
     this.initLayersModel(this.qgisMeta)
-    this.legendFetcher = LegendFetcher(this.$http, `/api/project/map/${this.project.name}`)
+    this.legendFetcher = LegendFetcher(this.$http, `/api/project/ows/${this.project.name}`)
   },
   methods: {
     initLayersModel (meta) {

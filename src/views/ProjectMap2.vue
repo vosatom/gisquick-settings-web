@@ -275,7 +275,7 @@ export default {
       const tasks = this.flatLayers.map(l => {
         const params = { ...baseParams, LAYER: l.server_name || l.name}
         return this.$http
-          .get(`/api/project/map/${this.project.name}`, { params })
+          .get(`/api/project/ows/${this.project.name}`, { params })
           .then(resp => ({
             [l.id]: resp.data
           }))

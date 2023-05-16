@@ -113,8 +113,7 @@ export default {
       register(proj4)
 
       const source = new ImageWMS({
-        // url: '/api/project/map',
-        url: `/api/project/map/${this.project}`,
+        url: `/api/project/ows/${this.project}`,
         params: {
           // MAP: this.project,
           LAYERS: this.layersParam,

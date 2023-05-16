@@ -575,7 +575,7 @@ export default {
       return {
         name: this.project.name,
         ows_project: this.project.name,
-        ows_url:  `/api/map/ows/${this.project.name}`
+        ows_url:  `/api/project/ows/${this.project.name}`,
         // formatter: name => formatters[name]
       }
     },
@@ -776,7 +776,7 @@ export default {
         OUTPUTFORMAT: 'GeoJSON'
       }
 
-      const url = `/api/project/map/${this.project.name}`
+      const url = `/api/project/ows/${this.project.name}`
       const headers = { 'Content-Type': 'text/xml' }
       let geojson, featuresCount
       this.loading = true
