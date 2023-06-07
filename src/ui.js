@@ -4,6 +4,7 @@ import VBadge from './ui/Badge.vue'
 import VCheckbox from './ui/Checkbox.vue'
 import VCollapsible from './ui/Collapsible.vue'
 import VDateField from './ui/DateField.vue'
+import VDatetimeField from '@/ui/DatetimeField.vue'
 import VDialog from './ui/Dialog.vue'
 import VFileField from './ui/FileField.vue'
 import VLinearProgress from './ui/LinearProgress.vue'
@@ -38,6 +39,7 @@ export default {
     Vue.component('v-icon', VIcon)
     Vue.component('v-checkbox', VCheckbox)
     Vue.component('v-date-field', VDateField)
+    Vue.component('v-datetime-field', VDatetimeField)
     Vue.component('v-dialog', VDialog)
     Vue.component('v-file-field', VFileField)
     Vue.component('v-linear-progress', VLinearProgress)
