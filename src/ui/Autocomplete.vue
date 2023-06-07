@@ -28,7 +28,7 @@
           v-if="!!text"
           class="clear f-row-ac"
           role="button"
-          aria-label="Vyčistiť"
+          aria-label="Clear"
           @click="clear"
         >
           <v-icon name="clear" class="m-2" color="#777"/>

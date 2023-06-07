@@ -12,7 +12,7 @@
     <template v-slot:append>
       <v-menu
         ref="menu"
-        aria-label="Vybrať dátum"
+        aria-label="Select date"
         transition="slide-y"
         align="rr;bb,tt"
         content-class="popup-content popup-menu light"
