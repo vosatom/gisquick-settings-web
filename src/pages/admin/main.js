@@ -13,6 +13,11 @@ import '@/ui/base.scss'
 import '@/ui/layout.scss'
 import '@/ui/transitions/transitions.scss'
 
+// import all icons for hot reload functionality in dev mode
+if (process.env.NODE_ENV === 'development') {
+  import.meta.glob('../icons/*.svg')
+}
+
 Vue.config.productionTip = false
 
 Vue.use(UI)

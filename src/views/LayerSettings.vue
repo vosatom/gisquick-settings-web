@@ -3,7 +3,7 @@
     <portal v-if="pageVisible" to="left-panel">
       <div class="nav-header f-row-ac dark">
         <div class="f-row-ac f-grow m-1">
-          <v-icon name="layers2" size="24" color="yellow"/>
+          <v-icon name="layers" size="24" color="yellow"/>
           <span class="title f-grow mx-2" v-text="layerMeta.title"/>
         </div>
         <router-link class="f-row-ac mx-2" :to="{name: 'layers'}">

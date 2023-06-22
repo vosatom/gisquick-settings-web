@@ -103,7 +103,8 @@ export default {
           action: () => this.$refs.changePasswordDialog.show()
         }, {
           text: 'Logout',
-          action: this.logout
+          action: this.logout,
+          icon: 'logout'
         }
       ]
     }

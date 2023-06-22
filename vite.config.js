@@ -33,7 +33,10 @@ export default defineConfig(({ mode }) => ({
     mpa({
       open: '/user/'
     }),
-    svgSprite(),
+    svgSprite({
+      user: ['./icons/user'],
+      admin: ['./icons/admin']
+    }),
     svgLoader(),
     legacy({
       targets: ['ie >= 11'],

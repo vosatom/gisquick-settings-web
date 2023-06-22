@@ -183,7 +183,7 @@
         <template v-slot:toolbar>
           <v-btn class="layers-toggle icon flat" :color="showLayers ? 'primary' : ''" @click="showLayers = !showLayers">
             <!-- <v-icon name="overlays"/> -->
-            <v-icon size="24" name="layers2"/>
+            <v-icon size="24" name="layers"/>
           </v-btn>
         </template>
         <template v-slot:toolbar-end>

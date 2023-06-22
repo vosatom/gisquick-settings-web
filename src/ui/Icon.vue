@@ -3,6 +3,10 @@ function colorStyle (color) {
   return color.startsWith('#') ? color : `var(--color-${color})`
 }
 
+function stripPrefix (str, prefix) {
+  return str?.startsWith(prefix) ? str.slice(prefix.length) : str
+}
+
 export default {
   functional: true,
   props: {
@@ -29,8 +33,9 @@ export default {
         ctx.data.style = { fill: cs }
       }
     }
+    // ic_ prefix is for easier trackability of icons in source code
     const attrs = {
-      'xlink:href': `#${name}`
+      'xlink:href': `#${stripPrefix(name, 'ic_')}`
     }
     const use = h('use', { attrs })
     return h('svg', ctx.data, [use])
