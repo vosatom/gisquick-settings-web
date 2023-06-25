@@ -572,6 +572,11 @@ export default {
       }
       try {
         const { data } = await this.$ws.request('ProjectInfo', params)
+        Object.values(data.layers).forEach(l => {
+          if (!l.type.endsWith('Layer')) {
+            l.type = l.type + 'Layer'
+          }
+        })
         this.projectInfo = data
       } catch (err) {
         this.projectInfo = null
