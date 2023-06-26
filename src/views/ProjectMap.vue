@@ -241,9 +241,6 @@ import ThumbnailEditor from '@/components/ThumbnailEditor.vue'
 import TextTabsHeader from '@/ui/TextTabsHeader.vue'
 import VTabsHeader from '@/ui/TabsHeader.vue'
 import MapImg from '@/assets/map.svg?component'
-const MapView = () => import(/* webpackChunkName: "olmap" */ '@/components/Map.vue')
-const DrawExtent = () => import(/* webpackChunkName: "olmap" */ '@/components/DrawExtent.vue')
-
 import { layersList, layersGroups, transformLayersTree, filterLayers } from '@/utils/layers'
 import { scalesToResolutions } from '@/utils/scales'
 import { extentPrecision } from '@/utils/units'
@@ -283,9 +280,14 @@ function LegendFetcher (http, url) {
     }
   }
 }
+
 export default {
   name: 'ProjectMap',
-  components: { LayersTree, MapView, MapImg, DrawExtent, ExtentField, ScalesList, ThumbnailEditor, VTabsHeader, TextTabsHeader },
+  components: {
+    LayersTree, MapImg, ExtentField, ScalesList, ThumbnailEditor, VTabsHeader, TextTabsHeader,
+    MapView: async () => (await import('@/components/map-components')).Map,
+    DrawExtent: async () => (await import('@/components/map-components')).DrawExtent
+  },
   mixins: [ Page ],
   props: {
     project: Object,
