@@ -742,9 +742,6 @@ export default {
   //     margin-right: 39px;
   //   }
   // }
-  :deep(tr.detail-header):hover {
-    background-color: rgba(var(--color-orange-rgb), 0.05);
-  }
   .group-link {
     margin-left: auto;
   }

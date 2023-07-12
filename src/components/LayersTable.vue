@@ -376,11 +376,9 @@ export default {
     border-spacing: 0;
     // table-layout: fixed;
   }
-  ::v-deep {
-    th, td {
-      padding: 0 12px;
-      // white-space: nowrap;
-    }
+  :deep(th), :deep(td) {
+    padding: 0 12px;
+    // white-space: nowrap;
   }
   th {
     .filter {
@@ -388,7 +386,7 @@ export default {
       text-align: left;
     }
   }
-  ::v-deep td {
+  :deep(td) {
     height: 32px;
     strong {
       color: var(--color-primary);
@@ -446,12 +444,11 @@ export default {
     }
     // border-block: 1px solid #eee;
   }
-  tbody {
+  :deep(tbody) {
     tr:hover {
       background-color: #eee;
     }
     tr.selected {
-      // background-color: var(--color-yellow);
       background-color: rgba(var(--color-yellow-rgb), 0.5);
     }
   }
