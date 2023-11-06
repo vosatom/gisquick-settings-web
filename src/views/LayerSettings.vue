@@ -6,6 +6,34 @@
           <v-icon name="layers" size="24" color="yellow"/>
           <span class="title f-grow mx-2" v-text="layerMeta.title"/>
         </div>
+        <div v-if="layerNavigation" class="f-row-ac">
+          <component
+            :is="layerNavigation.prevId ? 'router-link' : 'span'"
+            :class="[
+              'f-row-ac mx-2',
+              !layerNavigation.prevId && 'navigation-link-disabled',
+            ]"
+            :to="{
+              name: 'layer-settings',
+              params: { layerId: layerNavigation.prevId },
+            }"
+          >
+            <v-icon name="caret-left-bold" class="mr-2" />
+          </component>
+          <component
+            :is="layerNavigation.nextId ? 'router-link' : 'span'"
+            :class="[
+              'f-row-ac mx-2',
+              !layerNavigation.nextId && 'navigation-link-disabled',
+            ]"
+            :to="{
+              name: 'layer-settings',
+              params: { layerId: layerNavigation.nextId },
+            }"
+          >
+            <v-icon name="caret-right-bold" class="mr-2" />
+          </component>
+        </div>
         <router-link class="f-row-ac mx-2" :to="{name: 'layers'}">
           <v-icon name="upward_arrow" class="mr-2"/>
         </router-link>
@@ -203,6 +231,17 @@ export default {
     },
     isLayerQueryable () {
       return this.layerMeta.flags.includes('query')
+    },
+    layerNavigation () {
+      const layersOrder = this.project.meta.layers_order
+      const currentIndex = layersOrder.indexOf(this.layerId)
+      if (currentIndex !== -1) {
+        return {
+          prevId: layersOrder[currentIndex - 1],
+          nextId: layersOrder[currentIndex + 1],
+        }
+      }
+      return null
     }
   },
   methods: {
@@ -299,6 +338,10 @@ export default {
   .title {
     font-size: 16px;
     // font-weight: 500;
+    max-width: 90px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
   a {
     color: inherit;
@@ -377,5 +420,10 @@ section.info {
 }
 .legend-field {
   max-width: 360px;
+}
+
+.navigation-link-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
