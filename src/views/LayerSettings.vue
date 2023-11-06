@@ -117,6 +117,18 @@
               @input="setOptSetting(layerSettings, 'config.test', $event)"
             /> -->
           </div>
+
+          <div class="custom-config f-col my-2">
+            <div class="legend-field">
+              <v-text-field
+                class="filled"
+                label="Legend URL"
+                lazy
+                :value="layerConfig.legend_url"
+                @input="setOptSetting(layerSettings, 'custom.legend_url', $event)"
+              />
+            </div>
+          </div>
         </div>
 
         <div class="f-col f-grow">
@@ -127,14 +139,16 @@
             :layer-meta="layerMeta"
             :layer-settings="settings.layers[layerId]"
           />
-          <div class="i-card shadow-1 f-row-ac mx-2 my-2 light">
-            <v-icon class="mx-2 ml-4" name="legend"/>
-            <span class="mx-2 f-grow">Map legend</span>
-            <v-switch
-              class="round"
-              :value="!layerSettings.legend_disabled"
-              @input="setLegendVisibility"
-            />
+          <div class="i-card shadow-1 mx-2 my-2">
+            <div class="f-row-ac light">
+              <v-icon class="mx-2 ml-4" name="legend" />
+              <span class="mx-2 f-grow">Map legend</span>
+              <v-switch
+                class="round"
+                :value="!layerSettings.legend_disabled"
+                @input="setLegendVisibility"
+              />
+            </div>
           </div>
         </div>
       </div>
