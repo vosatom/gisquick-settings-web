@@ -40,6 +40,7 @@ async function buildSprite (dirPaths) {
   const ids = new Set()
   for (const filename of svgs) {
     const id = path.basename(filename, '.svg')
+    if (!filename.includes('.svg')) continue
     if (!ids.has(id)) {
       const data = fs.readFileSync(filename, 'utf8')
       const result = await optimize(data, opts)
