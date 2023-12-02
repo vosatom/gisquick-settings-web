@@ -10,6 +10,15 @@
           multiline
           lazy
         />
+
+        <v-select
+          class="filled"
+          label="Language"
+          v-model="settings.lang"
+          :items="availableLanguages"
+          itemValue="code"
+          itemText="name"
+        />
       </div>
     </ScrollArea>
   </div>
@@ -18,12 +27,26 @@
 <script>
 import ScrollArea from '@/ui/ScrollArea.vue'
 import TextEditor from '@/components/TextEditor.vue'
+import { TaskState, watchTask } from '@/tasks'
 
 export default {
   components: { ScrollArea, TextEditor },
   props: {
     project: Object,
     settings: Object,
+  },
+  data() {
+    return {
+      task: TaskState(),
+      availableLanguages: [],
+    }
+  },
+  mounted() {
+    const task = this.$http.get('/map/config.json').then((resp) => {
+      this.availableLanguages = resp.data.languages
+      return resp.data
+    })
+    watchTask(task, this.task)
   },
 }
 </script>
