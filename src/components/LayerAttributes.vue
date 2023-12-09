@@ -80,6 +80,8 @@
         <template v-slot:cell(widget)="{ item }">
           <widget-settings
             class="widget-select"
+            :project="project"
+            :settings="settings"
             :attr="item"
             :attr-settings="attrsSettings[item.name]"
             @input="updateWidget(item, $event)"
@@ -321,13 +323,14 @@ import GeoJSON from 'ol/format/GeoJSON'
 import WidgetSettings from '@/components/WidgetSettings.vue'
 import FormattersEditor, { createFormatter } from '@/components/FormattersEditor.vue'
 import VImage from '@/components/image/Image.vue'
-import GenericInfoPanel, { DateWidget, ValueMapWidget, BoolWidget, UrlWidget, createTableImageWidget, createMediaFileTableWidget, mediaUrlFormat  } from '@/components/GenericInfopanel.vue'
+import GenericInfoPanel, { DateWidget, ValueMapWidget, BoolWidget, UrlWidget, createTableImageWidget, createMediaFileTableWidget, mediaUrlFormat, getFileService  } from '@/components/GenericInfopanel.vue'
 import { layerFeaturesQuery } from '@/map/featureinfo'
 import { excludedFieldsSet } from '@/adapters/attributes'
 import { externalComponent } from '@/components-loader'
 import { TaskState, watchTask } from '@/tasks'
 import { pull } from '@/utils/collections'
 import { isEmpty } from 'ol/extent'
+import { lookupTable } from '@/utils'
 
 export async function loadUmdScript (url, filename) {
   return new Promise((resolve, reject) => {
@@ -663,7 +666,8 @@ export default {
         } else if (attr.widget === 'Image') {
           widget = createTableImageWidget()
         } else if (attr.widget === 'MediaFile') {
-          widget = createMediaFileTableWidget(mediaUrlFormat(this.project.name, this.layer, attr))
+          const service = getFileService(attr, this.settings.storage)
+          widget = createMediaFileTableWidget(mediaUrlFormat(this.project.name, this.layer, attr, service))
         } else if (attr.type === 'date') { // and also attr.widget === 'DateTime' ?
           widget = DateWidget
         } else if (attr.type === 'bool') {

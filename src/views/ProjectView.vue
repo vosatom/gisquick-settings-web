@@ -469,6 +469,13 @@ export default {
         topics: [],
         use_mapcache: false,
         custom: {},
+        storage: [
+          {
+            id: 'local',
+            type: 'local',
+            label: 'Project folder',
+          },
+        ],
         services: {
           providers: {},
           features: {},

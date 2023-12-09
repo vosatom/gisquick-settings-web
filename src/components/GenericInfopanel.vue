@@ -71,23 +71,33 @@ export const ImageWidget = Widget((h, ctx) => {
   ]
 })
 
-export function mediaUrl (project, layer, attr) {
+export function getFileService(attr, storage) {
+  return attr.config?.provider_type === 's3' && storage.find((provider) => provider.id === attr.config?.provider_id)
+}
+
+export function mediaUrl (project, layer, attr, provider) {
   let location = attr.config?.directory || `web/${layer.name}`
-  let baseDir = ''
-  const relativeDepth = attr.config?.relative_depth ?? 0
-  if (relativeDepth) {
-    const parts = location.split('/')
-    baseDir = parts.slice(0, relativeDepth).join('/')
-    location = parts.slice(relativeDepth).join('/')
+  let base = ''
+  if (provider.type === 's3') {
+    base = provider.store_url + '/' + provider.bucket
+  } else {
+    let baseDir = ''
+    const relativeDepth = attr.config?.relative_depth ?? 0
+    if (relativeDepth) {
+      const parts = location.split('/')
+      baseDir = parts.slice(0, relativeDepth).join('/')
+      location = parts.slice(relativeDepth).join('/')
+    }
+    base = path.join('/api/project/media/', project, baseDir)
   }
   return {
-    base: path.join('/api/project/media/', project, baseDir),
+    base,
     location
   }
 }
 
-export function mediaUrlFormat (project, layer, attr) {
-  const { base } = mediaUrl(project, layer, attr)
+export function mediaUrlFormat (project, layer, attr, provider) {
+  const { base } = mediaUrl(project, layer, attr, provider)
   return value => path.join(base, value)
 }
 
@@ -172,7 +182,7 @@ export function createMediaFileWidget (project, layer, attr) {
     if (!value) {
       return <span class="value"></span>
     }
-    const url = path.join(base, value)
+    const url = base + value
     const ext = path.extname(value).toLowerCase()
     if (ImageExtensions.includes(ext)) {
       const thumbnailUrl = RasterImageExtensions.includes(ext) ? `${url}?thumbnail=true` : url
