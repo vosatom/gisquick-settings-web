@@ -1,14 +1,10 @@
 import axios from 'axios'
-import https from 'https'
 
 const MB = 1024 * 1024
 const GB = 1024 * MB
 const HTTP = axios.create({
   baseURL: '',
   withCredentials: true,
-  httpsAgent: new https.Agent({
-    rejectUnauthorized: false
-  }),
   maxContentLength: 1 * GB
 })
 

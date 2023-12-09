@@ -48,23 +48,20 @@ export default defineConfig(({ mode }) => ({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       path: 'path-browserify',
-      https: 'agent-base'
     }
   },
   server: {
     proxy: {
       "/ws": {
         ws: true,
-        target: 'ws://localhost'
-        // target: 'wss://dev.gisquick.org'
+        target: 'ws://localhost:3000',
+        secure: false,
+        changeOrigin: true,
       },
       "/api": {
-        target: 'http://localhost'
-        // target: 'https://dev.gisquick.org',
-        // target: 'https://portal.mapotip.cz:8443/',
-        // changeOrigin: true,
-        // secure: false,
-        // cookieDomainRewrite: 'localhost'
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
       }
     }
   }
