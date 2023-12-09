@@ -234,6 +234,7 @@ import { objectDiff } from '@/utils/diff'
 import { hasAny, pull } from '@/utils/collections'
 
 import MapImg from '@/assets/map.svg?component'
+import { computed } from 'vue'
 
 function validatedSettings (settings, meta) {
   // detection of media folders
@@ -418,6 +419,8 @@ export default {
   },
   provide () {
     return {
+      project: computed(() => this.project),
+      settings: computed(() => this.settings),
       fetchProjectInfo: this.fetchProjectInfo
     }
   },
