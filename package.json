@@ -17,7 +17,7 @@
     "portal-vue": "^2.1.7",
     "proj4": "^2.8.0",
     "squire-rte": "^2.0.3",
-    "vue": "^2.7.7",
+    "vue": "^2.7.14",
     "vue-router": "^3.5.4"
   },
   "devDependencies": {
@@ -39,6 +39,6 @@
     "vite": "^3.0.2",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-mpa": "^1.1.4",
-    "vue-template-compiler": "^2.7.10"
+    "vue-template-compiler": "^2.7.14"
   }
 }
