@@ -4,6 +4,14 @@
       <span class="title">Topics</span>
     </div> -->
     <div class="f-col panel box">
+      <div class="f-row-ac label px-2 toolbar">
+        <div class="f-grow">Topics</div>
+        <div class="actions">
+          <v-btn @click="addTopic" title="Add topic" class="icon small m-0">
+            <v-icon name="plus"/>
+          </v-btn>
+        </div>
+      </div>
       <v-list
         draggable
         class="flat f-grow m-0"
@@ -13,18 +21,20 @@
         :selected="selectedIndex"
         @click-item="selectTopic"
         @reorder="reorderTopics"
-      />
-      <hr/>
-      <div class="toolbar f-row f-shrink">
-        <v-btn class="f-grow m-0" @click="addTopic">
-          <v-icon name="plus" class="mr-2"/>
-          <span>Add</span>
-        </v-btn>
-        <v-btn class="f-grow m-0" @click="removeSelectedTopic">
-          <v-icon name="minus" class="mr-2"/>
-          <span>Remove</span>
-        </v-btn>
-      </div>
+      >
+        <template v-slot:item="{ item, index, selected }">
+          <span v-text="item.title" class="f-grow" />
+          <v-btn
+            v-if="selected"
+            v-show="activeTopic === item"
+            class="remove icon small m-0"
+            tabindex="-1-"
+            @click.stop="removeTopic(index)"
+          >
+            <v-icon name="delete_forever" />
+          </v-btn>
+        </template>
+      </v-list>
     </div>
     <div class="form py-2">
       <div class="f-col" v-if="activeTopic">
@@ -65,7 +75,9 @@
           </template>
         </layers-table>
       </div>
-      <span v-else class="p-2">No topic is selected</span>
+      <span class="f-col-ac f-justify-center empty-message" v-else>
+        Select topic from sidebar
+      </span>
     </div>
   </div>
 </template>
@@ -125,9 +137,12 @@ export default {
         base_layer: null,
       })
     },
-    removeSelectedTopic () {
+    removeTopic (index) {
       // if (this.selectedIndex >= 0) {
-      this.topics.splice(this.selectedIndex, 1)
+      this.topics.splice(index, 1)
+      const nextIndex = Math.min(index, this.topics.length - 1)
+      console.log(nextIndex);
+      this.selectTopic(this.topics[nextIndex] ?? null, nextIndex)
     },
     toggleLayer (layer, group) {
       const isBaseLayer = (layerId) => {
@@ -191,5 +206,11 @@ export default {
     border: 1px solid #ccc;
     // border-radius: 3px;
   }
+}
+.toolbar {
+  background-color: #eee;
+  border: 1px solid #ccc;
+  border-width: 1px 0 1px 0;
+  font-weight: 500;
 }
 </style>
