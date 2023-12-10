@@ -59,6 +59,7 @@
           v-if="widget === 'MediaFile'"
           :config="config"
           @update="updateConfig"
+          :settings="settings"
         />
       </div>
     </v-dialog>
@@ -76,6 +77,7 @@ export default {
     attr: Object,
     attrSettings: Object
   },
+  inject: ['settings'],
   computed: {
     widget () {
       if (this.attr.widget === 'ValueMap') {

@@ -31,10 +31,7 @@ import { TaskState, watchTask } from '@/tasks'
 
 export default {
   components: { ScrollArea, TextEditor },
-  props: {
-    project: Object,
-    settings: Object,
-  },
+  inject: ['project', 'settings'],
   data() {
     return {
       task: TaskState(),

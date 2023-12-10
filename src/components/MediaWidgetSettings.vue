@@ -129,8 +129,10 @@ export const MediaTypesList = [
 export default {
   props: {
     config: Object,
+
+    // Cannot use inject/provide, because of Portal
+    settings: Object,
   },
-  inject: ['project', 'settings'],
   computed: {
     providers () {
       return this.settings.storage.map((service) => ({ value: service.id, text: service.label }))
