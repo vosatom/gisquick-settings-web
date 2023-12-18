@@ -146,6 +146,16 @@
                 "
               />
             </div>
+
+            <div v-if="layerMeta.type === 'RasterLayer'">
+              <v-checkbox
+                class="filled"
+                label="clientLayer"
+                lazy
+                :value="layerConfig.clientLayer"
+                @input="setSetting(layerSettings, 'custom.clientLayer', $event)"
+              />
+            </div>
           </div>
         </div>
 
@@ -168,6 +178,15 @@
               />
             </div>
           </div>
+
+          <v-select
+            v-if="isBaseLayer"
+            class="filled"
+            label="Layer filter"
+            :items="layerFilters"
+            :value="layerSettings.filter ?? undefined"
+            @input="setOptSetting(layerSettings, 'filter', $event)"
+          />
         </div>
       </div>
     </section>
@@ -277,7 +296,13 @@ export default {
     },
     legendTypes() {
       return [{id:'image', label:'Image'},{id:'table', label:'Table'},{id:'link', label:'Link'},{id:'json', label:'JSON'}]
-    }
+    },
+    layerFilters() {
+      return [
+        { value: undefined, text: 'None' },
+        { value: 'grayscale', text: 'Grayscale' },
+      ]
+    },
   },
   methods: {
     scrollToSection (item) {
