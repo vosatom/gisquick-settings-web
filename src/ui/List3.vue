@@ -48,6 +48,10 @@
           }"
           @click="onItemClick(item, index)"
           @mouseover="highlightIndex = index"
+          :draggable="draggable"
+          @dragstart="dragHandlers.dragstart($event, index, item)"
+          @dragover="dragHandlers.dragover($event, index, item)"
+          @drop="dragHandlers.drop($event, index, item)"
         >
           <slot v-if="item === appendItem" name="append-item"/>
           <slot
@@ -86,6 +90,7 @@ export default {
       default: 'primary'
     },
     disabled: Boolean,
+    draggable: Boolean,
     items: Array,
     itemKey: String,
     itemText: String,
@@ -113,6 +118,22 @@ export default {
         return this.renderItems?.find(i => i[this.itemKey] === this.selected)
       }
       return Number.isInteger(this.selected) ? this.renderItems[this.selected] : null
+    },
+    dragHandlers () {
+      let src
+      return {
+        dragstart: (e, index, item) => {
+          src = { index, item }
+          e.dataTransfer.effectAllowed = 'move'
+        },
+        dragover: (e, index, item) => {
+          e.dataTransfer.dropEffect = src?.index !== index ? 'move' : 'none'
+          e.preventDefault()
+        },
+        drop: (_, index, item) => {
+          this.$emit('reorder', { src, dest: { index, item } })
+        }
+      }
     }
   },
   methods: {

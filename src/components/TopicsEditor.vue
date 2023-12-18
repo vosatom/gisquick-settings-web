@@ -5,12 +5,14 @@
     </div> -->
     <div class="f-col panel box">
       <v-list
+        draggable
         class="flat f-grow m-0"
         empty-text="No Topics"
         item-text="title"
         :items="topics"
         :selected="selectedIndex"
         @click-item="selectTopic"
+        @reorder="reorderTopics"
       />
       <hr/>
       <div class="toolbar f-row f-shrink">
@@ -125,6 +127,12 @@ export default {
     },
     selectTopic (item, index) {
       this.selectedIndex = index
+    },
+    reorderTopics ({ src, dest }) {
+      const selected = this.activeTopic
+      this.topics.splice(src.index, 1)
+      this.topics.splice(dest.index, 0, src.item)
+      this.selectedIndex = this.topics.indexOf(selected)
     }
   }
 }
