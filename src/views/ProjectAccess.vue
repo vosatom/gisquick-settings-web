@@ -492,10 +492,10 @@ export default {
       return new Set(this.selectedRole?.permissions.topics)
     },
     topicsLayers () {
-      return this.settings.topics.map(t => t.visible_overlays.map(lid => ({
+      return this.settings.topics.map(t => t.visible_overlays.filter(lid => this.project.meta.layers[lid]).map(lid => ({
         id: lid,
         title: this.project.meta.layers[lid].title,
-        visible: this.layersPerms[lid].includes('view')
+        visible: this.layersPerms[lid]?.includes('view')
       })))
     },
     projectOverlaysGroup () {
