@@ -89,56 +89,59 @@
             </template>
 
             <template v-slot:thumbnail>
-              <div class="f-row-ac f-justify-end">
-                <!-- <v-btn v-if="project.thumbnail" class="icon" @click="deleteThumbnail">
-                  <v-icon name="delete_forever"/>
-                </v-btn> -->
-                <div class="v-separator"/>
-                <input
-                  ref="input"
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  @input="setThumbnailFile"
-                  @change="setThumbnailFile"
-                />
-                <v-btn class="icon" @click="$refs.input.click()">
-                  <v-icon name="folder-open"/>
-                </v-btn>
-                <v-btn class="icon" @click="loadThumbnailFromMap">
-                  <v-icon name="map"/>
-                </v-btn>
-                <!-- <v-menu
-                  aria-label="Menu"
-                  transition="slide-y"
-                  align="rr;bb,tt"
-                  content-class="popup-menu"
-                  :items="thumbnailMenu"
-                >
-                  <template v-slot:activator="{ toggle }">
-                    <v-btn aria-label="Menu" class="icon" @click="toggle">
-                      <v-icon name="menu"/>
-                    </v-btn>
-                  </template>
-                </v-menu> -->
-              </div>
-              <thumbnail-editor v-if="thumbnailSrc" ref="thumbnailEditor" :src="thumbnailSrc"/>
-              <div v-else class="thumbnail f-col">
-                <img v-if="project.thumbnail" :src="`/api/project/thumbnail/${project.name}`"/>
-                <div v-else class="f-col-ac">
-                  <map-img class="placeholder" width="110"/>
-                  <small class="uppercase mb-2">No Thumbnail</small>
+              <div class="m-2">
+                <div class="f-row-ac f-justify-end">
+                  <span class="label f-grow">Thumbnail image</span>
+                  <!-- <v-btn v-if="project.thumbnail" class="icon" @click="deleteThumbnail">
+                    <v-icon name="delete_forever"/>
+                  </v-btn> -->
+                  <div class="v-separator"/>
+                  <input
+                    ref="input"
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    @input="setThumbnailFile"
+                    @change="setThumbnailFile"
+                  />
+                  <v-btn class="icon" @click="$refs.input.click()">
+                    <v-icon name="folder-open"/>
+                  </v-btn>
+                  <v-btn class="icon" @click="loadThumbnailFromMap">
+                    <v-icon name="map"/>
+                  </v-btn>
+                  <!-- <v-menu
+                    aria-label="Menu"
+                    transition="slide-y"
+                    align="rr;bb,tt"
+                    content-class="popup-menu"
+                    :items="thumbnailMenu"
+                  >
+                    <template v-slot:activator="{ toggle }">
+                      <v-btn aria-label="Menu" class="icon" @click="toggle">
+                        <v-icon name="menu"/>
+                      </v-btn>
+                    </template>
+                  </v-menu> -->
                 </div>
-              </div>
-              <div v-if="thumbnailSrc" class="f-row-ac light mb-2">
-                <v-btn color="green" class="f-grow" @click="saveThumbnail">
-                  <v-icon name="save" class="mr-2"/>
-                  <span>Save</span>
-                </v-btn>
-                <v-btn color="red" class="outlined f-grow" @click="removeLocalThumbnail">
-                  <v-icon name="x" color="red" class="mr-2"/>
-                  <span>Cancel</span>
-                </v-btn>
+                <thumbnail-editor v-if="thumbnailSrc" ref="thumbnailEditor" :src="thumbnailSrc"/>
+                <div v-else class="thumbnail f-col">
+                  <img v-if="project.thumbnail" :src="`/api/project/thumbnail/${project.name}`"/>
+                  <div v-else class="f-col-ac">
+                    <map-img class="placeholder" width="110"/>
+                    <small class="uppercase mb-2">No Thumbnail</small>
+                  </div>
+                </div>
+                <div v-if="thumbnailSrc" class="f-row-ac light mb-2">
+                  <v-btn color="green" class="f-grow" @click="saveThumbnail">
+                    <v-icon name="save" class="mr-2"/>
+                    <span>Save</span>
+                  </v-btn>
+                  <v-btn color="red" class="outlined f-grow" @click="removeLocalThumbnail">
+                    <v-icon name="x" color="red" class="mr-2"/>
+                    <span>Cancel</span>
+                  </v-btn>
+                </div>
               </div>
               <!-- <div class="f-row f-justify-center">
                 <input
@@ -166,7 +169,17 @@
                   <v-icon name="delete_forever"/>
                 </v-btn>
               </div> -->
-
+            </template>
+            <template v-slot:other>
+              <v-checkbox
+                label="Map Tiling"
+                v-model="settings.map_tiling"
+              />
+              <small class="mx-2">
+                Enables tiled rendering of overlay layers.
+                Faster in most cases, but can cause visual artifacts in symbols and labels.
+                It may be helpful to set the <strong>Tile buffer</strong> parameter in QGIS project properties (QGIS Server tab).
+              </small>
             </template>
           </v-tabs>
         </v-scroll-area>
@@ -330,6 +343,7 @@ export default {
         { key: 'scales', label: 'Scales' },
         { key: 'extent', label: 'Extent' },
         { key: 'thumbnail', label: 'Thumbnail' },
+        { key: 'other', label: 'Other' }
       ]
     },
     extentMenu () {
@@ -577,5 +591,10 @@ export default {
   img {
     width: 100%;
   }
+}
+.label {
+  font-weight: 500;
+  font-size: 13px;
+  opacity: 0.8;
 }
 </style>
