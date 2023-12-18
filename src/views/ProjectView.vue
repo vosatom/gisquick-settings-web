@@ -488,6 +488,7 @@ export default {
           providers: {},
           features: {},
         },
+        lang: this.$root.app.lang,
       }
       if (meta.scales.length) {
         Object.assign(settings, {
