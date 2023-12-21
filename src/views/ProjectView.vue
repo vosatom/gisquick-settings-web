@@ -75,7 +75,6 @@
           <router-link class="m-2" :to="{name: 'map'}">Map</router-link>
           <router-link class="m-2" :to="{name: 'layers'}">Layers</router-link>
           <router-link class="m-2" :to="{name: 'topics'}">Topics</router-link>
-          <router-link class="m-2" :to="{name: 'search'}">Search</router-link>
           <router-link class="m-2" :to="{name: 'access'}">Permissions</router-link>
           <router-link class="m-2" :to="{name: 'services'}">Services</router-link>
           <router-link class="m-2" :to="{name: 'bookmarks'}" v-if="projectHasBookmarks">Bookmarks</router-link>

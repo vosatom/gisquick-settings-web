@@ -85,11 +85,11 @@ const routes = [
         name: 'topics',
         component: ProjectTopics
       },
-      {
-        path: 'search',
-        name: 'search',
-        component: SearchView
-      },
+      // {
+      //   path: 'search',
+      //   name: 'search',
+      //   component: SearchView
+      // },
       {
         path: 'access',
         name: 'access',
