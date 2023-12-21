@@ -16,6 +16,7 @@ import PublishView from '@/views/PublishView.vue'
 import ProjectTopics from '@/views/ProjectTopics.vue'
 import ProjectAccess from '@/views/ProjectAccess.vue'
 import ProjectUpdate from '@/views/ProjectUpdate.vue'
+import SearchView from '@/views/SearchView.vue'
 
 Vue.use(VueRouter)
 
@@ -80,6 +81,11 @@ const routes = [
         path: 'topics',
         name: 'topics',
         component: ProjectTopics
+      },
+      {
+        path: 'search',
+        name: 'search',
+        component: SearchView
       },
       {
         path: 'access',
