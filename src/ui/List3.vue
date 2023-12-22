@@ -59,6 +59,7 @@
             name="item"
             :item="item"
             :index="index"
+            :selected="selectedItem === item"
           >
             <span v-text="item[itemText]"/>
           </slot>
