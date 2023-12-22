@@ -171,15 +171,30 @@
               </div> -->
             </template>
             <template v-slot:other>
-              <v-checkbox
-                label="Map Tiling"
-                v-model="settings.map_tiling"
-              />
-              <small class="mx-2">
-                Enables tiled rendering of overlay layers.
-                Faster in most cases, but can cause visual artifacts in symbols and labels.
-                It may be helpful to set the <strong>Tile buffer</strong> parameter in QGIS project properties (QGIS Server tab).
-              </small>
+              <div>
+                <v-checkbox
+                  label="Map Tiling"
+                  v-model="settings.map_tiling"
+                />
+                <div class="mx-2 small">
+                  Enables tiled rendering of overlay layers.
+                  Faster in most cases, but can cause visual artifacts in symbols and labels.
+                  It may be helpful to set the <strong>Tile buffer</strong> parameter in QGIS project properties (QGIS Server tab).
+                </div>
+              </div>
+              <div :class="{ disabled: !settings.map_tiling }">
+                <v-checkbox
+                  label="Map Cache"
+                  v-model="settings.use_mapcache"
+                  :disabled="!settings.map_tiling"
+                >
+                <div class="label">Map Cache</div>
+                <v-badge color="orange">Experimental</v-badge>
+                </v-checkbox>
+                <div class="mx-2 small">
+                  Enables map cache. <span>To use this feature, enable Map Tiling setting first.</span> Experimental, as it can sometimes show outdated tiles.
+                </div>
+              </div>
             </template>
           </v-tabs>
         </v-scroll-area>
@@ -596,5 +611,8 @@ export default {
   font-weight: 500;
   font-size: 13px;
   opacity: 0.8;
+}
+.disabled {
+  opacity: 0.5;
 }
 </style>
