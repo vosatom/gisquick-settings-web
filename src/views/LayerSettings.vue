@@ -119,13 +119,31 @@
           </div>
 
           <div class="custom-config f-col my-2">
-            <div class="legend-field">
-              <v-text-field
+            <div>
+              <v-select
                 class="filled"
-                label="Legend URL"
-                lazy
-                :value="layerConfig.legend_url"
-                @input="setOptSetting(layerSettings, 'custom.legend_url', $event)"
+                label="Legend type"
+                :items="legendTypes"
+                itemText="label"
+                itemValue="id"
+                :value="layerSettings.custom?.legend_type ?? 'image'"
+                @input="
+                  setOptSetting(layerSettings, 'custom.legend_type', $event)
+                "
+              />
+            </div>
+
+            <div v-if="layerMeta.type === 'RasterLayer'">
+              <legend-items-editor
+                v-if="layerSettings.custom?.legend_type === 'table'"
+                :project="project"
+                :settings="settings"
+                :layerSettings="layerSettings"
+                :layerConfig="layerConfig"
+                :value="layerConfig.legend_items"
+                @input="
+                  setSetting(layerSettings, 'custom.legend_items', $event)
+                "
               />
             </div>
           </div>
@@ -175,12 +193,12 @@ import LayerFlags from '@/components/LayerFlagsList.vue'
 import Page from '@/mixins/Page'
 import { lookupTable } from '@/utils'
 import { layersList } from '@/utils/layers'
+import LegendItemsEditor from '@/components/LegendItemsEditor.vue'
 
-window.isEmpty = isEmpty
 export default {
   name: 'LayerSettings',
   mixins: [ Page ],
-  components: { LayerAttributes, LayerFlags },
+  components: { LayerAttributes, LayerFlags, LegendItemsEditor },
   props: {
     project: Object,
     settings: Object,
@@ -256,6 +274,9 @@ export default {
         }
       }
       return null
+    },
+    legendTypes() {
+      return [{id:'image', label:'Image'},{id:'table', label:'Table'},{id:'link', label:'Link'},{id:'json', label:'JSON'}]
     }
   },
   methods: {
