@@ -78,6 +78,7 @@
           <router-link class="m-2" :to="{name: 'search'}">Search</router-link>
           <router-link class="m-2" :to="{name: 'access'}">Permissions</router-link>
           <router-link class="m-2" :to="{name: 'services'}">Services</router-link>
+          <router-link class="m-2" :to="{name: 'bookmarks'}" v-if="projectHasBookmarks">Bookmarks</router-link>
           <router-link class="m-2" :to="{name: 'settings'}">Settings</router-link>
           <div class="v-separator"/>
 
@@ -399,7 +400,13 @@ export default {
         }
       }
       return data
-    }
+    },
+    projectHasBookmarks() {
+      return (
+        this.project.meta.bookmarks &&
+        Object.keys(this.project.meta.bookmarks).length > 0
+      )
+    },
     // layersProjectCapabilities () {
     //   console.log('# layersProjectCapabilities')
     //   return this.settings && mapValues(this.project.meta.layers, l => this.settings.layers[l.id].flags)
@@ -469,6 +476,7 @@ export default {
         topics: [],
         use_mapcache: false,
         custom: {},
+        bookmarks: {},
         storage: [
           {
             id: 'local',

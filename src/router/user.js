@@ -17,6 +17,7 @@ import ProjectTopics from '@/views/ProjectTopics.vue'
 import ProjectAccess from '@/views/ProjectAccess.vue'
 import ProjectServices from '@/views/ProjectServices.vue'
 import ProjectSettings from '@/views/ProjectSettings.vue'
+import ProjectBookmarks from '@/views/ProjectBookmarks.vue'
 import ProjectUpdate from '@/views/ProjectUpdate.vue'
 import SearchView from '@/views/SearchView.vue'
 
@@ -104,6 +105,11 @@ const routes = [
         path: 'settings',
         name: 'settings',
         component: ProjectSettings
+      },
+      {
+        path: 'bookmarks',
+        name: 'bookmarks',
+        component: ProjectBookmarks,
       },
       {
         path: 'update',
