@@ -97,7 +97,7 @@ function arrayDiff (target, base, key) {
   return res
 }
 
-export function objectDiff (object, base, path = [], debug = false) {
+export function objectDiff (object, base, path = [], debug = !false) {
   const oKeys = Object.keys(object)
   const bKeys = Object.keys(base)
   const added = difference(oKeys, bKeys)
@@ -110,7 +110,7 @@ export function objectDiff (object, base, path = [], debug = false) {
     const v2 = base[k]
     if (!isEqual(v1, v2)) {
       if (debug) {
-        console.log('diff', v1, v2)
+        console.log('diff', v1, v2, {a:JSON.stringify(v1), b:JSON.stringify(v2)})
       }
       path = [...path, k]
       $diff.changed.push(k)

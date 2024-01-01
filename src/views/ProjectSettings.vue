@@ -20,6 +20,9 @@
           itemText="name"
         />
       </div>
+
+      <MNKProjectSettings />
+      <MNKProjectInit />
     </ScrollArea>
   </div>
 </template>
@@ -28,9 +31,11 @@
 import ScrollArea from '@/ui/ScrollArea.vue'
 import TextEditor from '@/components/TextEditor.vue'
 import { TaskState, watchTask } from '@/tasks'
+import MNKProjectSettings from '@/modules/mnk/ProjectSettings.vue'
+import MNKProjectInit from '@/modules/mnk/ProjectInit.vue'
 
 export default {
-  components: { ScrollArea, TextEditor },
+  components: { ScrollArea, TextEditor, MNKProjectSettings, MNKProjectInit },
   inject: ['project', 'settings'],
   data() {
     return {

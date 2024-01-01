@@ -291,16 +291,6 @@ function validatedSettings (settings, meta) {
     t.id = t.title.toLowerCase().replace(/ /, '_')
   })
 
-  settings.custom = {
-    ...settings.custom,
-    routing: {
-      ...settings.custom?.routing,
-      services: {
-        ...settings.custom?.routing?.services,
-      },
-    }
-  }
-
   return settings
 }
 
