@@ -23,6 +23,7 @@ function createAdmin(options) {
     name: 'Admin',
     users: existingAuth?.users ?? [],
     permissions: {
+      custom_media_upload: true,
       attributes: mapValues(options.project.meta.layers, (layer) => {
         const attributes = chain(layer.attributes)
           .keyBy('name')

@@ -147,6 +147,13 @@
               v-model="selectedRole.users"
             />
           </template>
+
+          <v-checkbox
+            class="filled"
+            label="Media file upload"
+            lazy
+            v-model="selectedRole.permissions.custom_media_upload"
+          />
         </div>
         <layers-table
           v-if="selectedRole && roleTab === 'base-layers'"
@@ -523,7 +530,8 @@ export default {
         users: [],
         permissions: {
           ...initLayersPermissions(this.project.meta.layers),
-          topics: this.settings.topics.map(t => t.id)
+          topics: this.settings.topics.map(t => t.id),
+          custom_media_upload: true,
         }
       }
     },
