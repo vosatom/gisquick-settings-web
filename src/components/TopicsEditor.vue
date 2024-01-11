@@ -42,6 +42,12 @@
           placeholder=""
           multiline
         />
+        <v-text-field
+          class="filled"
+          rows="3"
+          label="Thumbnail URL"
+          v-model="activeTopic.thumbnail_url"
+        />
         <layers-table
           v-if="activeTopic"
           label="Layer"
