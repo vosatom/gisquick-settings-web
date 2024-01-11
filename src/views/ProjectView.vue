@@ -77,6 +77,7 @@
           <router-link class="m-2" :to="{name: 'topics'}">Topics</router-link>
           <router-link class="m-2" :to="{name: 'search'}">Search</router-link>
           <router-link class="m-2" :to="{name: 'access'}">Permissions</router-link>
+          <router-link class="m-2" :to="{name: 'services'}">Services</router-link>
           <router-link class="m-2" :to="{name: 'settings'}">Settings</router-link>
           <div class="v-separator"/>
 
@@ -289,6 +290,17 @@ function validatedSettings (settings, meta) {
   settings.topics?.filter(t => !t.id).forEach(t => {
     t.id = t.title.toLowerCase().replace(/ /, '_')
   })
+
+  settings.custom = {
+    ...settings.custom,
+    routing: {
+      ...settings.custom?.routing,
+      services: {
+        ...settings.custom?.routing?.services,
+      },
+    }
+  }
+
   return settings
 }
 
@@ -455,7 +467,12 @@ export default {
         layers,
         title: meta.title,
         topics: [],
-        use_mapcache: false
+        use_mapcache: false,
+        custom: {},
+        services: {
+          providers: {},
+          features: {},
+        },
       }
       if (meta.scales.length) {
         Object.assign(settings, {

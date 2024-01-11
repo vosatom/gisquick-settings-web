@@ -120,13 +120,15 @@ export default {
     layersList: {
       immediate: true,
       handler (layers) {
-        const legends = {}
-        layers.forEach(l => {
-          legends[l.id] = TaskState()
-          const t = this.legendFetcher.fetch(l)
-          watchTask(t, legends[l.id])
-        })
-        this.legends = legends
+        if (this.legendFetcher) {
+          const legends = {}
+          layers.forEach(l => {
+            legends[l.id] = TaskState()
+            const t = this.legendFetcher.fetch(l)
+            watchTask(t, legends[l.id])
+          })
+          this.legends = legends
+        }
       }
     }
   },
